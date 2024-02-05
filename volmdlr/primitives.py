@@ -68,9 +68,17 @@ class RoundedLineSegments:
                               name=self.name)
 
     def arc_features(self, point_index: int):
+        """
+        Returns the arc features for point at index.
+        """
         raise NotImplementedError('The method arc_features should be overloaded.')
 
     def _primitives(self):
+        """
+        Gets Rounded line segments primitives.
+
+        :return: primitives
+        """
         alpha = {}
         dist = {}
         lines_length = {}
@@ -197,6 +205,10 @@ class RoundedLineSegments:
         return self.primitives_from_arcs(arcs)
 
     def primitives_from_arcs(self, arcs):
+        """
+        Get Rounded line segment from arcs.
+
+        """
         primitives = []
         # Creating lines
         for index_line in range(self.npoints - 1):
