@@ -1796,9 +1796,10 @@ class OpenTriangleShell3D(OpenShell3D):
         faces: List[volmdlr.faces.Triangle3D],
         color: Tuple[float, float, float] = None,
         alpha: float = 1.0,
+        reference_path: str = volmdlr.PATH_ROOT,
         name: str = "",
     ):
-        OpenShell3D.__init__(self, faces=faces, color=color, alpha=alpha, name=name)
+        OpenShell3D.__init__(self, faces=faces, color=color, alpha=alpha, reference_path=reference_path, name=name)
 
     def get_bounding_box(self) -> volmdlr.core.BoundingBox:
         """Gets the Shell bounding box."""
@@ -1864,7 +1865,6 @@ class OpenTriangleShell3D(OpenShell3D):
                 triangles.append(volmdlr.faces.Triangle3D(points[i1], points[i2], points[i3]))
             except ZeroDivisionError:
                 pass
-
         return cls(triangles, name=name)
 
     def decimate(
@@ -1961,11 +1961,8 @@ class OpenTriangleShell3D(OpenShell3D):
         # not rounding to make sure to retrieve the exact same object with 'dict_to_object'
         vertices, faces = self.to_mesh_data(round_vertices=False)
 
-        dict_["vertices"] = vertices.tolist()
-        dict_["faces"] = faces.tolist()
-        dict_["alpha"] = self.alpha
-        dict_["color"] = self.color
-
+        dict_.update({"vertices": vertices.tolist(), "faces": faces.tolist(), "alpha": self.alpha,
+                      "color": self.color, "reference_path": self.reference_path})
         return dict_
 
     @classmethod
@@ -1987,7 +1984,7 @@ class OpenTriangleShell3D(OpenShell3D):
         triangle_shell = cls.from_mesh_data(vertices, faces, name)
         triangle_shell.alpha = dict_["alpha"]
         triangle_shell.color = dict_["color"]
-
+        triangle_shell.reference_path = dict_.get("reference_path", volmdlr.PATH_ROOT)
         return triangle_shell
 
     def to_display_triangle_shell(self) -> "DisplayTriangleShell3D":
@@ -2024,10 +2021,11 @@ class ClosedTriangleShell3D(OpenTriangleShell3D, ClosedShell3D):
         faces: List[volmdlr.faces.Triangle3D],
         color: Tuple[float, float, float] = None,
         alpha: float = 1.0,
+        reference_path: str = volmdlr.PATH_ROOT,
         name: str = "",
     ):
         OpenTriangleShell3D.__init__(self, faces=faces, color=color, alpha=alpha, name=name)
-        ClosedShell3D.__init__(self, faces, color, alpha, name)
+        ClosedShell3D.__init__(self, faces=faces, color=color, alpha=alpha, reference_path=reference_path, name=name)
 
     def are_normals_pointing_outwards(self):
         """Verifies if all face's normal are pointing outwards the closed shell."""
