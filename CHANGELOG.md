@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 #### edges.py
--
+- arc2d: start and end angle, and arc angle.
 
 #### faces.py
 - Toroidalface ConicalFace intersections.
