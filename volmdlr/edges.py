@@ -4787,7 +4787,7 @@ class LineSegment3D(LineSegment):
 
     def _conical_revolution(self, params):
         """Creates a conical revolution of a Line Segment 3D."""
-        axis, u, dist1, dist2, angle, apex = params
+        axis, u, radius1, radius2, angle, apex = params
 
         v = axis.cross(u)
         direction_vector = self.direction_vector()
@@ -4797,17 +4797,17 @@ class LineSegment3D(LineSegment):
         if semi_angle > 0.5 * math.pi:
             semi_angle = math.pi - semi_angle
             axis = -axis
-            frame_origin = apex + axis * dist1
+            frame_origin = apex + axis * (radius1 / math.tan(semi_angle))
             cone_frame = volmdlr.Frame3D(frame_origin, u, -v, axis)
             angle2 = - angle
         else:
             angle2 = angle
-            frame_origin = apex + axis * dist1
+            frame_origin = apex + axis * (radius1 / math.tan(semi_angle))
             cone_frame = volmdlr.Frame3D(frame_origin, u, v, axis)
 
-        surface = volmdlr.surfaces.ConicalSurface3D(cone_frame, semi_angle, dist1 * math.tan(semi_angle))
+        surface = volmdlr.surfaces.ConicalSurface3D(cone_frame, semi_angle, radius1)
         return [volmdlr.faces.ConicalFace3D.from_surface_rectangular_cut(
-            surface, 0, angle2, z1=0.0 / math.tan(semi_angle), z2=dist2 - dist1 / math.tan(semi_angle))]
+            surface, 0, angle2, z1=0.0, z2=(radius2 - radius1) / math.tan(semi_angle))]
 
     def _cylindrical_revolution(self, params):
         """Creates a cylindrical revolution of a Line Segment 3D."""
