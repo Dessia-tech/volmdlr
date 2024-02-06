@@ -356,10 +356,8 @@ def contour2d_healing_self_intersection(contour2d):
             zip(contour2d.primitives, contour2d.primitives[1:] + [contour2d.primitives[0]])):
         if not prim1.end.is_close(prim2.start):
             # check intersection
-            intersections = prim1.intersections(prim2)
+            intersections = prim1.intersections(prim2, force_sort=True)
             if intersections:
-                if len(intersections) > 1:
-                    intersections = prim1.sort_points_along_curve(intersections)
                 split_point = intersections[0]
                 if prim1.is_point_edge_extremity(split_point):
                     new_prim1 = prim1
