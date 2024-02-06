@@ -742,6 +742,9 @@ class Surface3D(DessiaObject):
         raise NotImplementedError(f"plot method is not implemented for {self.__class__.__name__}")
 
     def point2d_to_3d(self, point2d):
+        """
+        Abstract method.
+        """
         raise NotImplementedError(f'point2d_to_3d is abstract and should be implemented in {self.__class__.__name__}')
 
     def point3d_to_2d(self, point3d):
@@ -5379,6 +5382,9 @@ class SphericalSurface3D(PeriodicalSurface):
         return points
 
     def arc3d_to_2d_any_direction_singularity(self, arc3d, point_singularity, half_pi):
+        """
+        Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
+        """
         split = arc3d.split(point_singularity)
         primitive0 = self.arc3d_to_2d_any_direction(split[0])[0]
         primitive2 = self.arc3d_to_2d_any_direction(split[1])[0]
@@ -7659,8 +7665,9 @@ class BSplineSurface3D(Surface3D):
     def _find_index_min(matrix_points, point):
         """Helper function to find point of minimal distance."""
         distances = np.linalg.norm(matrix_points - point, axis=1)
-
-        return np.argmin(distances), distances.min()
+        indexes = np.argsort(distances)
+        index = indexes[0]
+        return index, distances[index]
 
     def _point_inversion_initialization(self, point3d_array):
         """
@@ -7738,12 +7745,13 @@ class BSplineSurface3D(Surface3D):
                                                   start=(u_start, v_start),
                                                   stop=(u_stop, v_stop)), dtype=np.float64)
             index, distance = self._find_index_min(matrix, point3d_array)
+            u, v, delta_u, delta_v = self._update_parameters([u_start, u_stop, v_start, v_stop], sample_size_u,
+                                                             sample_size_v, index)
             if distance < minimal_distance:
                 minimal_distance = distance
             if abs(distance - last_distance) < acceptable_distance * 0.01:
                 return (u, v), minimal_distance
-            u, v, delta_u, delta_v = self._update_parameters([u_start, u_stop, v_start, v_stop], sample_size_u,
-                                                             sample_size_v, index)
+
             last_distance = distance
             count += 1
 
@@ -7798,36 +7806,41 @@ class BSplineSurface3D(Surface3D):
 
         u_start, u_stop, v_start, v_stop = self.domain
         results = []
-        if tol > 1e-7:
-            res = minimize(fun, x0=np.array(initial_guess), jac=True,
+
+        res = minimize(fun, x0=np.array(initial_guess), jac=True,
+                       bounds=[(u_start, u_stop),
+                               (v_start, v_stop)])
+        if res.fun <= tol or (tol > 1e-7 and res.success
+                              and abs(res.fun - point_inversion_result) <= tol and res.fun < 5 * tol):
+            return volmdlr.Point2D(*res.x)
+        results = [(res.x, res.fun)]
+        if self.u_closed:
+            res = minimize(fun, x0=np.array((u_start, initial_guess[1])), jac=True,
                            bounds=[(u_start, u_stop),
                                    (v_start, v_stop)])
-            if res.fun <= 1e-6 or (res.success and abs(res.fun - point_inversion_result) <= 1e-6 and res.fun < 5e-6):
-                return volmdlr.Point2D(*res.x)
+            if res.fun <= tol:
+                return volmdlr.Point2D(u_start, initial_guess[1])
+            results.append((res.x, res.fun))
+            res = minimize(fun, x0=np.array((u_stop, initial_guess[1])), jac=True,
+                           bounds=[(u_start, u_stop),
+                                   (v_start, v_stop)])
+            if res.fun <= tol:
+                return volmdlr.Point2D(u_stop, initial_guess[1])
+            results.append((res.x, res.fun))
+        if self.v_closed:
+            res = minimize(fun, x0=np.array((initial_guess[0], v_start)), jac=True,
+                           bounds=[(u_start, u_stop),
+                                   (v_start, v_stop)])
+            results.append((res.x, res.fun))
+            if res.fun <= tol:
+                return volmdlr.Point2D(initial_guess[0], v_start)
+            res = minimize(fun, x0=np.array((initial_guess[0], v_stop)), jac=True,
+                           bounds=[(u_start, u_stop),
+                                   (v_start, v_stop)])
+            if res.fun <= tol:
+                return volmdlr.Point2D(initial_guess[0], v_stop)
+            results.append((res.x, res.fun))
 
-            if self.u_closed:
-                res = minimize(fun, x0=np.array((u_start, initial_guess[1])), jac=True,
-                               bounds=[(u_start, u_stop),
-                                       (v_start, v_stop)])
-                if res.fun <= 5e-6:
-                    return volmdlr.Point2D(u_start, initial_guess[1])
-                res = minimize(fun, x0=np.array((u_stop, initial_guess[1])), jac=True,
-                               bounds=[(u_start, u_stop),
-                                       (v_start, v_stop)])
-                if res.fun <= 5e-6:
-                    return volmdlr.Point2D(u_stop, initial_guess[1])
-            if self.v_closed:
-                res = minimize(fun, x0=np.array((initial_guess[0], v_start)), jac=True,
-                               bounds=[(u_start, u_stop),
-                                       (v_start, v_stop)])
-                if res.fun <= 5e-6:
-                    return volmdlr.Point2D(initial_guess[0], v_start)
-                res = minimize(fun, x0=np.array((initial_guess[0], v_stop)), jac=True,
-                               bounds=[(u_start, u_stop),
-                                       (v_start, v_stop)])
-                if res.fun <= 5e-6:
-                    return volmdlr.Point2D(initial_guess[0], v_stop)
-            results = [(res.x, res.fun)]
         point3d_array = np.asarray(point3d)
 
         if self.u_knots.shape[0] > 2 or self.v_knots.shape[0] > 2:
@@ -8148,10 +8161,10 @@ class BSplineSurface3D(Surface3D):
         parametric_points = verify_repeated_parametric_points(parametric_points)
         if interpolation_degree >= len(parametric_points):
             interpolation_degree = len(parametric_points) - 1
-        brep = edges.BSplineCurve2D.from_points_interpolation(points=parametric_points, degree=interpolation_degree,
-                                                              centripetal=True)
-        if brep:
-            return [brep]
+        if len(parametric_points) > 1 and interpolation_degree > 1:
+            brep = edges.BSplineCurve2D.from_points_interpolation(points=parametric_points, degree=interpolation_degree)
+            if brep:
+                return [brep]
         return None
 
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
