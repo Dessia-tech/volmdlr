@@ -742,6 +742,9 @@ class Surface3D(DessiaObject):
         raise NotImplementedError(f"plot method is not implemented for {self.__class__.__name__}")
 
     def point2d_to_3d(self, point2d):
+        """
+        Abstract method.
+        """
         raise NotImplementedError(f'point2d_to_3d is abstract and should be implemented in {self.__class__.__name__}')
 
     def point3d_to_2d(self, point3d):
@@ -5379,6 +5382,9 @@ class SphericalSurface3D(PeriodicalSurface):
         return points
 
     def arc3d_to_2d_any_direction_singularity(self, arc3d, point_singularity, half_pi):
+        """
+        Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
+        """
         split = arc3d.split(point_singularity)
         primitive0 = self.arc3d_to_2d_any_direction(split[0])[0]
         primitive2 = self.arc3d_to_2d_any_direction(split[1])[0]

@@ -1412,6 +1412,9 @@ class VolumeModel(dc.PhysicalObject):
         return VolumeModel(new_primitives, self.name)
 
     def plot2d(self, ax=None, color=None):
+        """
+        Plot the bounding boxes of the objects inside the volume model.
+        """
         fig = plt.figure()
         if ax is None:
             ax = fig.add_subplot(111, projection='3d')
@@ -2117,6 +2120,9 @@ class VolumeModel(dc.PhysicalObject):
 
     @staticmethod
     def get_elements_lines(gmsh_model):
+        """
+        Helper function to export the volume model into gmsh format.
+        """
         lines_elements = []
         lines_elements.append('$Elements')
 
@@ -2183,6 +2189,9 @@ class MovingVolumeModel(VolumeModel):
         return True
 
     def step_volume_model(self, istep: int):
+        """
+        Creates a volume model with all the frames of the model.
+        """
         primitives = []
         for primitive, frame in zip(self.primitives, self.step_frames[istep]):
             primitives.append(
