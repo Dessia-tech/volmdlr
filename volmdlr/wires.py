@@ -1487,7 +1487,8 @@ class Wire3D(WireMixin, PhysicalObject):
         babylon_lines = {'points': points,
                          'alpha': self.alpha,
                          'name': self.name,
-                         'color': list(self.color) if self.color is not None else [0.8, 0.8, 0.8]
+                         'color': list(self.color) if self.color is not None else [0.8, 0.8, 0.8],
+                         "reference_path": self.reference_path
                          }
         return [babylon_lines]
 
@@ -2173,6 +2174,7 @@ class Contour2D(ContourMixin, Wire2D):
         return plot_data.Contour2D(plot_data_primitives=plot_data_primitives,
                                    edge_style=edge_style,
                                    surface_style=surface_style,
+                                   reference_path=self.reference_path,
                                    name=self.name)
 
     def is_edge_inside(self, edge):
@@ -4153,13 +4155,12 @@ class Contour3D(ContourMixin, Wire3D):
     _non_data_hash_attributes = ['points', 'name']
     _generic_eq = True
 
-    def __init__(self, primitives: List[volmdlr.core.Primitive3D],
-                 name: str = ''):
+    def __init__(self, primitives: List[volmdlr.core.Primitive3D], reference_path: str = PATH_ROOT, name: str = ""):
         """
         Defines a contour3D from a collection of edges following each other stored in primitives list.
         """
 
-        Wire3D.__init__(self, primitives=primitives, name=name)
+        Wire3D.__init__(self, primitives=primitives, reference_path=reference_path, name=name)
         self._edge_polygon = None
         self._utd_bounding_box = False
 

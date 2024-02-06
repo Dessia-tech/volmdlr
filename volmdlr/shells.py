@@ -99,7 +99,8 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
                  color: Tuple[float, float, float] = None,
                  alpha: float = 1.,
                  name: str = '',
-                 bounding_box: volmdlr.core.BoundingBox = None):
+                 bounding_box: volmdlr.core.BoundingBox = None,
+                 reference_path: str = volmdlr.PATH_ROOT):
 
         self.faces = faces
         if not color:
@@ -118,7 +119,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
 
         volmdlr.core.CompositePrimitive3D.__init__(self,
                                                    primitives=faces, color=color, alpha=alpha,
-                                                   name=name)
+                                                   reference_path=reference_path, name=name)
 
     def _data_hash(self):
         return len(self.faces)  # sum(face._data_hash() for face in self.faces)
@@ -2073,7 +2074,8 @@ class DisplayTriangleShell3D(Shell3D):
     performance.
     """
 
-    def __init__(self, positions: NDArray[float], indices: NDArray[int], name: str = ""):
+    def __init__(self, positions: NDArray[float], indices: NDArray[int],
+                 reference_path: str = volmdlr.PATH_ROOT, name: str = ""):
         """
         Instantiate the DisplayTriangleShell3D.
 
@@ -2089,7 +2091,7 @@ class DisplayTriangleShell3D(Shell3D):
         self.positions = positions
         self.indices = indices
 
-        Shell3D.__init__(self, faces=[], name=name)  # avoid saving the faces for memory and performance
+        Shell3D.__init__(self, faces=[], reference_path=reference_path, name=name)  # avoid saving the faces for memory and performance
 
     @classmethod
     def from_triangle_shell(

@@ -250,9 +250,11 @@ class Primitive3D(dc.PhysicalObject):
     Defines a Primitive3D.
     """
 
-    def __init__(self, color: Tuple[float, float, float] = None, alpha: float = 1.0, name: str = ''):
+    def __init__(self, color: Tuple[float, float, float] = None, alpha: float = 1.0,
+                 reference_path: str = volmdlr.PATH_ROOT, name: str = ''):
         self.color = color
         self.alpha = alpha
+        self.reference_path = reference_path
 
         dc.PhysicalObject.__init__(self, name=name)
 
@@ -291,8 +293,8 @@ class Primitive3D(dc.PhysicalObject):
         if mesh is None:
             return []
         babylon_mesh = mesh.to_babylon()
-
         babylon_mesh.update(self.babylon_param())
+        babylon_mesh["reference_path"] = self.reference_path
         return [babylon_mesh]
 
 
@@ -307,9 +309,9 @@ class CompositePrimitive3D(Primitive3D):
     _non_data_hash_attributes = []
 
     def __init__(self, primitives: List[Primitive3D], color: Tuple[float, float, float] = None, alpha: float = 1,
-                 name: str = ''):
+                 reference_path: str = volmdlr.PATH_ROOT, name: str = ""):
         self.primitives = primitives
-        Primitive3D.__init__(self, color=color, alpha=alpha, name=name)
+        Primitive3D.__init__(self, color=color, alpha=alpha, reference_path=reference_path, name=name)
         self._utd_primitives_to_index = False
 
     def to_dict(self, *args, **kwargs):
@@ -1436,6 +1438,7 @@ class VolumeModel(dc.PhysicalObject):
                         'lines': []}
         display_points = []
         for primitive in self.primitives:
+            print(primitive.reference_path)
             if hasattr(primitive, 'babylon_meshes'):
                 babylon_data['meshes'].extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
             elif hasattr(primitive, 'babylon_curves'):

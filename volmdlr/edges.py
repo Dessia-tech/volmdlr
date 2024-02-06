@@ -4894,8 +4894,8 @@ class LineSegment3D(LineSegment):
         babylon_lines = {'points': points,
                          'alpha': 1.0,
                          'name': self.name,
-                         'color': [0.2, 0.8, 0.2]
-                         }
+                         'color': [0.2, 0.8, 0.2],
+                         "reference_path": self.reference_path}
         return babylon_lines
 
     def move_frame_along(self, frame):
