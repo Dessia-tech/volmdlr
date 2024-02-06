@@ -352,7 +352,7 @@ class Edge(dc.DessiaObject):
             # intersections.extend(intersections_points)
         return intersections
 
-    def intersections(self, edge2: 'Edge', abs_tol: float = 1e-6):
+    def intersections(self, edge2: 'Edge', abs_tol: float = 1e-6, force_sort: bool = False):
         """
         Gets the intersections between two edges.
 
@@ -363,10 +363,14 @@ class Edge(dc.DessiaObject):
         method_name = f'{edge2.__class__.__name__.lower()[:-2]}_intersections'
         if hasattr(self, method_name):
             intersections = getattr(self, method_name)(edge2, abs_tol)
+            if force_sort:
+                intersections = self.sort_points_along_curve(intersections)
             return intersections
         method_name = f'{self.__class__.__name__.lower()[:-2]}_intersections'
         if hasattr(edge2, method_name):
             intersections = getattr(edge2, method_name)(self, abs_tol)
+            if force_sort:
+                intersections = self.sort_points_along_curve(intersections)
             return intersections
         return self._generic_edge_intersections(edge2, abs_tol)
 
