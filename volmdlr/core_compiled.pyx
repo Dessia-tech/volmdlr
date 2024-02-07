@@ -3301,11 +3301,16 @@ class Frame3D(Basis3D):
     :param v:Vector3D: second vector of the basis
     :param w:Vector3D: third vector of the basis
     """
+    _standalone_in_db = True
 
     def __init__(self, origin: Point3D, u: Vector3D, v: Vector3D, w: Vector3D, name: Text = ""):
         self.origin = origin
         Basis3D.__init__(self, u, v, w)
         self.name = name
+
+    @classmethod
+    def define(cls):
+        return cls(O3D, X3D, Y3D, Z3D)
 
     def __repr__(self):
         return f"{self.__class__.__name__}(origin={self.origin}, u={self.u}, v={self.v}, w={self.w})"

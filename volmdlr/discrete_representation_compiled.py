@@ -7,6 +7,7 @@ Helper Cython functions for discrete representation defined using the pure Pytho
 This module needs to be compiled!
 """
 from typing import List, Set, Tuple
+from dessia_common.core import DessiaObject
 
 import cython
 import cython.cimports.libc.math as math_c
@@ -20,7 +21,7 @@ from numpy.typing import NDArray
 # TEST
 
 @cython.cclass
-class Vector3D:
+class Vector3D(DessiaObject):
     x: cython.double
     y: cython.double
     z: cython.double
