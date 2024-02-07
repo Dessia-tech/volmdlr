@@ -20,16 +20,20 @@ from numpy.typing import NDArray
 
 # TEST
 
-@cython.cclass
+# @cython.cclass
 class Vector3D(DessiaObject):
     x: cython.double
     y: cython.double
     z: cython.double
 
+    _standalone_in_db = True
+
     def __init__(self, x, y, z):
         self.x = x
         self.y = y
         self.z = z
+
+        DessiaObject.__init__(self, name="")
 
 
 # CUSTOM TYPES
