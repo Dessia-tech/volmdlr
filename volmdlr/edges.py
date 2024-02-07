@@ -604,7 +604,7 @@ class Edge(dc.DessiaObject):
             curve = self.line
         elif edge_type in ("Arc", "FullArc"):
             curve = self.circle
-        elif edge_type == ("ArcEllipse", "FullArcEllipse"):
+        elif edge_type in ("ArcEllipse", "FullArcEllipse"):
             curve = self.ellipse
         elif edge_type == "BSplineCurve":
             curve = self
