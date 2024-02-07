@@ -2258,7 +2258,8 @@ class LineSegment2D(LineSegment):
         """
         A specified copy of a LineSegment2D.
         """
-        return self.__class__(start=self.start.copy(deep, memo), end=self.end.copy(deep, memo), name=self.name)
+        return self.__class__(start=self.start.copy(deep, memo), end=self.end.copy(deep, memo),
+                              reference_path=self.reference_path, name=self.name)
 
     def __hash__(self):
         return hash(('linesegment2d', self.start, self.end, self.line))
@@ -2279,7 +2280,7 @@ class LineSegment2D(LineSegment):
     def to_dict(self, *args, **kwargs):
         """Stores all Line Segment 2D attributes in a dict object."""
         dict_ = super().to_dict(*args, **kwargs)
-        dict_["object_class"] = "volmdlr.edges.LineSegment2D"
+        dict_.update({"object_class": "volmdlr.edges.LineSegment2D", "reference_path": self.reference_path})
         return dict_
 
     @property
@@ -2462,7 +2463,8 @@ class LineSegment2D(LineSegment):
         :param angle: angle rotation
         :return: a new rotated LineSegment2D
         """
-        return LineSegment2D(self.start.rotation(center, angle), self.end.rotation(center, angle))
+        return LineSegment2D(start=self.start.rotation(center, angle), end=self.end.rotation(center, angle),
+                             reference_path=self.reference_path, name=self.name)
 
     def translation(self, offset: volmdlr.Vector2D):
         """
@@ -2471,7 +2473,8 @@ class LineSegment2D(LineSegment):
         :param offset: translation vector.
         :return: A new translated LineSegment2D.
         """
-        return LineSegment2D(self.start.translation(offset), self.end.translation(offset))
+        return LineSegment2D(start=self.start.translation(offset), end=self.end.translation(offset),
+                             reference_path=self.reference_path, name=self.name)
 
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
         """
@@ -2487,7 +2490,7 @@ class LineSegment2D(LineSegment):
             new_end = frame.global_to_local_coordinates(self.end)
         else:
             raise ValueError('Please Enter a valid side: old or new')
-        return LineSegment2D(new_start, new_end)
+        return LineSegment2D(start=new_start, end=new_end, reference_path=self.reference_path, name=self.name)
 
     def plot_data(self, edge_style: plot_data.EdgeStyle = None):
         """
@@ -2496,8 +2499,8 @@ class LineSegment2D(LineSegment):
         :param edge_style: edge style.
         :return: plot_data.LineSegment2D object.
         """
-        return plot_data.LineSegment2D([self.start.x, self.start.y],
-                                       [self.end.x, self.end.y],
+        return plot_data.LineSegment2D(point1=[self.start.x, self.start.y],
+                                       point2=[self.end.x, self.end.y],
                                        reference_path=self.reference_path,
                                        edge_style=edge_style)
 
@@ -2925,28 +2928,29 @@ class Arc2D(ArcMixin, Edge):
         return (self.circle == other_arc.circle and self.start == other_arc.start
                 and self.end == other_arc.end and self.is_trigo == other_arc.is_trigo)
 
-    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#', id_method=True, id_memo=None):
+    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#', id_method=True, id_memo=None, **kwargs):
         """Stores all Arc 2D attributes in a dict object."""
         dict_ = self.base_dict()
-        dict_['circle'] = self.circle.to_dict(use_pointers=use_pointers, memo=memo,
-                                              id_method=id_method, id_memo=id_memo, path=path + '/circle')
-        dict_['start'] = self.start.to_dict(use_pointers=use_pointers, memo=memo,
-                                                id_method=id_method, id_memo=id_memo, path=path + '/start')
-        dict_['end'] = self.end.to_dict(use_pointers=use_pointers, memo=memo,
-                                                id_method=id_method, id_memo=id_memo, path=path + '/end')
+        dict_['circle'] = self.circle.to_dict(use_pointers=use_pointers, memo=memo, id_method=id_method,
+                                              id_memo=id_memo, path=f"{path}/circle")
+        dict_['start'] = self.start.to_dict(use_pointers=use_pointers, memo=memo, id_method=id_method,
+                                            id_memo=id_memo, path=f"{path}/start")
+        dict_['end'] = self.end.to_dict(use_pointers=use_pointers, memo=memo, id_method=id_method,
+                                        id_memo=id_memo, path=f"{path}/end")
+        dict_["reference_path"] = self.reference_path
         return dict_
 
     @classmethod
-    def from_3_points(cls, point1, point2, point3, name: str = ''):
+    def from_3_points(cls, point1, point2, point3, reference_path: str = PATH_ROOT, name: str = ''):
         """
         Creates a circle 2d from 3 points.
 
         :return: circle 2d.
         """
         circle = volmdlr_curves.Circle2D.from_3_points(point1, point2, point3)
-        arc = cls(circle, point1, point3)
+        arc = cls(circle=circle, start=point1, end=point3, reference_path=reference_path, name=name)
         if not arc.point_belongs(point2):
-            return cls(circle.reverse(), point1, point3, name=name)
+            return cls(circle=circle.reverse(), start=point1, end=point3, reference_path=reference_path, name=name)
         return arc
 
     @property
@@ -3122,8 +3126,7 @@ class Arc2D(ArcMixin, Edge):
         """
         u = self.middle_point() - self.circle.center
         u = u.unit_vector()
-        return self.circle.center + 4 / (3 * self.angle) * self.circle.radius * math.sin(
-            self.angle * 0.5) * u
+        return self.circle.center + 4 / (3 * self.angle) * self.circle.radius * math.sin(self.angle * 0.5) * u
 
     @property
     def bounding_rectangle(self):
@@ -3414,7 +3417,8 @@ class Arc2D(ArcMixin, Edge):
         :return: A new Arc2D object that is a deep copy of the original.
 
         """
-        return Arc2D(self.circle.copy(), self.start.copy(), self.end.copy(), reference_path=self.reference_path)
+        return Arc2D(circle=self.circle.copy(), start=self.start.copy(), end=self.end.copy(),
+                     reference_path=self.reference_path, name=self.name)
 
     def infinite_primitive(self, offset):
         """Create an offset curve from a distance of the original curve."""
@@ -3459,20 +3463,20 @@ class FullArc2D(FullArcMixin, Arc2D):
         self.angle1 = 0.0
         self.angle2 = volmdlr.TWO_PI
 
-    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#', id_method=True, id_memo=None):
+    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#', id_method=True, id_memo=None, **kwargs):
         """Stores all Full Arc 2D attributes in a dict object."""
         dict_ = self.base_dict()
-        dict_['circle'] = self.circle.to_dict(use_pointers=use_pointers, memo=memo,
-                                              id_method=id_method, id_memo=id_memo, path=path + '/circle')
-        dict_['angle'] = self.angle
-        dict_['is_trigo'] = self.is_trigo
-        dict_['start_end'] = self.start.to_dict(use_pointers=use_pointers, memo=memo,
-                                                id_method=id_method, id_memo=id_memo, path=path + '/start_end')
+        dict_['circle'] = self.circle.to_dict(use_pointers=use_pointers, memo=memo, id_method=id_method,
+                                              id_memo=id_memo, path=f"{path}/circle")
+        dict_.update({"angle": self.angle, "is_trigo": self.is_trigo, "reference_path": self.reference_path})
+        dict_['start_end'] = self.start.to_dict(use_pointers=use_pointers, memo=memo, id_method=id_method,
+                                                id_memo=id_memo, path=f"{path}/start_end")
         return dict_
 
     def copy(self, *args, **kwargs):
         """Creates a copy of a fullarc 2d."""
-        return FullArc2D(self.circle.copy(), self.start.copy())
+        return FullArc2D(circle=self.circle.copy(), start_end=self.start.copy(),
+                         reference_path=self.reference_path, name=self.name)
 
     @classmethod
     def dict_to_object(cls, dict_, *args, **kwargs):
@@ -3492,8 +3496,7 @@ class FullArc2D(FullArcMixin, Arc2D):
         """
         circle = volmdlr_curves.Circle2D.dict_to_object(dict_['circle'])
         start_end = volmdlr.Point2D.dict_to_object(dict_['start_end'])
-
-        return cls(circle, start_end, name=dict_['name'])
+        return cls(circle=circle, start_end=start_end, reference_path=dict_["reference_path"], name=dict_['name'])
 
     def __hash__(self):
         return hash((self.__class__.__name__, self.circle, self.start_end))
@@ -3562,13 +3565,13 @@ class FullArc2D(FullArcMixin, Arc2D):
         """Rotation of a full arc 2D."""
         new_circle = self.circle.rotation(center, angle)
         new_start_end = self.start.rotation(center, angle)
-        return FullArc2D(new_circle, new_start_end)
+        return FullArc2D(circle=new_circle, start_end=new_start_end, reference_path=self.reference_path, name=self.name)
 
     def translation(self, offset: volmdlr.Vector2D):
         """Translation of a full arc 2D."""
         new_circle = self.circle.translation(offset)
         new_start_end = self.start.translation(offset)
-        return FullArc2D(new_circle, new_start_end)
+        return FullArc2D(circle=new_circle, start_end=new_start_end, reference_path=self.reference_path, name=self.name)
 
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
         """
@@ -3583,7 +3586,7 @@ class FullArc2D(FullArcMixin, Arc2D):
         :rtype: :class:`volmdlr.edges.FullArc2D`
         """
         return FullArc2D(*[point.frame_mapping(frame, side) for point in
-                           [self.circle, self.start]])
+                           [self.circle, self.start]], reference_path=self.reference_path, name=self.name)
 
     def polygonization(self):
         """Creates a Polygon from a full arc 2d."""
@@ -4390,7 +4393,7 @@ class LineSegment3D(LineSegment):
     def to_dict(self, *args, **kwargs):
         """Stores all Line Segment 3D in a dict object."""
         dict_ = super().to_dict(*args, **kwargs)
-        dict_["object_class"] = "volmdlr.edges.LineSegment3D"
+        dict_.update({"object_class": "volmdlr.edges.LineSegment3D", "reference_path": self.reference_path})
         return dict_
 
     def normal_vector(self, abscissa=0.):
@@ -4422,7 +4425,7 @@ class LineSegment3D(LineSegment):
         """
         start, end = self.start.plane_projection2d(center, x, y), self.end.plane_projection2d(center, x, y)
         if not start.is_close(end):
-            return LineSegment2D(start, end, reference_path=self.reference_path)
+            return LineSegment2D(start=start, end=end, reference_path=self.reference_path, name=self.name)
         return None
 
     def line_intersections(self, line, tol: float = 1e-6):
@@ -4471,7 +4474,7 @@ class LineSegment3D(LineSegment):
         """
         start = self.start.rotation(center, axis, angle)
         end = self.end.rotation(center, axis, angle)
-        return LineSegment3D(start, end)
+        return LineSegment3D(start=start, end=end, reference_path=self.reference_path, name=self.name)
 
     def __contains__(self, point):
 
@@ -4490,8 +4493,8 @@ class LineSegment3D(LineSegment):
         :param offset: translation vector
         :return: A new translated LineSegment3D
         """
-        return LineSegment3D(
-            self.start.translation(offset), self.end.translation(offset))
+        return LineSegment3D(start=self.start.translation(offset), end=self.end.translation(offset),
+                             reference_path=self.reference_path, name=self.name)
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
@@ -4500,16 +4503,17 @@ class LineSegment3D(LineSegment):
         side = 'old' or 'new'
         """
         if side == 'old':
-            return LineSegment3D(
-                *[frame.local_to_global_coordinates(point) for point in [self.start, self.end]])
+            return LineSegment3D(*[frame.local_to_global_coordinates(point) for point in [self.start, self.end]],
+                                 reference_path=self.reference_path, name=self.name)
         if side == 'new':
-            return LineSegment3D(
-                *[frame.global_to_local_coordinates(point) for point in [self.start, self.end]])
+            return LineSegment3D(*[frame.global_to_local_coordinates(point) for point in [self.start, self.end]],
+                                 reference_path=self.reference_path, name=self.name)
         raise ValueError('Please Enter a valid side: old or new')
 
     def copy(self, *args, **kwargs):
         """Returns a copy of the line segment."""
-        return LineSegment3D(self.start.copy(), self.end.copy(), reference_path=self.reference_path)
+        return LineSegment3D(start=self.start.copy(), end=self.end.copy(),
+                             reference_path=self.reference_path, name=self.name)
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         """Plots the Line segment 3d using matplotlib."""
@@ -4577,14 +4581,14 @@ class LineSegment3D(LineSegment):
         """
         Gets the reverse of the Line Segment.
         """
-        return LineSegment3D(self.end.copy(), self.start.copy())
+        return LineSegment3D(start=self.end.copy(), end=self.start.copy(),
+                             reference_path=self.reference_path, name=self.name)
 
     def minimum_distance_points(self, other_line):
         """
         Returns the points on this line and on the other line that are the closest of lines.
         """
-        return get_minimum_distance_points_lines(self.start, self.end,
-                                                                       other_line.start, other_line.end)
+        return get_minimum_distance_points_lines(self.start, self.end, other_line.start, other_line.end)
 
     def matrix_distance(self, other_line):
         """
@@ -4858,8 +4862,7 @@ class LineSegment3D(LineSegment):
         section_contour3d = section_contour2d.to_3d(self.start, frame.u, frame.v)
         new_faces = []
         for contour_primitive in section_contour3d.primitives:
-            new_faces.extend(contour_primitive.extrusion(self.length()
-                                                         * self.unit_direction_vector()))
+            new_faces.extend(contour_primitive.extrusion(self.length() * self.unit_direction_vector()))
         return new_faces
 
     def line_distance(self, line, return_points: bool = False):
@@ -4895,7 +4898,7 @@ class LineSegment3D(LineSegment):
                          'alpha': 1.0,
                          'name': self.name,
                          'color': [0.2, 0.8, 0.2],
-                         "reference_path": self.reference_path}
+                         'reference_path': self.reference_path}
         return babylon_lines
 
     def move_frame_along(self, frame):
