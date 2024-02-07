@@ -198,7 +198,10 @@ class Face3D(volmdlr.core.Primitive3D):
         step_id = kwargs.get("step_id", "#UNKNOW_ID")
         step_name = kwargs.get("name", "ADVANCED_FACE")
         name = arguments[0][1:-1]
-        contours = [object_dict[int(arg[1:])] for arg in arguments[1]]
+        if arguments[1] != "()":
+            contours = [object_dict[int(arg[1:])] for arg in arguments[1]]
+        else:
+            contours = []
         if any(contour is None for contour in contours):
             warnings.warn(
                 f"Could not instantiate #{step_id} = {step_name}({arguments})"
@@ -209,7 +212,7 @@ class Face3D(volmdlr.core.Primitive3D):
         surface = object_dict[int(arguments[2])]
         face = globals()[surface.face_class]
         point_in_contours3d = any(isinstance(contour, volmdlr.Point3D) for contour in contours)
-        if (len(contours) == 1) and isinstance(contours[0], volmdlr.Point3D):
+        if not contours or ((len(contours) == 1) and isinstance(contours[0], volmdlr.Point3D)):
             return face.from_surface_rectangular_cut(surface)
         if len(contours) == 2 and point_in_contours3d:
             vertex = next(contour for contour in contours if isinstance(contour, volmdlr.Point3D))
@@ -3720,7 +3723,7 @@ class BSplineFace3D(Face3D):
 
     @classmethod
     def from_surface_rectangular_cut(
-        cls, bspline_surface3d, u1: float, u2: float, v1: float, v2: float, name: str = ""
+        cls, bspline_surface3d, u1: float = 0.0, u2: float = 1.0, v1: float = 0.0, v2: float = 1.0, name: str = ""
     ):
         """
         Cut a rectangular piece of the BSplineSurface3D object and return a BSplineFace3D object.
