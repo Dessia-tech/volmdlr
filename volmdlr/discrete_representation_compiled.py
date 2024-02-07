@@ -16,6 +16,21 @@ from cython.cimports.libcpp.stack import stack
 from cython.cimports.libcpp.vector import vector
 from numpy.typing import NDArray
 
+
+# TEST
+
+@cython.cclass
+class Vector3D:
+    x: cython.double
+    y: cython.double
+    z: cython.double
+
+    def __init__(self, x, y, z):
+        self.x = x
+        self.y = y
+        self.z = z
+
+
 # CUSTOM TYPES
 _Point3D = Tuple[float, float, float]
 _Triangle3D = Tuple[_Point3D, _Point3D, _Point3D]
@@ -29,8 +44,8 @@ _Triangle2D = Tuple[_Point2D, _Point2D, _Point2D]
 
 
 def triangles_to_voxel_matrix(
-    triangles: List[_Triangle3D],
-    voxel_size: float,
+        triangles: List[_Triangle3D],
+        voxel_size: float,
 ) -> Tuple[NDArray[np.bool_], Tuple[float, float, float]]:
     """
     Helper function to compute the voxel matrix of all the voxels intersecting with a given list of triangles.
@@ -149,9 +164,9 @@ def line_segments_to_pixels(line_segments: List[_Segment2D], pixel_size: float) 
 
 
 def triangle_intersects_voxel(
-    triangle: _Triangle3D,
-    voxel_center: _Point3D,
-    voxel_extents: Tuple[float, float, float],
+        triangle: _Triangle3D,
+        voxel_center: _Point3D,
+        voxel_extents: Tuple[float, float, float],
 ) -> bool:
     """
     Helper function to compute if there is an intersection between a 3D triangle and a voxel.
@@ -233,7 +248,7 @@ def _round_to_digits(num: cython.double, digits: cython.int = 0) -> cython.doubl
 @cython.cdivision(True)
 @cython.exceptval(check=False)
 def _round_point_3d_to_digits(
-    point_3d: Tuple[cython.double, cython.double, cython.double], digits: cython.int = 0
+        point_3d: Tuple[cython.double, cython.double, cython.double], digits: cython.int = 0
 ) -> Tuple[cython.double, cython.double, cython.double]:
     """Round the given point to the specified number of digits after the decimal point."""
     return (
@@ -255,13 +270,13 @@ def _is_integer(value: cython.double) -> bool_C:
 @cython.wraparound(False)
 @cython.exceptval(check=False)
 def _triangle_intersects_voxel(
-    triangle: Tuple[
-        Tuple[cython.double, cython.double, cython.double],
-        Tuple[cython.double, cython.double, cython.double],
-        Tuple[cython.double, cython.double, cython.double],
-    ],
-    voxel_center: Tuple[cython.double, cython.double, cython.double],
-    voxel_extents: Tuple[cython.double, cython.double, cython.double],
+        triangle: Tuple[
+            Tuple[cython.double, cython.double, cython.double],
+            Tuple[cython.double, cython.double, cython.double],
+            Tuple[cython.double, cython.double, cython.double],
+        ],
+        voxel_center: Tuple[cython.double, cython.double, cython.double],
+        voxel_extents: Tuple[cython.double, cython.double, cython.double],
 ) -> bool_C:
     """Check if a 3D triangle intersects with a voxel defined by its center and extents."""
     # Ported from https://gist.github.com/zvonicek/fe73ba9903f49d57314cf7e8e0f05dcf
@@ -339,9 +354,9 @@ def _triangle_intersects_voxel(
 
     # Compute the projection interval radius of b onto L(t) = b.c + t * p.n
     radius = (
-        voxel_extents[0] * math_c.fabs(plane_normal[0])
-        + voxel_extents[1] * math_c.fabs(plane_normal[1])
-        + voxel_extents[2] * math_c.fabs(plane_normal[2])
+            voxel_extents[0] * math_c.fabs(plane_normal[0])
+            + voxel_extents[1] * math_c.fabs(plane_normal[1])
+            + voxel_extents[2] * math_c.fabs(plane_normal[2])
     )
 
     # Intersection occurs when plane distance falls within [-radius,+radius] interval
@@ -425,12 +440,12 @@ def _triangle_intersects_voxel(
 @cython.wraparound(False)
 @cython.exceptval(check=False)
 def _calculate_axis_values(
-    v0: cython.double[3],
-    v1: cython.double[3],
-    v2: cython.double[3],
-    ax: cython.double[3],
-    f: cython.double[3],
-    voxel_extents: Tuple[cython.double, cython.double, cython.double],
+        v0: cython.double[3],
+        v1: cython.double[3],
+        v2: cython.double[3],
+        ax: cython.double[3],
+        f: cython.double[3],
+        voxel_extents: Tuple[cython.double, cython.double, cython.double],
 ) -> bool_C:
     """Calculate axis values used in triangle intersection tests with an axis-aligned box."""
     # pylint: disable=invalid-name
@@ -439,9 +454,9 @@ def _calculate_axis_values(
     p1 = v1[0] * ax[0] + v1[1] * ax[1] + v1[2] * ax[2]
     p2 = v2[0] * ax[0] + v2[1] * ax[1] + v2[2] * ax[2]
     radius = (
-        voxel_extents[0] * math_c.fabs(f[2])
-        + voxel_extents[1] * math_c.fabs(f[0])
-        + voxel_extents[2] * math_c.fabs(f[1])
+            voxel_extents[0] * math_c.fabs(f[2])
+            + voxel_extents[1] * math_c.fabs(f[0])
+            + voxel_extents[2] * math_c.fabs(f[1])
     )
 
     return max(-max(p0, p1, p2), min(p0, p1, p2)) > radius
@@ -449,24 +464,24 @@ def _calculate_axis_values(
 
 @cython.cfunc
 def _triangle_interfaces_voxel(
-    triangle: Tuple[
-        Tuple[cython.double, cython.double, cython.double],
-        Tuple[cython.double, cython.double, cython.double],
-        Tuple[cython.double, cython.double, cython.double],
-    ],
-    voxel_center: Tuple[cython.double, cython.double, cython.double],
-    voxel_extents: Tuple[cython.double, cython.double, cython.double],
+        triangle: Tuple[
+            Tuple[cython.double, cython.double, cython.double],
+            Tuple[cython.double, cython.double, cython.double],
+            Tuple[cython.double, cython.double, cython.double],
+        ],
+        voxel_center: Tuple[cython.double, cython.double, cython.double],
+        voxel_extents: Tuple[cython.double, cython.double, cython.double],
 ) -> bool_C:
     """Check if a 3D triangle is at the interface of a voxel defined by its center and extents."""
 
     # Check if the triangle is in the Y-Z plane at the interface of the voxel
     if (
-        _round_to_digits(triangle[0][0], 9)
-        == _round_to_digits(triangle[1][0], 9)
-        == _round_to_digits(triangle[2][0], 9)
+            _round_to_digits(triangle[0][0], 9)
+            == _round_to_digits(triangle[1][0], 9)
+            == _round_to_digits(triangle[2][0], 9)
     ) and (
-        (_round_to_digits(triangle[0][0], 9) == _round_to_digits(voxel_center[0] - voxel_extents[0], 9))
-        or (_round_to_digits(triangle[0][0], 9) == _round_to_digits(voxel_center[0] + voxel_extents[0], 9))
+            (_round_to_digits(triangle[0][0], 9) == _round_to_digits(voxel_center[0] - voxel_extents[0], 9))
+            or (_round_to_digits(triangle[0][0], 9) == _round_to_digits(voxel_center[0] + voxel_extents[0], 9))
     ):
         # Define the 3D triangle in 2D
         p0: Tuple[cython.double, cython.double] = (triangle[0][1], triangle[0][2])
@@ -495,12 +510,12 @@ def _triangle_interfaces_voxel(
 
     # Check if the triangle is in the X-Z plane at the interface of the voxel
     if (
-        _round_to_digits(triangle[0][1], 9)
-        == _round_to_digits(triangle[1][1], 9)
-        == _round_to_digits(triangle[2][1], 9)
+            _round_to_digits(triangle[0][1], 9)
+            == _round_to_digits(triangle[1][1], 9)
+            == _round_to_digits(triangle[2][1], 9)
     ) and (
-        (_round_to_digits(triangle[0][1], 9) == _round_to_digits(voxel_center[1] - voxel_extents[1], 9))
-        or (_round_to_digits(triangle[0][1], 9) == _round_to_digits(voxel_center[1] + voxel_extents[1], 9))
+            (_round_to_digits(triangle[0][1], 9) == _round_to_digits(voxel_center[1] - voxel_extents[1], 9))
+            or (_round_to_digits(triangle[0][1], 9) == _round_to_digits(voxel_center[1] + voxel_extents[1], 9))
     ):
         # Define the 3D triangle in 2D
         p0: Tuple[cython.double, cython.double] = (triangle[0][0], triangle[0][2])
@@ -529,12 +544,12 @@ def _triangle_interfaces_voxel(
 
     # Check if the triangle is in the X-Y plane at the interface of the voxel
     if (
-        _round_to_digits(triangle[0][2], 9)
-        == _round_to_digits(triangle[1][2], 9)
-        == _round_to_digits(triangle[2][2], 9)
+            _round_to_digits(triangle[0][2], 9)
+            == _round_to_digits(triangle[1][2], 9)
+            == _round_to_digits(triangle[2][2], 9)
     ) and (
-        (_round_to_digits(triangle[0][2], 9) == _round_to_digits(voxel_center[2] - voxel_extents[2], 9))
-        or (_round_to_digits(triangle[0][2], 9) == _round_to_digits(voxel_center[2] + voxel_extents[2], 9))
+            (_round_to_digits(triangle[0][2], 9) == _round_to_digits(voxel_center[2] - voxel_extents[2], 9))
+            or (_round_to_digits(triangle[0][2], 9) == _round_to_digits(voxel_center[2] + voxel_extents[2], 9))
     ):
         # Define the 3D triangle in 2D
         p0: Tuple[cython.double, cython.double] = (triangle[0][0], triangle[0][1])
@@ -567,13 +582,13 @@ def _triangle_interfaces_voxel(
 @cython.cfunc
 @cython.exceptval(check=False)
 def _triangle_2d_intersects_pixel(
-    triangle_2d: Tuple[
-        Tuple[cython.double, cython.double],
-        Tuple[cython.double, cython.double],
-        Tuple[cython.double, cython.double],
-    ],
-    pixel_center: Tuple[cython.double, cython.double],
-    pixel_extents: Tuple[cython.double, cython.double],
+        triangle_2d: Tuple[
+            Tuple[cython.double, cython.double],
+            Tuple[cython.double, cython.double],
+            Tuple[cython.double, cython.double],
+        ],
+        pixel_center: Tuple[cython.double, cython.double],
+        pixel_extents: Tuple[cython.double, cython.double],
 ) -> bool_C:
     """Check if a triangle defined in 2D intersects with a pixel defined by its center and extents."""
 
@@ -604,53 +619,53 @@ def _triangle_2d_intersects_pixel(
 
     # Check if a point of the triangle is in the pixel
     if (
-        _point_in_pixel(triangle_2d[0], left_bottom_corner, right_top_corner)
-        or _point_in_pixel(triangle_2d[1], left_bottom_corner, right_top_corner)
-        or _point_in_pixel(triangle_2d[2], left_bottom_corner, right_top_corner)
+            _point_in_pixel(triangle_2d[0], left_bottom_corner, right_top_corner)
+            or _point_in_pixel(triangle_2d[1], left_bottom_corner, right_top_corner)
+            or _point_in_pixel(triangle_2d[2], left_bottom_corner, right_top_corner)
     ):
         return True
 
     # Check if a corner point of the pixel is in the triangle
     if (
-        _point_in_triangle_2d(left_bottom_corner, triangle_2d)
-        or _point_in_triangle_2d(right_bottom_corner, triangle_2d)
-        or _point_in_triangle_2d(left_top_corner, triangle_2d)
-        or _point_in_triangle_2d(right_top_corner, triangle_2d)
+            _point_in_triangle_2d(left_bottom_corner, triangle_2d)
+            or _point_in_triangle_2d(right_bottom_corner, triangle_2d)
+            or _point_in_triangle_2d(left_top_corner, triangle_2d)
+            or _point_in_triangle_2d(right_top_corner, triangle_2d)
     ):
         return True
 
     # Check if an edge of the triangle intersect with the pixel
     if (
-        _line_segment_intersects_pixel(
-            triangle_2d[0][0],
-            triangle_2d[0][1],
-            triangle_2d[1][0],
-            triangle_2d[1][1],
-            left_bottom_corner[0],
-            right_top_corner[0],
-            left_bottom_corner[1],
-            right_top_corner[1],
-        )
-        or _line_segment_intersects_pixel(
-            triangle_2d[0][0],
-            triangle_2d[0][1],
-            triangle_2d[2][0],
-            triangle_2d[2][1],
-            left_bottom_corner[0],
-            right_top_corner[0],
-            left_bottom_corner[1],
-            right_top_corner[1],
-        )
-        or _line_segment_intersects_pixel(
-            triangle_2d[1][0],
-            triangle_2d[1][1],
-            triangle_2d[2][0],
-            triangle_2d[2][1],
-            left_bottom_corner[0],
-            right_top_corner[0],
-            left_bottom_corner[1],
-            right_top_corner[1],
-        )
+            _line_segment_intersects_pixel(
+                triangle_2d[0][0],
+                triangle_2d[0][1],
+                triangle_2d[1][0],
+                triangle_2d[1][1],
+                left_bottom_corner[0],
+                right_top_corner[0],
+                left_bottom_corner[1],
+                right_top_corner[1],
+            )
+            or _line_segment_intersects_pixel(
+        triangle_2d[0][0],
+        triangle_2d[0][1],
+        triangle_2d[2][0],
+        triangle_2d[2][1],
+        left_bottom_corner[0],
+        right_top_corner[0],
+        left_bottom_corner[1],
+        right_top_corner[1],
+    )
+            or _line_segment_intersects_pixel(
+        triangle_2d[1][0],
+        triangle_2d[1][1],
+        triangle_2d[2][0],
+        triangle_2d[2][1],
+        left_bottom_corner[0],
+        right_top_corner[0],
+        left_bottom_corner[1],
+        right_top_corner[1],
+    )
     ):
         return True
 
@@ -660,10 +675,10 @@ def _triangle_2d_intersects_pixel(
 @cython.cfunc
 @cython.exceptval(check=False)
 def _bounding_rectangles_overlap(
-    min_rect1: Tuple[cython.double, cython.double],
-    max_rect1: Tuple[cython.double, cython.double],
-    min_rect2: Tuple[cython.double, cython.double],
-    max_rect2: Tuple[cython.double, cython.double],
+        min_rect1: Tuple[cython.double, cython.double],
+        max_rect1: Tuple[cython.double, cython.double],
+        min_rect2: Tuple[cython.double, cython.double],
+        max_rect2: Tuple[cython.double, cython.double],
 ) -> bool_C:
     # Check if rect1 is to the left of rect2 or rect2 is to the left of rect1
     if max_rect1[0] < min_rect2[0] or max_rect2[0] < min_rect1[0]:
@@ -679,12 +694,12 @@ def _bounding_rectangles_overlap(
 @cython.cfunc
 @cython.exceptval(check=False)
 def _point_in_triangle_2d(
-    point: Tuple[cython.double, cython.double],
-    triangle_2d: Tuple[
-        Tuple[cython.double, cython.double],
-        Tuple[cython.double, cython.double],
-        Tuple[cython.double, cython.double],
-    ],
+        point: Tuple[cython.double, cython.double],
+        triangle_2d: Tuple[
+            Tuple[cython.double, cython.double],
+            Tuple[cython.double, cython.double],
+            Tuple[cython.double, cython.double],
+        ],
 ) -> bool_C:
     """Check if a point is in a 2D triangle."""
 
@@ -698,9 +713,9 @@ def _point_in_triangle_2d(
 @cython.cfunc
 @cython.exceptval(check=False)
 def __sign(
-    p1: Tuple[cython.double, cython.double],
-    p2: Tuple[cython.double, cython.double],
-    p3: Tuple[cython.double, cython.double],
+        p1: Tuple[cython.double, cython.double],
+        p2: Tuple[cython.double, cython.double],
+        p3: Tuple[cython.double, cython.double],
 ) -> cython.double:
     return (p1[0] - p3[0]) * (p2[1] - p3[1]) - (p2[0] - p3[0]) * (p1[1] - p3[1])
 
@@ -708,14 +723,14 @@ def __sign(
 @cython.cfunc
 @cython.exceptval(check=False)
 def _point_in_pixel(
-    point: Tuple[cython.double, cython.double],
-    left_bottom_corner: Tuple[cython.double, cython.double],
-    right_top_corner: Tuple[cython.double, cython.double],
+        point: Tuple[cython.double, cython.double],
+        left_bottom_corner: Tuple[cython.double, cython.double],
+        right_top_corner: Tuple[cython.double, cython.double],
 ) -> bool_C:
     """Check if a point is in pixel, defined by its corners."""
 
     return (left_bottom_corner[0] <= point[0] <= right_top_corner[0]) and (
-        left_bottom_corner[1] <= point[1] <= right_top_corner[1]
+            left_bottom_corner[1] <= point[1] <= right_top_corner[1]
     )
 
 
@@ -725,9 +740,9 @@ def _point_in_pixel(
 @cython.cdivision(True)
 @cython.exceptval(check=False)
 def _aabb_intersecting_boxes(
-    min_point: Tuple[cython.double, cython.double, cython.double],
-    max_point: Tuple[cython.double, cython.double, cython.double],
-    voxel_size: cython.double,
+        min_point: Tuple[cython.double, cython.double, cython.double],
+        max_point: Tuple[cython.double, cython.double, cython.double],
+        voxel_size: cython.double,
 ) -> vector[Tuple[cython.double, cython.double, cython.double]]:
     """Calculate the voxel centers that intersects with a given axis-aligned boxes."""
 
@@ -771,10 +786,10 @@ def _aabb_intersecting_boxes(
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def _flood_fill_matrix_2d(
-    matrix: bool_C[:, :],
-    start: Tuple[cython.int, cython.int],
-    fill_with: bool_C,
-    shape: Tuple[cython.int, cython.int],
+        matrix: bool_C[:, :],
+        start: Tuple[cython.int, cython.int],
+        fill_with: bool_C,
+        shape: Tuple[cython.int, cython.int],
 ) -> bool_C[:, :]:
     """Apply a flood fill algorithm to a 2D boolean matrix from a given starting point."""
 
@@ -811,10 +826,10 @@ def _flood_fill_matrix_2d(
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def _flood_fill_matrix_3d(
-    matrix: bool_C[:, :, :],
-    start: Tuple[cython.int, cython.int, cython.int],
-    fill_with: bool_C,
-    shape: Tuple[cython.int, cython.int, cython.int],
+        matrix: bool_C[:, :, :],
+        start: Tuple[cython.int, cython.int, cython.int],
+        fill_with: bool_C,
+        shape: Tuple[cython.int, cython.int, cython.int],
 ) -> bool_C[:, :, :]:
     """Apply a flood fill algorithm to a 3D boolean matrix from a given starting point."""
     # pylint: disable=too-many-locals
@@ -846,10 +861,10 @@ def _flood_fill_matrix_3d(
             new_x, new_y, new_z = x + dx[i], y + dy[i], z + dz[i]
 
             if (
-                0 <= x + dx[i] < shape[0]
-                and 0 <= y + dy[i] < shape[1]
-                and 0 <= z + dz[i] < shape[2]
-                and matrix[new_x, new_y, new_z] == old_value
+                    0 <= x + dx[i] < shape[0]
+                    and 0 <= y + dy[i] < shape[1]
+                    and 0 <= z + dz[i] < shape[2]
+                    and matrix[new_x, new_y, new_z] == old_value
             ):
                 fill_stack.push((new_x, new_y, new_z))
 
@@ -862,14 +877,14 @@ def _flood_fill_matrix_3d(
 @cython.wraparound(False)
 @cython.exceptval(check=False)
 def _line_segment_intersects_pixel(
-    x1: cython.double,
-    y1: cython.double,
-    x2: cython.double,
-    y2: cython.double,
-    xmin: cython.double,
-    xmax: cython.double,
-    ymin: cython.double,
-    ymax: cython.double,
+        x1: cython.double,
+        y1: cython.double,
+        x2: cython.double,
+        y2: cython.double,
+        xmin: cython.double,
+        xmax: cython.double,
+        ymin: cython.double,
+        ymax: cython.double,
 ) -> bool_C:
     """Check if a line segment intersects with a pixel defined by its center and size."""
     # pylint: disable=too-many-arguments, too-many-locals
@@ -882,16 +897,17 @@ def _line_segment_intersects_pixel(
 
     # Check if all corners are on the same side of the line
     miss: bool_C = (
-        (line_eq1 >= 0 and line_eq2 >= 0 and line_eq3 >= 0 and line_eq4 >= 0)
-        or (line_eq1 < 0 and line_eq2 < 0 and line_eq3 < 0 and line_eq4 < 0)
-    ) and (
-        (line_eq1 > 0 and line_eq2 > 0 and line_eq3 > 0 and line_eq4 > 0)
-        or (line_eq1 <= 0 and line_eq2 <= 0 and line_eq3 <= 0 and line_eq4 <= 0)
-    )
+                           (line_eq1 >= 0 and line_eq2 >= 0 and line_eq3 >= 0 and line_eq4 >= 0)
+                           or (line_eq1 < 0 and line_eq2 < 0 and line_eq3 < 0 and line_eq4 < 0)
+                   ) and (
+                           (line_eq1 > 0 and line_eq2 > 0 and line_eq3 > 0 and line_eq4 > 0)
+                           or (line_eq1 <= 0 and line_eq2 <= 0 and line_eq3 <= 0 and line_eq4 <= 0)
+                   )
 
     # Does it miss based on the shadow intersection test?
     shadow_miss: bool_C = (
-        (x1 > xmax and x2 > xmax) or (x1 < xmin and x2 < xmin) or (y1 > ymax and y2 > ymax) or (y1 < ymin and y2 < ymin)
+            (x1 > xmax and x2 > xmax) or (x1 < xmin and x2 < xmin) or (y1 > ymax and y2 > ymax) or (
+                y1 < ymin and y2 < ymin)
     )
 
     # A hit is if it doesn't miss on both tests!
@@ -903,8 +919,8 @@ def _line_segment_intersects_pixel(
 @cython.wraparound(False)
 @cython.cdivision(True)
 def _line_segments_to_pixels(
-    line_segments: vector[Tuple[Tuple[cython.double, cython.double], Tuple[cython.double, cython.double]]],
-    pixel_size: cython.double,
+        line_segments: vector[Tuple[Tuple[cython.double, cython.double], Tuple[cython.double, cython.double]]],
+        pixel_size: cython.double,
 ) -> vector[Tuple[cython.double, cython.double]]:
     """Convert line segments to a list of pixel centers they intersect with."""
     # pylint: disable=too-many-locals
@@ -954,12 +970,12 @@ def _line_segments_to_pixels(
 @cython.wraparound(False)
 @cython.cdivision(True)
 def _triangle_2d_to_pixels(
-    triangle_2d: Tuple[
-        Tuple[cython.double, cython.double],
-        Tuple[cython.double, cython.double],
-        Tuple[cython.double, cython.double],
-    ],
-    pixel_size: cython.double,
+        triangle_2d: Tuple[
+            Tuple[cython.double, cython.double],
+            Tuple[cython.double, cython.double],
+            Tuple[cython.double, cython.double],
+        ],
+        pixel_size: cython.double,
 ) -> vector[Tuple[cython.double, cython.double]]:
     """Convert line segments to a list of pixel centers they intersect with."""
 
@@ -976,17 +992,17 @@ def _triangle_2d_to_pixels(
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def _triangles_to_voxel_matrix(
-    triangles: vector[
-        Tuple[
-            Tuple[cython.double, cython.double, cython.double],
-            Tuple[cython.double, cython.double, cython.double],
-            Tuple[cython.double, cython.double, cython.double],
-        ]
-    ],
-    n_triangles: cython.int,
-    voxel_size: cython.double,
-    matrix: bool_C[:, :, :],
-    matrix_origin_center: Tuple[cython.double, cython.double, cython.double],
+        triangles: vector[
+            Tuple[
+                Tuple[cython.double, cython.double, cython.double],
+                Tuple[cython.double, cython.double, cython.double],
+                Tuple[cython.double, cython.double, cython.double],
+            ]
+        ],
+        n_triangles: cython.int,
+        voxel_size: cython.double,
+        matrix: bool_C[:, :, :],
+        matrix_origin_center: Tuple[cython.double, cython.double, cython.double],
 ) -> bool_C[:, :, :]:
     """Convert 3D triangles to a voxel matrix representation using intersection tests."""
     # pylint: disable=too-many-locals, too-many-branches, too-many-statements, invalid-name
@@ -1003,9 +1019,9 @@ def _triangles_to_voxel_matrix(
 
         # Check if the triangle is in the Y-Z plane at the interface between voxels
         elif (
-            _round_to_digits(triangles[i][0][0], 9)
-            == _round_to_digits(triangles[i][1][0], 9)
-            == _round_to_digits(triangles[i][2][0], 9)
+                _round_to_digits(triangles[i][0][0], 9)
+                == _round_to_digits(triangles[i][1][0], 9)
+                == _round_to_digits(triangles[i][2][0], 9)
         ) and _is_integer(_round_to_digits(x_abscissa / voxel_size, 9)):
             # Define the 3D triangle in 2D
             p0: Tuple[cython.double, cython.double] = (
@@ -1085,9 +1101,9 @@ def _triangles_to_voxel_matrix(
 
         # Check if the triangle is in the X-Z plane at the interface between voxels
         elif (
-            _round_to_digits(triangles[i][0][1], 9)
-            == _round_to_digits(triangles[i][1][1], 9)
-            == _round_to_digits(triangles[i][2][1], 9)
+                _round_to_digits(triangles[i][0][1], 9)
+                == _round_to_digits(triangles[i][1][1], 9)
+                == _round_to_digits(triangles[i][2][1], 9)
         ) and _is_integer(_round_to_digits(y_abscissa / voxel_size, 9)):
             # Define the 3D triangle in 2D
             p0: Tuple[cython.double, cython.double] = (
@@ -1167,9 +1183,9 @@ def _triangles_to_voxel_matrix(
 
         # Check if the triangle is in the X-Y plane at the interface between voxels
         elif (
-            _round_to_digits(triangles[i][0][2], 9)
-            == _round_to_digits(triangles[i][1][2], 9)
-            == _round_to_digits(triangles[i][2][2], 9)
+                _round_to_digits(triangles[i][0][2], 9)
+                == _round_to_digits(triangles[i][1][2], 9)
+                == _round_to_digits(triangles[i][2][2], 9)
         ) and _is_integer(_round_to_digits(z_abscissa / voxel_size, 9)):
             # Define the 3D triangle in 2D
             p0: Tuple[cython.double, cython.double] = (
@@ -1275,9 +1291,9 @@ def _triangles_to_voxel_matrix(
 
                 if not matrix[ix, iy, iz]:
                     if _triangle_intersects_voxel(
-                        triangle,
-                        voxel_centers[j],
-                        (0.5 * voxel_size, 0.5 * voxel_size, 0.5 * voxel_size),
+                            triangle,
+                            voxel_centers[j],
+                            (0.5 * voxel_size, 0.5 * voxel_size, 0.5 * voxel_size),
                     ):
                         matrix[ix, iy, iz] = True
 
@@ -1287,7 +1303,7 @@ def _triangles_to_voxel_matrix(
 @cython.cfunc
 @cython.exceptval(check=False)
 def _get_min_pixel_grid_center(
-    pixel_centers: vector[Tuple[cython.double, cython.double]]
+        pixel_centers: vector[Tuple[cython.double, cython.double]]
 ) -> Tuple[cython.double, cython.double]:
     """Calculate and return the minimum x and y coordinates among a collection of pixel centers."""
 
@@ -1302,7 +1318,7 @@ def _get_min_pixel_grid_center(
 @cython.cfunc
 @cython.exceptval(check=False)
 def _get_max_pixel_grid_center(
-    pixel_centers: vector[Tuple[cython.double, cython.double]]
+        pixel_centers: vector[Tuple[cython.double, cython.double]]
 ) -> Tuple[cython.double, cython.double]:
     """Calculate and return the maximum x and y coordinates among a collection of pixel centers."""
 
@@ -1319,10 +1335,10 @@ def _get_max_pixel_grid_center(
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def _pixel_centers_to_filled_pixel_matrix(
-    pixel_centers: vector[Tuple[cython.double, cython.double]],
-    pixel_size: cython.double,
-    shape: Tuple[cython.int, cython.int],
-    min_center: Tuple[cython.double, cython.double],
+        pixel_centers: vector[Tuple[cython.double, cython.double]],
+        pixel_size: cython.double,
+        shape: Tuple[cython.int, cython.int],
+        min_center: Tuple[cython.double, cython.double],
 ) -> bool_C[:, :]:
     """
     Convert pixel centers to a filled boolean matrix.
@@ -1333,18 +1349,18 @@ def _pixel_centers_to_filled_pixel_matrix(
 
     for i in range(pixel_centers.size()):
         ix = (
-            cython.cast(
-                cython.int,
-                _round_to_digits((pixel_centers[i][0] - min_center[0]) / pixel_size, 9),
-            )
-            + 1
+                cython.cast(
+                    cython.int,
+                    _round_to_digits((pixel_centers[i][0] - min_center[0]) / pixel_size, 9),
+                )
+                + 1
         )
         iy = (
-            cython.cast(
-                cython.int,
-                _round_to_digits((pixel_centers[i][1] - min_center[1]) / pixel_size, 9),
-            )
-            + 1
+                cython.cast(
+                    cython.int,
+                    _round_to_digits((pixel_centers[i][1] - min_center[1]) / pixel_size, 9),
+                )
+                + 1
         )
         matrix[ix, iy] = True
 
@@ -1361,29 +1377,31 @@ def _pixel_centers_to_filled_pixel_matrix(
 @cython.cfunc
 @cython.exceptval(check=False)
 def _check_triangle_equal_point(
-    triangle: Tuple[
-        Tuple[cython.double, cython.double, cython.double],
-        Tuple[cython.double, cython.double, cython.double],
-        Tuple[cython.double, cython.double, cython.double],
-    ]
+        triangle: Tuple[
+            Tuple[cython.double, cython.double, cython.double],
+            Tuple[cython.double, cython.double, cython.double],
+            Tuple[cython.double, cython.double, cython.double],
+        ]
 ) -> bool_C:
     """Check if any two points of a triangle are equal, implying degeneracy."""
 
     return (
-        (triangle[0][0] == triangle[1][0] and triangle[0][1] == triangle[1][1] and triangle[0][2] == triangle[1][2])
-        or (triangle[0][0] == triangle[2][0] and triangle[0][1] == triangle[2][1] and triangle[0][2] == triangle[2][2])
-        or (triangle[1][0] == triangle[2][0] and triangle[1][1] == triangle[2][1] and triangle[1][2] == triangle[2][2])
+            (triangle[0][0] == triangle[1][0] and triangle[0][1] == triangle[1][1] and triangle[0][2] == triangle[1][2])
+            or (triangle[0][0] == triangle[2][0] and triangle[0][1] == triangle[2][1] and triangle[0][2] == triangle[2][
+        2])
+            or (triangle[1][0] == triangle[2][0] and triangle[1][1] == triangle[2][1] and triangle[1][2] == triangle[2][
+        2])
     )
 
 
 @cython.cfunc
 @cython.exceptval(check=False)
 def _triangle_min_max_points(
-    triangle: Tuple[
-        Tuple[cython.double, cython.double, cython.double],
-        Tuple[cython.double, cython.double, cython.double],
-        Tuple[cython.double, cython.double, cython.double],
-    ]
+        triangle: Tuple[
+            Tuple[cython.double, cython.double, cython.double],
+            Tuple[cython.double, cython.double, cython.double],
+            Tuple[cython.double, cython.double, cython.double],
+        ]
 ) -> Tuple[Tuple[cython.double, cython.double, cython.double], Tuple[cython.double, cython.double, cython.double],]:
     """Calculate and return the minimum and maximum coordinates of a 3D triangle."""
 
@@ -1424,11 +1442,11 @@ def _triangle_min_max_points(
 @cython.cfunc
 @cython.exceptval(check=False)
 def _triangle_2d_min_max_points(
-    triangle: Tuple[
-        Tuple[cython.double, cython.double],
-        Tuple[cython.double, cython.double],
-        Tuple[cython.double, cython.double],
-    ]
+        triangle: Tuple[
+            Tuple[cython.double, cython.double],
+            Tuple[cython.double, cython.double],
+            Tuple[cython.double, cython.double],
+        ]
 ) -> Tuple[Tuple[cython.double, cython.double], Tuple[cython.double, cython.double]]:
     """Calculate and return the minimum and maximum coordinates of a 2D triangle."""
 
@@ -1458,13 +1476,13 @@ def _triangle_2d_min_max_points(
 
 @cython.cfunc
 def _triangles_min_max_points(
-    triangles: vector[
-        Tuple[
-            Tuple[cython.double, cython.double, cython.double],
-            Tuple[cython.double, cython.double, cython.double],
-            Tuple[cython.double, cython.double, cython.double],
+        triangles: vector[
+            Tuple[
+                Tuple[cython.double, cython.double, cython.double],
+                Tuple[cython.double, cython.double, cython.double],
+                Tuple[cython.double, cython.double, cython.double],
+            ]
         ]
-    ]
 ) -> Tuple[Tuple[cython.double, cython.double, cython.double], Tuple[cython.double, cython.double, cython.double],]:
     """Calculate and return the minimum and maximum coordinates across a collection of 3D triangles."""
 
@@ -1507,7 +1525,7 @@ def _triangles_min_max_points(
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def _voxel_triangular_faces(
-    x: cython.double, y: cython.double, z: cython.double, voxel_size: float
+        x: cython.double, y: cython.double, z: cython.double, voxel_size: float
 ) -> vector[
     Tuple[
         Tuple[cython.double, cython.double, cython.double],
