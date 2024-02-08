@@ -1361,8 +1361,8 @@ def _mesh_data_to_voxel_matrix(
     # Check interface voxels
     for i in range(n_triangles):
         x_abscissa = _round_to_digits(vertices[triangles[i][0]][0], 9)
-        y_abscissa = _round_to_digits(vertices[triangles[i][0]][0], 9)
-        z_abscissa = _round_to_digits(vertices[triangles[i][0]][0], 9)
+        y_abscissa = _round_to_digits(vertices[triangles[i][0]][1], 9)
+        z_abscissa = _round_to_digits(vertices[triangles[i][0]][2], 9)
 
         # Check if two points of the triangle are equal
         if _check_triangle_equal_point(
