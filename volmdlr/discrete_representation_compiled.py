@@ -73,6 +73,54 @@ def triangles_to_voxel_matrix(
     )
 
 
+def mesh_data_to_voxel_matrix(
+    vertices: NDArray[float],
+    triangles: NDArray[int],
+    voxel_size: float,
+) -> Tuple[NDArray[np.bool_], Tuple[float, float, float]]:
+    """
+    Helper function to compute the voxel matrix of all the voxels intersecting with a given list of triangles of a mesh.
+
+    :param vertices: An array of 3D vertices specifying the 3D mesh.
+    :type vertices: ndarray[float]
+    :param triangles: An array of triangles representing the connectivity of the 3D mesh.
+    :type triangles: ndarray[int]
+    :param voxel_size: The voxel edges size.
+    :type voxel_size: float
+
+    :return: The voxel matrix and the origin center of the matrix.
+    :rtype: tuple[np.ndarray[np.bool_, np.ndim == 3], tuple[float, float, float]]
+    """
+    # compute the size of the matrix and min matrix origin center
+    min_point, max_point = np.min(vertices), np.max(vertices)
+    shape = (
+        int(max_point[0] // voxel_size + 1) - int(min_point[0] // voxel_size) + 2,
+        int(max_point[1] // voxel_size + 1) - int(min_point[1] // voxel_size) + 2,
+        int(max_point[2] // voxel_size + 1) - int(min_point[2] // voxel_size) + 2,
+    )
+    matrix = np.zeros(shape, dtype=np.bool_)
+    matrix_origin_center = (
+        round((min_point[0] // voxel_size - 0.5) * voxel_size, 9),
+        round((min_point[1] // voxel_size - 0.5) * voxel_size, 9),
+        round((min_point[2] // voxel_size - 0.5) * voxel_size, 9),
+    )
+
+    # compute the intersecting voxel
+    return (
+        np.asarray(
+            _mesh_data_to_voxel_matrix(
+                np.array(triangles),
+                len(triangles),
+                voxel_size,
+                matrix,
+                matrix_origin_center,
+            ),
+            np.bool_,
+        ),
+        matrix_origin_center,
+    )
+
+
 def flood_fill_matrix_2d(matrix: NDArray[np.bool_], start: Tuple[int, int], fill_with: bool) -> NDArray[np.bool_]:
     """
     Perform 2D flood fill on the given matrix starting from the specified position.
