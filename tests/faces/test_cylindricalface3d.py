@@ -200,6 +200,14 @@ class TestCylindricalFace3D(unittest.TestCase):
                 for curve_solution, expected_result in zip(list_curves, expected_results[i][j]):
                     self.assertAlmostEqual(curve_solution.length(), expected_result, 6)
 
+    def test_cylindricalface_intersections(self):
+        face1, face2 = DessiaObject.from_json(os.path.join(folder,
+            'test_cylindrical_face_intersections.json')).primitives
+        intersections = face1.face_intersections(face2)
+        self.assertTrue(len(intersections), 1)
+        self.assertAlmostEqual(intersections[0].primitives[0].length(), 0.004773175304187915)
+        self.assertTrue(isinstance(intersections[0].primitives[0], edges.ArcEllipse3D))
+
 
 if __name__ == '__main__':
     unittest.main()

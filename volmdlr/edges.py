@@ -435,6 +435,8 @@ class Edge(dc.DessiaObject):
         if split1[0] and split1[0].point_belongs(point2, abs_tol=1e-6):
             split2 = split1[0].split(point2)
         else:
+            if split1[1] is None:
+                print(True)
             split2 = split1[1].split(point2)
         new_split_edge = None
         for split_edge in split2:
@@ -2164,7 +2166,15 @@ class BSplineCurve2D(BSplineCurve):
         """
         if self.bounding_rectangle.distance_to_b_rectangle(bspline.bounding_rectangle) > abs_tol:
             return []
-        return self._generic_edge_intersections(bspline, abs_tol)
+        from volmdlr import to_occt, from_occt
+        from OCP.Geom2dAPI import Geom2dAPI_InterCurveCurve
+        from OCP.Precision import Precision
+        bspline_occt1 = to_occt.volmdlr_bsplinecurve2d_to_occt(self)
+        bspline_occt2 = to_occt.volmdlr_bsplinecurve2d_to_occt(bspline)
+        api_inters = Geom2dAPI_InterCurveCurve(bspline_occt1, bspline_occt2, Precision.Intersection_s())
+        intersections = [from_occt.point2d_from_occt(api_inters.Point(i + 1)) for i in range(api_inters.NbPoints())]
+        return intersections
+        # return self._generic_edge_intersections(bspline, abs_tol)
 
     def axial_symmetry(self, line):
         """
@@ -4086,6 +4096,19 @@ class ArcEllipse2D(ArcEllipseMixin, Edge):
         """
         raise NotImplementedError(f'the straight_line_point_belongs method must be'
                                   f' overloaded by {self.__class__.__name__}')
+
+    def straight_line_center_of_mass(self):
+        """
+        Straight line center of mass.
+
+        This is an approximation.
+        """
+        center_of_mass = volmdlr.O2D
+        number_points = 100
+        for p in self.discretization_points(number_points=number_points):
+            center_of_mass += p
+        center_of_mass /= number_points
+        return center_of_mass
 
     def split(self, split_point, tol: float = 1e-6):
         """

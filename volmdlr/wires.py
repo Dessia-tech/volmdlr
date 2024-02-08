@@ -2075,6 +2075,8 @@ class Contour2D(ContourMixin, Wire2D):
         """
         # TODO: This is incomplete!!!
         x_min, x_max, y_min, y_max = self.bounding_rectangle
+        if isinstance(point, np.ndarray):
+            print(True)
         if point.x < x_min - tol or point.x > x_max + tol or point.y < y_min - tol or point.y > y_max + tol:
             return False
         if include_edge_points:
@@ -2125,7 +2127,7 @@ class Contour2D(ContourMixin, Wire2D):
                         area += trigo * edge.straight_line_area()
                     self._area = abs(area)
                 else:
-                    self._area = polygon.triangulation().area()
+                    self._area = float(polygon.triangulation().area())
         return self._area
 
     def center_of_mass(self):
@@ -2429,7 +2431,7 @@ class Contour2D(ContourMixin, Wire2D):
         intersecting_points = []
         for primitive1 in self.primitives:
             for primitive2 in contour2d.primitives:
-                line_intersection = primitive1.linesegment_intersections(primitive2)
+                line_intersection = primitive1.intersections(primitive2)
                 if line_intersection:
                     if not line_intersection[0].in_list(intersecting_points):
                         intersecting_points.extend(line_intersection)

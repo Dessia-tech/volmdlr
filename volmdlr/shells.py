@@ -1250,9 +1250,12 @@ class ClosedShell3D(Shell3D):
         and as the values the resulting primitive from the two intersecting faces.
         It is done, so it is not needed to calculate the same intersecting primitive twice.
         """
+        debug_face = DessiaObject.from_json('/Users/wirajandasilva/Downloads/test_debug_planeface_itrs.json')
         face_combinations1 = {face: [] for face in self.faces}
         face_combinations2 = {face: [] for face in shell2.faces}
         for face1 in self.faces:
+            if face1 == debug_face:
+                print(True)
             for face2 in shell2.faces:
                 if face1.surface3d.is_coincident(face2.surface3d, abs_tol=tol):
                     contours1, contours2 = face1.get_coincident_face_intersections(face2)
@@ -1340,8 +1343,11 @@ class ClosedShell3D(Shell3D):
         :param list_coincident_faces: list of coincident faces.
         :return: list of new faces for union of two closed shell3.
         """
+        debug_face = DessiaObject.from_json('/Users/wirajandasilva/Downloads/test_debug_planeface_itrs.json')
         faces = []
         for face in intersecting_faces:
+            if face == debug_face:
+                print(True)
             new_faces = face.set_operations_new_faces(dict_faces_intersections)
             faces = self.set_operations_valid_exterior_faces(new_faces, faces, list_coincident_faces, shell2)
         return faces
@@ -1522,7 +1528,8 @@ class ClosedShell3D(Shell3D):
             inside_shell2 = shell2.point_inside(new_face.random_point_inside())
             face_on_shell2 = shell2.face_on_shell(new_face)
             if not inside_shell2 or face_on_shell2:
-                if list_coincident_faces:
+                if list_coincident_faces and any(new_face.surface3d.is_coincident(face.surface3d)
+                                                 for faces in list_coincident_faces for face in faces):
                     if self.is_face_between_shells(shell2, new_face):
                         return False
                 return True

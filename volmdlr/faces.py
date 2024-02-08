@@ -54,6 +54,34 @@ def octree_face_decomposition(face):
     return octree_decomposition(face.bounding_box, triangulation_faces)
 
 
+def parametric_face_inside(face1, face2, abs_tol: float = 1e-6):
+    """
+    Verifies if a face2 is inside face1.
+
+    It returns True if face2 is inside or False if the opposite.
+    """
+    if face1.surface3d.is_coincident(face2.surface3d, abs_tol):
+        if not face1.bounding_box.is_intersecting(face2.bounding_box) and \
+                not face1.bounding_box.is_inside_bbox(face2.bounding_box):
+            return False
+        self_contour2d = face1.surface2d.outer_contour
+        face2_contour2d = face2.surface2d.outer_contour
+        if self_contour2d.is_inside(face2_contour2d):
+            if self_contour2d.is_inside(face2_contour2d):
+                for inner_contour2d in face1.surface2d.inner_contours:
+                    # inner_contour2d = inner_contour.to_2d(
+                    #     self.surface3d.frame.origin, self.surface3d.frame.u, self.surface3d.frame.v
+                    # )
+                    if inner_contour2d.is_inside(face2_contour2d) or inner_contour2d.is_superposing(
+                            face2_contour2d
+                    ):
+                        return False
+            return True
+        if self_contour2d.is_superposing(face2_contour2d):
+            return True
+    return False
+
+
 class Face3D(volmdlr.core.Primitive3D):
     """
     Abstract method to define 3D faces.
@@ -601,6 +629,9 @@ class Face3D(volmdlr.core.Primitive3D):
         It returns True if face2 is inside or False if the opposite.
         """
         if self.surface3d.is_coincident(face2.surface3d, abs_tol):
+            if not self.bounding_box.is_intersecting(face2.bounding_box) and \
+                    not self.bounding_box.is_inside_bbox(face2.bounding_box):
+                return False
             self_contour2d = self.outer_contour3d.to_2d(
                 self.surface3d.frame.origin, self.surface3d.frame.u, self.surface3d.frame.v
             )
@@ -954,10 +985,11 @@ class Face3D(volmdlr.core.Primitive3D):
         :param intersecting_combinations: faces intersecting combinations dictionary.
         :return: new split faces.
         """
-        list_cutting_contours = self.get_face_cutting_contours(intersecting_combinations)
+        self_copy = self.copy(True)
+        list_cutting_contours = self_copy.get_face_cutting_contours(intersecting_combinations)
         if not list_cutting_contours:
-            return [self]
-        return self.divide_face(list_cutting_contours)
+            return [self_copy]
+        return self_copy.divide_face(list_cutting_contours)
 
     def split_inner_contour_intersecting_cutting_contours(self, list_cutting_contours):
         """
@@ -1332,6 +1364,8 @@ class Face3D(volmdlr.core.Primitive3D):
         :return: list of intersecting primitives for current face
         """
         face_intersecting_primitives2d = []
+        if self not in dict_intersecting_combinations:
+            print(True)
         intersections = dict_intersecting_combinations[self]
         for intersection_wire in intersections:
             wire2d = self.surface3d.contour3d_to_2d(intersection_wire)
@@ -2636,6 +2670,14 @@ class CylindricalFace3D(PeriodicalFaceMixin, Face3D):
         point2 = self.surface3d.frame.origin + self.surface3d.frame.w * zmax
         return volmdlr.wires.Wire3D([vme.LineSegment3D(point1, point2)])
 
+    def face_inside(self, face2, abs_tol: float = 1e-6):
+        """
+        Verifies if a face is inside another one.
+
+        It returns True if face2 is inside or False if the opposite.
+        """
+        return parametric_face_inside(self, face2, abs_tol)
+
 
 class ToroidalFace3D(PeriodicalFaceMixin, Face3D):
     """
@@ -2793,6 +2835,14 @@ class ToroidalFace3D(PeriodicalFaceMixin, Face3D):
         """
         planeface_intersections = planeface.toroidalface_intersections(self)
         return planeface_intersections
+
+    def face_inside(self, face2, abs_tol: float = 1e-6):
+        """
+        Verifies if a face is inside another one.
+
+        It returns True if face2 is inside or False if the opposite.
+        """
+        return parametric_face_inside(self, face2, abs_tol)
 
 
 class ConicalFace3D(PeriodicalFaceMixin, Face3D):
