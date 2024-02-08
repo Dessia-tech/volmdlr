@@ -545,7 +545,7 @@ class Voxelization(DiscreteRepresentation, PhysicalObject):
         :return: A voxelization created from the mesh data.
         :rtype: VoxelizationType
         """
-        return cls.from_triangles(cls._mesh_data_to_triangles(vertices, faces), voxel_size, name)
+        raise NotImplementedError("Voxelization is an abstract class and should not be use directly.")
 
     # FILLING METHODS
     def fill_outer_voxels(self) -> VoxelizationType:
