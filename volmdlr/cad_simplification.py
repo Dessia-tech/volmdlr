@@ -56,7 +56,7 @@ class Simplify(DessiaObject):
     def _volume_model_to_mesh(volume_model: VolumeModel):
         """Convert the VolumeModel to a unique Mesh3D."""
 
-        display_shell = None
+        mesh = None
 
         for shell in volume_model.get_shells():
             new_mesh = shell.triangulation()
