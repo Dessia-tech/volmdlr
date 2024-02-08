@@ -471,22 +471,25 @@ class Voxelization(DiscreteRepresentation, PhysicalObject):
 
     # CLASS METHODS
     @classmethod
-    def from_triangles(cls, triangles: List[_Triangle3D], voxel_size: float, name: str = "") -> VoxelizationType:
+    def from_mesh_data(
+        cls, vertices: Iterable[Iterable[float]], faces: Iterable[Iterable[int]], voxel_size: float, name: str = ""
+    ) -> "VoxelizationType":
         """
-        Create a voxelization from a list of triangles.
+        Create a voxelization from mesh data.
 
-        :param triangles: The list of triangles to create the voxelization from.
-        :type triangles: list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]
+        :param vertices: The vertices of the mesh.
+        :type vertices: Iterable[Iterable[float]]
+        :param faces: The faces of the mesh, using vertices indexes.
+        :type faces: Iterable[Iterable[int]]
         :param voxel_size: The size of each voxel.
         :type voxel_size: float
         :param name: Optional name for the voxelization.
         :type name: str
 
-        :return: A voxelization created from the list of triangles.
+        :return: A voxelization created from the mesh data.
         :rtype: VoxelizationType
         """
-        vertices, triangles = cls._triangles_to_mesh_data(triangles)
-        return cls.from_mesh_data(vertices, triangles, voxel_size, name)
+        raise NotImplementedError("Voxelization is an abstract class and should not be use directly.")
 
     @classmethod
     def from_shell(cls, shell: Shell3D, voxel_size: float, name: str = "") -> VoxelizationType:
@@ -528,25 +531,23 @@ class Voxelization(DiscreteRepresentation, PhysicalObject):
         return cls.from_mesh_data(mesh.vertices, mesh.triangles, voxel_size, name)
 
     @classmethod
-    def from_mesh_data(
-        cls, vertices: Iterable[Iterable[float]], faces: Iterable[Iterable[int]], voxel_size: float, name: str = ""
-    ) -> "VoxelizationType":
+    def from_triangles(cls, triangles: List[_Triangle3D], voxel_size: float, name: str = "") -> VoxelizationType:
         """
-        Create a voxelization from mesh data.
+        Create a voxelization from a list of triangles.
 
-        :param vertices: The vertices of the mesh.
-        :type vertices: Iterable[Iterable[float]]
-        :param faces: The faces of the mesh, using vertices indexes.
-        :type faces: Iterable[Iterable[int]]
+        :param triangles: The list of triangles to create the voxelization from.
+        :type triangles: list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]
         :param voxel_size: The size of each voxel.
         :type voxel_size: float
         :param name: Optional name for the voxelization.
         :type name: str
 
-        :return: A voxelization created from the mesh data.
+        :return: A voxelization created from the list of triangles.
         :rtype: VoxelizationType
         """
-        raise NotImplementedError("Voxelization is an abstract class and should not be use directly.")
+        vertices, triangles = cls._triangles_to_mesh_data(triangles)
+        return cls.from_mesh_data(vertices, triangles, voxel_size, name)
+
 
     # FILLING METHODS
     def fill_outer_voxels(self) -> VoxelizationType:
