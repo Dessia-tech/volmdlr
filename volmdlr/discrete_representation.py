@@ -548,7 +548,6 @@ class Voxelization(DiscreteRepresentation, PhysicalObject):
         vertices, triangles = cls._triangles_to_mesh_data(triangles)
         return cls.from_mesh_data(vertices, triangles, voxel_size, name)
 
-
     # FILLING METHODS
     def fill_outer_voxels(self) -> VoxelizationType:
         """
