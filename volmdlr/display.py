@@ -61,7 +61,7 @@ class MeshMixin:
         :return: A new Mesh instance representing the scaled mesh.
         :rtype: MeshType
         """
-        return self.__class__(self.vertices * scale_factor, self.triangles, self.name)
+        return self.__class__(self.vertices * scale_factor, self.triangles, name=self.name)
 
     def round_vertices(self, decimals: int = 9) -> "MeshType":
         """
@@ -75,7 +75,7 @@ class MeshMixin:
         """
         rounded_vertices = np.round(self.vertices, decimals)
 
-        return self.__class__(rounded_vertices, self.triangles, self.name)
+        return self.__class__(rounded_vertices, self.triangles, name=self.name)
 
     def remove_degenerate_triangles(self, tol: float = 0.0) -> "MeshType":
         """
@@ -109,7 +109,7 @@ class MeshMixin:
         valid_triangles = self.triangles[valid_triangles_mask]
 
         # Create a new Mesh3D instance with non-flat triangles
-        return self.__class__(self.vertices, valid_triangles, self.name)
+        return self.__class__(self.vertices, valid_triangles, name=self.name)
 
     def merge(self, other: "MeshType", merge_vertices: bool = False, merge_triangles: bool = False) -> "MeshType":
         """
@@ -136,7 +136,7 @@ class MeshMixin:
         merged_vertices = np.concatenate((self.vertices, other.vertices))
         merged_triangles = np.concatenate((self.triangles, other.triangles + len(self.vertices)))
 
-        mesh = self.__class__(merged_vertices, merged_triangles, self.name)
+        mesh = self.__class__(merged_vertices, merged_triangles, name=self.name)
 
         if merge_vertices:
             mesh = mesh.merge_vertices()
@@ -158,7 +158,7 @@ class MeshMixin:
         unique_vertices, indices_map = np.unique(self.vertices, axis=0, return_inverse=True)
         remapped_triangles = indices_map[self.triangles]
 
-        return self.__class__(unique_vertices, remapped_triangles, self.name)
+        return self.__class__(unique_vertices, remapped_triangles, name=self.name)
 
     def merge_triangles(self) -> "MeshType":
         """
@@ -174,7 +174,7 @@ class MeshMixin:
         _, unique_triangle_indices = np.unique(sorted_triangles, axis=0, return_index=True)
         unique_triangles = self.triangles[unique_triangle_indices]
 
-        return self.__class__(self.vertices, unique_triangles, self.name)
+        return self.__class__(self.vertices, unique_triangles, name=self.name)
 
     def split_shared_vertices(self) -> "MeshType":
         """
@@ -189,7 +189,7 @@ class MeshMixin:
         unmerged_vertices = self.vertices[self.triangles.ravel()]
         unmerged_triangles = np.arange(len(self.triangles) * 3).reshape(-1, 3)
 
-        return self.__class__(unmerged_vertices, unmerged_triangles, self.name)
+        return self.__class__(unmerged_vertices, unmerged_triangles, name=self.name)
 
     def __add__(self, other: "MeshType") -> "MeshType":
         """
@@ -400,9 +400,6 @@ class Mesh3D(MeshMixin, Primitive3D):
         """
         self.vertices = vertices
         self.triangles = triangles
-
-        self.color = (0.8, 0.8, 0.8)
-        self.alpha = 1.0
 
         self._faces = None
         self._bounding_box = None
