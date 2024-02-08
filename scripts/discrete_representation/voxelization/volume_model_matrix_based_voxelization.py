@@ -5,7 +5,7 @@ In MatrixBasedVoxelization, voxels are stored as a 3D numpy array of np.bool_.
 """
 import volmdlr
 from volmdlr.core import VolumeModel
-from volmdlr.discrete_representation import MatrixBasedVoxelization
+from volmdlr.discrete import MatrixBasedVoxelization
 from volmdlr.primitives3d import Cylinder, Sphere
 
 VOXEL_SIZE = 0.01

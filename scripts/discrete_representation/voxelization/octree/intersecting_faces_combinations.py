@@ -6,7 +6,7 @@ import time
 
 import volmdlr
 from volmdlr.core import VolumeModel
-from volmdlr.discrete_representation import OctreeBasedVoxelization
+from volmdlr.discrete import OctreeBasedVoxelization
 from volmdlr.step import Step
 
 # Load

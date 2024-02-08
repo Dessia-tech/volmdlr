@@ -5,7 +5,7 @@ import random
 
 import volmdlr
 from volmdlr.core import VolumeModel
-from volmdlr.discrete_representation import MatrixBasedVoxelization
+from volmdlr.discrete import MatrixBasedVoxelization
 from volmdlr.primitives3d import Block
 
 VOXEL_SIZE = 0.05

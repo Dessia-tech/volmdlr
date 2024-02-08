@@ -14,7 +14,7 @@ import volmdlr
 from volmdlr import Point3D
 from volmdlr.cloud import PointCloud3D
 from volmdlr.core import VolumeModel
-from volmdlr.discrete_representation import MatrixBasedVoxelization
+from volmdlr.discrete import MatrixBasedVoxelization
 from volmdlr.display import Mesh3D
 from volmdlr.faces import Triangle3D
 from volmdlr.primitives3d import ExtrudedProfile

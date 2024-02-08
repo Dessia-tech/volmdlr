@@ -15,7 +15,7 @@ from numpy.typing import NDArray
 
 from volmdlr import Point2D, Point3D, Vector3D
 from volmdlr.core import BoundingBox, BoundingRectangle, VolumeModel
-from volmdlr.discrete_representation_compiled import (
+from volmdlr.discrete_compiled import (
     flood_fill_matrix_2d,
     flood_fill_matrix_3d,
     line_segments_to_pixels,

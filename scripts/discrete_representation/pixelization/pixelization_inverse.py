@@ -3,7 +3,7 @@ Showcase of computing the inverse of a pixelization.
 """
 
 from volmdlr import Point2D
-from volmdlr.discrete_representation import MatrixBasedPixelization
+from volmdlr.discrete import MatrixBasedPixelization
 from volmdlr.wires import ClosedPolygon2D
 
 PIXEL_SIZE = 0.05
