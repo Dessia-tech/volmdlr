@@ -505,7 +505,8 @@ class Voxelization(DiscreteRepresentation, PhysicalObject):
         if isinstance(shell, DisplayTriangleShell3D):
             return cls.from_mesh_data(shell.positions, shell.indices, voxel_size, name)
 
-        return cls.from_triangles(cls._shell_to_triangles(shell), voxel_size, name)
+        mesh = shell.triangulation()
+        return cls.from_mesh_data(mesh.vertices, mesh.triangles, voxel_size, name)
 
     @classmethod
     def from_volume_model(cls, volume_model: VolumeModel, voxel_size: float, name: str = "") -> VoxelizationType:
@@ -522,7 +523,8 @@ class Voxelization(DiscreteRepresentation, PhysicalObject):
         :return: A voxelization created from the VolumeModel.
         :rtype: VoxelizationType
         """
-        return cls.from_triangles(cls._volume_model_to_triangles(volume_model), voxel_size, name)
+        mesh = volume_model.to_mesh3d()
+        return cls.from_mesh_data(mesh.vertices, mesh.triangles, voxel_size, name)
 
     @classmethod
     def from_mesh_data(
