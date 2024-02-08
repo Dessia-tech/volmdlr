@@ -40,6 +40,12 @@ class TestStep(unittest.TestCase):
         self.assertEqual(step.functions[3].arg[2], "((#3,#4),(#5,#6))")
         self.assertEqual(step.functions[3].arg[3], "'nom, d'un entité'")
         self.assertEqual(step.functions[3].arg[4], "(PARAMETER_VALUE(20.0))")
+        self.assertEqual(step.functions[4].name, "TRIMMED_CURVE")
+        self.assertEqual(len(step.functions[4].arg), 6)
+        self.assertEqual(step.functions[4].arg[2], "(#9,PARAMETER_VALUE(0.))")
+        self.assertEqual(step.functions[4].arg[3], "(#10,PARAMETER_VALUE(13.))")
+
+
 
     def test_split_arguments_special(self):
         function_args = "'nom, spécial', (#1, #2), ((#3, #4), (#5, #6)), (PARAMETER_VALUE(20.0)));"
@@ -51,6 +57,8 @@ class TestStep(unittest.TestCase):
         _ = step.to_volume_model()
         self.assertEqual(len(step.functions[327014].arg), 9)
         self.assertEqual(step.functions[327014].arg[-1], '.UNSPECIFIED.')
+
+
 
 
 if __name__ == '__main__':

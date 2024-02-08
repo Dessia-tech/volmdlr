@@ -29,6 +29,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### step.py
 - Fix Step.create_connections with wireframe models
+- Fix TRIMMED_CURVE import
+
+#### core.py
+- Fix Compound step export for wireframe models.
 
 
 #### surfaces.py

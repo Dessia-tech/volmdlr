@@ -222,7 +222,7 @@ class Step(dc.DessiaObject):
             arguments = step_reader.step_split_arguments(entity_name_str, function_arg)
 
         for i, argument in enumerate(arguments):
-            if argument[:2] == '(#' and argument[-1] == ')':
+            if argument[:2] == '(#' and argument[-1] == ')' and argument[-2] != ")":
                 arg_list = step_reader.set_to_list(argument)
                 for arg in arg_list:
                     connections.append(int(arg[1:]))
@@ -444,6 +444,8 @@ class Step(dc.DessiaObject):
         """
         name_representation_entity = self.functions[id_representation_entity].name
         arg = self.functions[id_representation_entity].arg[1]
+        if arg[0][1:] == '':
+            print(True)
         if name_representation_entity == "MANIFOLD_SURFACE_SHAPE_REPRESENTATION":
             if self.functions[int(arg[0][1:])].name == "AXIS2_PLACEMENT_3D":
                 id_solid_entity = int(arg[1][1:])
@@ -787,7 +789,8 @@ class Step(dc.DessiaObject):
         if self.root_nodes["NEXT_ASSEMBLY_USAGE_OCCURRENCE"]:
             return volmdlr.core.VolumeModel([self.instatiate_assembly(object_dict)])
         primitives = []
-        shapes = [object_dict[shape] for shape in shape_representations]
+        shapes = [object_dict[shape] for shape in shape_representations
+                  if self.functions[shape].name in STEP_REPRESENTATION_ENTITIES]
         for shape in shapes:
             if isinstance(shape, list):
                 primitives.extend(shape)
