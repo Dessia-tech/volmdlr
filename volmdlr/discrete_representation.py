@@ -635,61 +635,6 @@ class Voxelization(DiscreteRepresentation, PhysicalObject):
         return [self.to_closed_triangle_shell()]
 
     # HELPER METHODS
-
-    @staticmethod
-    def _shell_to_triangles(shell: Shell3D) -> List[_Triangle3D]:
-        """
-        Helper method to convert a Shell3D to a list of triangles.
-
-        It uses the "triangulation" method to triangulate the Shell3D.
-
-        :param shell: The Shell3D to convert to triangles.
-        :type shell: Shell3D
-
-        :return: The list of triangles extracted from the triangulated Shell3D.
-        :rtype: List[Triangle]
-        """
-        triangulation = shell.triangulation()
-        return [
-            (
-                (
-                    float(triangulation.vertices[triangle[0]][0]),
-                    float(triangulation.vertices[triangle[0]][1]),
-                    float(triangulation.vertices[triangle[0]][2]),
-                ),
-                (
-                    float(triangulation.vertices[triangle[1]][0]),
-                    float(triangulation.vertices[triangle[1]][1]),
-                    float(triangulation.vertices[triangle[1]][2]),
-                ),
-                (
-                    float(triangulation.vertices[triangle[2]][0]),
-                    float(triangulation.vertices[triangle[2]][1]),
-                    float(triangulation.vertices[triangle[2]][2]),
-                ),
-            )
-            for triangle in triangulation.triangles
-        ]
-
-    @staticmethod
-    def _volume_model_to_triangles(volume_model: VolumeModel) -> List[_Triangle3D]:
-        """
-        Helper method to convert a VolumeModel to a list of triangles.
-
-        It uses the "triangulation" method to triangulate the shells of the VolumeModel.
-
-        :param volume_model: The VolumeModel to convert to triangles.
-        :type volume_model: VolumeModel
-
-        :return: The list of triangles extracted from the triangulated primitives of the VolumeModel.
-        :rtype: List[Triangle]
-        """
-        triangles = []
-        for shell in volume_model.get_shells():
-            triangles.extend(Voxelization._shell_to_triangles(shell))
-
-        return triangles
-
     @staticmethod
     def _mesh_data_to_triangles(
         vertices: Iterable[Iterable[float]], faces: Iterable[Iterable[int]]
