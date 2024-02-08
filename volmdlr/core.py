@@ -1530,11 +1530,18 @@ class VolumeModel(dc.PhysicalObject):
             file.write(script)
         return filename
 
-    def to_mesh3d(self):
-        """Converts to volume model to a Mesh3D object."""
+    def to_mesh3d(self, merge_vertices: bool = True, merge_triangles: bool = True):
+        """
+        Converts to volume model to a Mesh3D object.
+
+        :param merge_vertices: Flag to indicate whether to merge vertices of the shells meshes.
+        :type merge_vertices: bool, optional
+        :param merge_triangles: Flag to indicate whether to merge triangles of the shells meshes.
+        :type merge_triangles: bool, optional
+        """
         mesh = self.primitives[0].triangulation()
         for primitive in self.primitives[1:]:
-            mesh = mesh.merge(primitive.triangulation(), merge_vertices=True, merge_triangles=True)
+            mesh = mesh.merge(primitive.triangulation(), merge_vertices=merge_vertices, merge_triangles=merge_triangles)
 
         return mesh
 
