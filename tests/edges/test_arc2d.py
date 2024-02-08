@@ -36,6 +36,25 @@ class TestArc2D(unittest.TestCase):
                    volmdlr.Point2D(0, 1),
                    volmdlr.Point2D(0.7071067811865475, 0.7071067811865475)]
 
+    def test_arc_angles(self):
+        frame = volmdlr.Frame2D(volmdlr.Point2D(-8.300842483198, 33.937305367912), volmdlr.Vector2D(-1.0, 0.0),
+                                volmdlr.Vector2D(-0.0, -1.0))
+
+        radius = 18.985621313014995
+
+        circle = curves.Circle2D(frame, radius)
+
+        start = volmdlr.Point2D(-21.897737241977318, 47.18790043228133)
+        end = volmdlr.Point2D(0.5512862323650758, 50.732948667420146)
+        arc = Arc2D(circle, start, end)
+        self.assertAlmostEqual(arc.angle_start, 2.369092548558922)
+        self.assertAlmostEqual(arc.angle_end, 1.085744328897209)
+        expected_angles = [2.369092548558922, 2.9246300027275742, -2.8030178502833594, -2.247480396114707,
+                           -1.6919429419460545, -1.136405487777402, -0.5808680336087492, -0.02533057944009658,
+                           0.5302068747285559, 1.0857443288972086]
+        for i, point in enumerate(arc.discretization_points(number_points=10)):
+            self.assertAlmostEqual(arc._arc_point_angle(point), expected_angles[i])
+
     def test_split(self):
         arc_split1 = self.arc2d.split(self.arc2d.start)
         self.assertIsNone(arc_split1[0])

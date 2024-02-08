@@ -352,7 +352,7 @@ class Edge(dc.DessiaObject):
             # intersections.extend(intersections_points)
         return intersections
 
-    def intersections(self, edge2: 'Edge', abs_tol: float = 1e-6):
+    def intersections(self, edge2: 'Edge', abs_tol: float = 1e-6, force_sort: bool = False):
         """
         Gets the intersections between two edges.
 
@@ -363,10 +363,14 @@ class Edge(dc.DessiaObject):
         method_name = f'{edge2.__class__.__name__.lower()[:-2]}_intersections'
         if hasattr(self, method_name):
             intersections = getattr(self, method_name)(edge2, abs_tol)
+            if force_sort:
+                intersections = self.sort_points_along_curve(intersections)
             return intersections
         method_name = f'{self.__class__.__name__.lower()[:-2]}_intersections'
         if hasattr(edge2, method_name):
             intersections = getattr(edge2, method_name)(self, abs_tol)
+            if force_sort:
+                intersections = self.sort_points_along_curve(intersections)
             return intersections
         return self._generic_edge_intersections(edge2, abs_tol)
 
@@ -2963,6 +2967,38 @@ class Arc2D(ArcMixin, Edge):
 
     points = property(_get_points)
 
+    @property
+    def angle(self):
+        """
+        Arc angle property.
+
+        :return: arc angle.
+        """
+        if not self._angle:
+            clockwise_arc = self.reverse() if self.is_trigo else self
+            vector_start = clockwise_arc.start - clockwise_arc.circle.center
+            vector_end = clockwise_arc.end - clockwise_arc.circle.center
+            arc_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_end)
+            self._angle = arc_angle
+        return self._angle
+
+    def get_start_end_angles(self):
+        """Returns the start and end angle of the arc."""
+        angle1 = self._arc_point_angle(self.start)
+        angle2 = self._arc_point_angle(self.end)
+        if self.is_trigo:
+            if angle2 == 0.0:
+                angle2 = volmdlr.TWO_PI
+        else:
+            angle1, angle2 = angle2, angle1
+        return angle1, angle2
+
+    def _arc_point_angle(self, point):
+        """Helper function to calculate the angle of point on a trigonometric arc."""
+        point_to_center = point - self.circle.center
+        angle = math.atan2(point_to_center.y, point_to_center.x)
+        return angle
+
     def point_belongs(self, point, abs_tol=1e-6):
         """
         Check if a Point2D belongs to the Arc2D.
@@ -3248,12 +3284,8 @@ class Arc2D(ArcMixin, Edge):
             for point in [self.circle.center, self.circle.start, self.circle.end]:
                 point.plot(ax=ax, color=edge_style.color, alpha=edge_style.alpha)
 
-        if self.is_trigo:
-            theta1 = self.angle_start * 180 / math.pi
-            theta2 = self.angle_end * 180 / math.pi
-        else:
-            theta2 = 360 - self.angle_start * 180 / math.pi
-            theta1 = 360 - self.angle_end * 180 / math.pi
+        theta1 = self.angle_start * 180 / math.pi
+        theta2 = self.angle_end * 180 / math.pi
 
         ax.add_patch(matplotlib.patches.Arc((self.circle.center.x, self.circle.center.y), 2 * self.circle.radius,
                                             2 * self.circle.radius, angle=0,
