@@ -5,7 +5,7 @@ Classes to define mesh for display use. Display mesh do not require good aspect 
 """
 
 import warnings
-from typing import List, TypeVar, Union, Tuple
+from typing import List, Tuple, TypeVar, Union
 
 import numpy as np
 import pyfqmr
@@ -16,9 +16,9 @@ from dessia_common.typings import JsonSerializable
 from numpy.typing import NDArray
 from scipy.spatial import cKDTree
 from trimesh import Trimesh
-from volmdlr.core import Primitive3D
 
 import volmdlr.edges
+from volmdlr.core import Primitive3D
 
 # TODO: make this module "mesh" as it is not useful only for display
 
