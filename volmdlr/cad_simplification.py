@@ -39,39 +39,39 @@ class Simplify(DessiaObject):
         DessiaObject.__init__(self, name=name)
 
     @staticmethod
-    def _volume_model_to_display_shells(volume_model: VolumeModel) -> List[DisplayTriangleShell3D]:
-        """Convert the VolumeModel to a list of DisplayTriangleShell3D."""
+    def _volume_model_to_meshes(volume_model: VolumeModel) -> List[Mesh3D]:
+        """Convert the VolumeModel to a list of Mesh3D."""
 
-        display_shells = []
+        meshes = []
 
         for shell in volume_model.get_shells():
-            display_shell = shell.to_triangle_shell().to_display_triangle_shell()
+            mesh = shell.triangulation()
 
-            if len(display_shell.indices) > 0:
-                display_shells.append(display_shell)
+            if len(mesh.triangles) > 0:
+                meshes.append(mesh)
 
-        return display_shells
+        return meshes
 
     @staticmethod
-    def _volume_model_to_display_shell(volume_model: VolumeModel):
-        """Convert the VolumeModel to a unique DisplayTriangleShell3D."""
+    def _volume_model_to_mesh(volume_model: VolumeModel):
+        """Convert the VolumeModel to a unique Mesh3D."""
 
         display_shell = None
 
         for shell in volume_model.get_shells():
-            new_display_shell = shell.to_triangle_shell().to_display_triangle_shell()
+            new_mesh = shell.triangulation()
 
-            if len(new_display_shell.indices) == 0:
+            if len(new_mesh.triangles) == 0:
                 continue
 
-            if display_shell:
-                display_shell += new_display_shell
+            if mesh:
+                mesh = mesh.merge(new_mesh, merge_vertices=True, merge_triangles=True)
             else:
-                display_shell = new_display_shell
+                mesh = new_mesh
 
-        display_shell.name = volume_model.name
+        mesh.name = volume_model.name
 
-        return display_shell
+        return mesh
 
 
 class TripleExtrusionSimplify(Simplify):
