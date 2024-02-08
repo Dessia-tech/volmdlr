@@ -92,17 +92,27 @@ def mesh_data_to_voxel_matrix(
     :rtype: tuple[np.ndarray[np.bool_, np.ndim == 3], tuple[float, float, float]]
     """
     # compute the size of the matrix and min matrix origin center
-    min_point, max_point = np.min(vertices), np.max(vertices)
+    min_x = np.min(vertices[:, 0])
+    max_x = np.max(vertices[:, 0])
+
+    min_y = np.min(vertices[:, 1])
+    max_y = np.max(vertices[:, 1])
+
+    min_z = np.min(vertices[:, 2])
+    max_z = np.max(vertices[:, 2])
+
     shape = (
-        int(max_point[0] // voxel_size + 1) - int(min_point[0] // voxel_size) + 2,
-        int(max_point[1] // voxel_size + 1) - int(min_point[1] // voxel_size) + 2,
-        int(max_point[2] // voxel_size + 1) - int(min_point[2] // voxel_size) + 2,
+        int(max_x // voxel_size + 1) - int(min_x // voxel_size) + 2,
+        int(max_y // voxel_size + 1) - int(min_y // voxel_size) + 2,
+        int(max_z // voxel_size + 1) - int(min_z // voxel_size) + 2,
     )
+
     matrix = np.zeros(shape, dtype=np.bool_)
+
     matrix_origin_center = (
-        round((min_point[0] // voxel_size - 0.5) * voxel_size, 9),
-        round((min_point[1] // voxel_size - 0.5) * voxel_size, 9),
-        round((min_point[2] // voxel_size - 0.5) * voxel_size, 9),
+        round((min_x // voxel_size - 0.5) * voxel_size, 9),
+        round((min_y // voxel_size - 0.5) * voxel_size, 9),
+        round((min_z // voxel_size - 0.5) * voxel_size, 9),
     )
 
     # compute the intersecting voxel
