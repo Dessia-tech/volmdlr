@@ -56,22 +56,7 @@ class Simplify(DessiaObject):
     def _volume_model_to_mesh(volume_model: VolumeModel):
         """Convert the VolumeModel to a unique Mesh3D."""
 
-        mesh = None
-
-        for shell in volume_model.get_shells():
-            new_mesh = shell.triangulation()
-
-            if len(new_mesh.triangles) == 0:
-                continue
-
-            if mesh:
-                mesh = mesh.merge(new_mesh, merge_vertices=True, merge_triangles=True)
-            else:
-                mesh = new_mesh
-
-        mesh.name = volume_model.name
-
-        return mesh
+        return volume_model.to_mesh3d()
 
 
 class TripleExtrusionSimplify(Simplify):
