@@ -419,6 +419,10 @@ class Mesh3D(MeshMixin, PhysicalObject):
         """Return self as volmdlr_primitives to enable babylonjs method."""
         return [self]
 
+    def triangulation(self) -> "Mesh3D":
+        """Return self as triangulation to enable VolumeModel usage."""
+        return self
+
     def area(self) -> float:
         """
         Calculate the total surface area of the 3D mesh as the sum of areas of triangles.
