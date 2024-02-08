@@ -3,7 +3,7 @@ Showcase of the 'VoxelizationSimplify' class.
 """
 import time
 
-from volmdlr.cad_simplification import VoxelizationSimplify
+from volmdlr.simplification import VoxelizationSimplify
 from volmdlr.step import Step
 
 VOXEL_SIZE = 0.002

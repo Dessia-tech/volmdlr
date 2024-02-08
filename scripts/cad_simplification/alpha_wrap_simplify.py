@@ -3,7 +3,7 @@ Showcase of the 'AlphaWrapSimplify' class.
 """
 import time
 
-from volmdlr.cad_simplification import AlphaWrapSimplify
+from volmdlr.simplification import AlphaWrapSimplify
 from volmdlr.step import Step
 
 # Load
