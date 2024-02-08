@@ -22,7 +22,7 @@ from volmdlr.discrete_representation_compiled import (
     round_point_3d_to_digits,
     round_to_digits,
     triangle_intersects_voxel,
-    triangles_to_voxel_matrix,
+    mesh_data_to_voxel_matrix,
     voxel_triangular_faces,
 )
 from volmdlr.edges import LineSegment2D
@@ -765,23 +765,27 @@ class PointBasedVoxelization(Voxelization):
 
     # CLASS METHODS
     @classmethod
-    def from_triangles(
-        cls, triangles: List[_Triangle3D], voxel_size: float, name: str = ""
+    def from_mesh_data(
+        cls, vertices: Iterable[Iterable[float]], faces: Iterable[Iterable[int]], voxel_size: float, name: str = ""
     ) -> "PointBasedVoxelization":
         """
-        Create a PointBasedVoxelization from a list of triangles.
+        Create a PointBasedVoxelization from mesh data.
 
-        :param triangles: The list of triangles to create the PointBasedVoxelization from.
-        :type triangles: list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]
+        :param vertices: The vertices of the mesh.
+        :type vertices: Iterable[Iterable[float]]
+        :param faces: The faces of the mesh, using vertices indexes.
+        :type faces: Iterable[Iterable[int]]
         :param voxel_size: The size of each voxel.
         :type voxel_size: float
         :param name: Optional name for the PointBasedVoxelization.
         :type name: str
 
-        :return: A PointBasedVoxelization created from the list of triangles.
+        :return: A PointBasedVoxelization created from the mesh data.
         :rtype: PointBasedVoxelization
         """
-        return cls(MatrixBasedVoxelization.from_triangles(triangles, voxel_size).get_voxel_centers(), voxel_size, name)
+        return cls(
+            MatrixBasedVoxelization.from_mesh_data(vertices, faces, voxel_size).get_voxel_centers(), voxel_size, name
+        )
 
     @classmethod
     def from_matrix_based_voxelization(
@@ -1267,23 +1271,25 @@ class MatrixBasedVoxelization(Voxelization):
 
     # CLASS METHODS
     @classmethod
-    def from_triangles(
-        cls, triangles: List[_Triangle3D], voxel_size: float, name: str = ""
+    def from_mesh_data(
+        cls, vertices: Iterable[Iterable[float]], faces: Iterable[Iterable[int]], voxel_size: float, name: str = ""
     ) -> "MatrixBasedVoxelization":
         """
-        Create a MatrixBasedVoxelization from a list of triangles.
+        Create a MatrixBasedVoxelization from mesh data.
 
-        :param triangles: The list of triangles to create the MatrixBasedVoxelization from.
-        :type triangles: list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]
+        :param vertices: The vertices of the mesh.
+        :type vertices: Iterable[Iterable[float]]
+        :param faces: The faces of the mesh, using vertices indexes.
+        :type faces: Iterable[Iterable[int]]
         :param voxel_size: The size of each voxel.
         :type voxel_size: float
         :param name: Optional name for the MatrixBasedVoxelization.
         :type name: str
 
-        :return: A MatrixBasedVoxelization created from the list of triangles.
+        :return: A MatrixBasedVoxelization created from mesh data.
         :rtype: MatrixBasedVoxelization
         """
-        matrix, min_grid_center = triangles_to_voxel_matrix(triangles, voxel_size)
+        matrix, min_grid_center = mesh_data_to_voxel_matrix(np.array(vertices), np.array(faces), voxel_size)
 
         return cls(matrix, min_grid_center, voxel_size, name).crop_matrix()
 
