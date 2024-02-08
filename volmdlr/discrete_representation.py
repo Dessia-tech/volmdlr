@@ -636,28 +636,21 @@ class Voxelization(DiscreteRepresentation, PhysicalObject):
 
     # HELPER METHODS
     @staticmethod
-    def _mesh_data_to_triangles(
-        vertices: Iterable[Iterable[float]], faces: Iterable[Iterable[int]]
-    ) -> List[_Triangle3D]:
+    def _triangles_to_mesh_data(triangles: List[_Triangle3D]) -> Tuple[NDArray[float], NDArray[int]]:
         """
-        Helper method to convert mesh data to a list of triangles.
+        Helper method to convert a list of triangles to mesh data.
 
-        :param vertices: The vertices of the mesh.
-        :type vertices: Iterable[Iterable[float]]
-        :param faces: The faces of the mesh, using vertices indexes.
-        :type faces: Iterable[Iterable[int]]
+        :param triangles: The triangles to converts.
+        :type triangles: list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]
 
-        :return: The list of triangles extracted from the triangulated primitives of the VolumeModel.
-        :rtype: List[Triangle]
+        :return: The mesh data of the triangles.
+        :rtype: Tuple[NDArray[float], NDArray[int]]
         """
-        triangles = []
+        all_vertices = np.array(triangles).reshape(-1, 3)
+        unique_vertices, indices = np.unique(all_vertices, axis=0, return_inverse=True)
+        faces = indices.reshape(-1, 3)
 
-        points = list(vertices)
-
-        for i1, i2, i3 in faces:
-            triangles.append((tuple(points[i1]), tuple(points[i2]), tuple(points[i3])))
-
-        return triangles
+        return unique_vertices, faces
 
     @staticmethod
     def voxel_to_bounding_box(voxel_center: _Point3D, voxel_size: float) -> BoundingBox:
