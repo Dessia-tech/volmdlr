@@ -212,39 +212,36 @@ class TriangleDecimationSimplify(Simplify):
         """
         # pylint: disable=too-many-arguments
 
-        decimated_shells = []
-        simplifier = pyfqmr.Simplify()
+        decimated_meshes = []
 
         if preserve_shells:
-            meshes = self._volume_model_to_display_shells(self.volume_model)
+            meshes = self._volume_model_to_meshes(self.volume_model)
         else:
-            meshes = [self._volume_model_to_display_shell(self.volume_model)]
+            meshes = [self._volume_model_to_mesh(self.volume_model)]
 
         for mesh in meshes:
-            vertices, triangles = mesh.positions, mesh.indices
-
-            simplifier.setMesh(vertices, triangles)
-            simplifier.simplify_mesh(
-                target_count=int(target_ratio * len(triangles)),
-                update_rate=update_rate,
-                aggressiveness=aggressiveness,
-                max_iterations=max_iterations,
-                verbose=verbose,
-                lossless=lossless,
-                threshold_lossless=threshold_lossless,
-                alpha=alpha,
-                K=k,
-                preserve_border=preserve_border,
+            decimated_meshes.append(
+                mesh.round_vertices()
+                .merge_vertices()
+                .decimate(
+                    target_count=int(target_ratio * mesh.n_triangles),
+                    update_rate=update_rate,
+                    aggressiveness=aggressiveness,
+                    max_iterations=max_iterations,
+                    verbose=verbose,
+                    lossless=lossless,
+                    threshold_lossless=threshold_lossless,
+                    alpha=alpha,
+                    k=k,
+                    preserve_border=preserve_border,
+                )
             )
 
-            vertices, faces, _ = simplifier.getMesh()
+            decimated_meshes[-1].name = mesh.name
+            decimated_meshes[-1].color = mesh.color
+            decimated_meshes[-1].alpha = mesh.alpha
 
-            decimated_shells.append(OpenTriangleShell3D.from_mesh_data(vertices, faces))
-            decimated_shells[-1].name = mesh.name
-            decimated_shells[-1].color = mesh.color
-            decimated_shells[-1].alpha = mesh.alpha
-
-        return VolumeModel(decimated_shells)
+        return VolumeModel(decimated_meshes)
 
 
 class AlphaWrapSimplify(Simplify):
