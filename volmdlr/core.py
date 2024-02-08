@@ -166,6 +166,8 @@ def map_primitive_with_initial_and_final_frames(primitive, initial_frame, final_
     """
     if initial_frame == final_frame:
         return primitive
+    if initial_frame == primitive:
+        return final_frame
     transfer_matrix = get_transfer_matrix_from_basis(initial_frame.basis(), final_frame.basis())
     u_vector = volmdlr.Vector3D(*transfer_matrix[0])
     v_vector = volmdlr.Vector3D(*transfer_matrix[1])
