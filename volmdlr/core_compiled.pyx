@@ -3301,7 +3301,6 @@ class Frame3D(Basis3D):
     :param v:Vector3D: second vector of the basis
     :param w:Vector3D: third vector of the basis
     """
-    _standalone_in_db = True
 
     def __init__(self, origin: Point3D, u: Vector3D, v: Vector3D, w: Vector3D, name: Text = ""):
         self.origin = origin
