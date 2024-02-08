@@ -5,17 +5,18 @@ Classes to define mesh for display use. Display mesh do not require good aspect 
 """
 
 import warnings
-from typing import List, TypeVar, Union
+from typing import List, TypeVar, Union, Tuple
 
 import numpy as np
 import pyfqmr
 import trimesh
-from dessia_common.core import DessiaObject, PhysicalObject
+from dessia_common.core import DessiaObject
 from dessia_common.serialization import BinaryFile
 from dessia_common.typings import JsonSerializable
 from numpy.typing import NDArray
 from scipy.spatial import cKDTree
 from trimesh import Trimesh
+from volmdlr.core import Primitive3D
 
 import volmdlr.edges
 
@@ -370,7 +371,7 @@ class Mesh2D(MeshMixin, DessiaObject):
         return areas.sum()
 
 
-class Mesh3D(MeshMixin, PhysicalObject):
+class Mesh3D(MeshMixin, Primitive3D):
     """
     3D triangle mesh.
     """
@@ -380,16 +381,22 @@ class Mesh3D(MeshMixin, PhysicalObject):
     _linesegment_class = volmdlr.edges.LineSegment3D
     _point_class = volmdlr.Point3D
 
-    def __init__(self, vertices: NDArray[float], triangles: NDArray[int], name: str = ""):
+    def __init__(
+        self,
+        vertices: NDArray[float],
+        triangles: NDArray[int],
+        color: Tuple[float, float, float] = None,
+        alpha: float = 1.0,
+        name: str = "",
+    ):
         """
         Initialize a 3D mesh.
 
         :param vertices: An array of 3D vertices specifying the 3D mesh.
-        :type vertices: ndarray[float]
         :param triangles: An array of triangles representing the connectivity of the 3D mesh.
-        :type triangles: ndarray[int]
-        :param name: A name for the mesh (default is an empty string).
-        :type name: str, optional
+        :param color: A color for the mesh, optional.
+        :param alpha: An alpha value for the mesh, optional.
+        :param name: A name for the mesh, optional (default is an empty string).
         """
         self.vertices = vertices
         self.triangles = triangles
@@ -400,7 +407,26 @@ class Mesh3D(MeshMixin, PhysicalObject):
         self._faces = None
         self._bounding_box = None
 
-        PhysicalObject.__init__(self, name=name)
+        Primitive3D.__init__(self, color=color, alpha=alpha, name=name)
+
+    def triangulation(self) -> "Mesh3D":
+        """Return self as triangulation to enable VolumeModel usage."""
+        return self
+
+    def to_babylon(self):
+        """
+        Convert the mesh to the Babylon.js format.
+
+        This method rounds the vertices to 6 decimal places and returns the mesh in a Babylon.js compatible format.
+        https://doc.babylonjs.com/how_to/custom
+
+        :return: A dictionary representing the mesh in Babylon.js format with 'positions' and 'indices' keys.
+        :rtype: dict
+        """
+        mesh = self.round_vertices(decimals=6)
+        babylon_mesh = {"positions": mesh.vertices.flatten().tolist(), "indices": mesh.triangles.flatten().tolist()}
+
+        return babylon_mesh
 
     @property
     def bounding_box(self):
@@ -414,14 +440,6 @@ class Mesh3D(MeshMixin, PhysicalObject):
             )
 
         return self._bounding_box
-
-    def volmdlr_primitives(self, **kwargs):
-        """Return self as volmdlr_primitives to enable babylonjs method."""
-        return [self]
-
-    def triangulation(self) -> "Mesh3D":
-        """Return self as triangulation to enable VolumeModel usage."""
-        return self
 
     def area(self) -> float:
         """
@@ -901,30 +919,6 @@ class Mesh3D(MeshMixin, PhysicalObject):
         :rtype: Trimesh
         """
         return Trimesh(self.vertices, self.triangles)
-
-    def to_babylon(self):
-        """
-        Convert the mesh to the Babylon.js format.
-
-        This method rounds the vertices to 6 decimal places and returns the mesh in a Babylon.js compatible format.
-        https://doc.babylonjs.com/how_to/custom
-
-        :return: A dictionary representing the mesh in Babylon.js format with 'positions' and 'indices' keys.
-        :rtype: dict
-        """
-        mesh = self.round_vertices(decimals=6)
-        babylon_mesh = {"positions": mesh.vertices.flatten().tolist(), "indices": mesh.triangles.flatten().tolist()}
-
-        return babylon_mesh
-
-    def babylon_meshes(self, *args, **kwargs):
-        """Return the mesh data as a dict compatible for Babylon.js."""
-
-        babylon_param = {"alpha": self.alpha, "name": self.name, "color": [*self.color]}
-        babylon_mesh = self.to_babylon()
-        babylon_mesh.update(babylon_param)
-
-        return [babylon_mesh]
 
     # SAVING
     def save_to_stl_file(self, filepath: str, scale_factor: float = 1000.0):
