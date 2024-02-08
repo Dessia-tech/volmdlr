@@ -485,7 +485,8 @@ class Voxelization(DiscreteRepresentation, PhysicalObject):
         :return: A voxelization created from the list of triangles.
         :rtype: VoxelizationType
         """
-        raise NotImplementedError("Voxelization is an abstract class and should not be use directly.")
+        vertices, triangles = cls._triangles_to_mesh_data(triangles)
+        return cls.from_mesh_data(vertices, triangles, voxel_size, name)
 
     @classmethod
     def from_shell(cls, shell: Shell3D, voxel_size: float, name: str = "") -> VoxelizationType:
