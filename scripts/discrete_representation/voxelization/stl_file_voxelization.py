@@ -2,13 +2,14 @@
 Example of voxelization from an STL file.
 """
 from volmdlr.discrete_representation import MatrixBasedVoxelization
-from volmdlr.stl import Stl
+from volmdlr.display import Mesh3D
+from volmdlr.core import VolumeModel
 
 VOXEL_SIZE = 0.0015
 STL_MODEL_FILE_PATH = "../../stl/simple.stl"
 
 # Load and convert the STL
-volume_model = Stl.load_from_file(STL_MODEL_FILE_PATH).to_volume_model()
+volume_model = VolumeModel([Mesh3D.from_stl_file(STL_MODEL_FILE_PATH)])
 
 # Voxelize the model
 voxelization = MatrixBasedVoxelization.from_volume_model(volume_model, VOXEL_SIZE, name="Voxelization")
