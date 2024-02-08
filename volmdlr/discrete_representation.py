@@ -19,10 +19,10 @@ from volmdlr.discrete_representation_compiled import (
     flood_fill_matrix_2d,
     flood_fill_matrix_3d,
     line_segments_to_pixels,
+    mesh_data_to_voxel_matrix,
     round_point_3d_to_digits,
     round_to_digits,
     triangle_intersects_voxel,
-    mesh_data_to_voxel_matrix,
     voxel_triangular_faces,
 )
 from volmdlr.edges import LineSegment2D
