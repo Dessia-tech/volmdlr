@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -
 
 #### surfaces.py
--
+- u_iso/v_iso: Returns the u_iso/v_iso curve of the surface.
 
 ### Fixed
 #### edges.py

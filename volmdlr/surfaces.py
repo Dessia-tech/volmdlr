@@ -2273,6 +2273,8 @@ class UPeriodicalSurface(Surface3D):
 
         if math.isclose(param_z1, param_z2, abs_tol=1e-4):
             circle3d = self.v_iso(param_z1)
+            if not circle3d:
+                print(True)
             if theta1 > theta2:
                 circle3d = circle3d.reverse()
             return [circle3d.trim(start3d, end3d)]
@@ -2514,13 +2516,7 @@ class CylindricalSurface3D(UPeriodicalSurface):
         :return: A list of Circle3D instances representing the generatrices of the cylinder.
         :rtype: List[Circle3D]
         """
-        circles = []
-        for j in range(number_circles):
-            circle_frame = self.frame.copy()
-            circle_frame.origin += (-0.5 + j / (number_circles - 1)) * length * circle_frame.w
-            circle = curves.Circle3D(circle_frame, self.radius)
-            circles.append(circle)
-        return circles
+        return [self.v_iso((-0.5 + j / (number_circles - 1)) * length) for j in range(number_circles)]
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(color='grey', alpha=0.5),
              length=None, **kwargs):
@@ -4259,15 +4255,6 @@ class ConicalSurface3D(UPeriodicalSurface):
             list_generatrices.append(wire)
         return list_generatrices
 
-    def get_circle_at_z(self, z):
-        """Gets a circle in the conical surface at given z position."""
-        i_frame = self.frame.translation(z * self.frame.w)
-        radius = abs(z * math.tan(self.semi_angle) + self.ref_radius)
-        if radius < 1e-15:
-            return None
-        circle = curves.Circle3D(i_frame, radius)
-        return circle
-
     def get_circle_generatrices(self, number_circles: int, z1, z2):
         """
         Get circles generatrix of the cone.
@@ -4278,7 +4265,7 @@ class ConicalSurface3D(UPeriodicalSurface):
         """
         circles = []
         for i_z in np.linspace(z1, z2, number_circles):
-            circle = self.get_circle_at_z(i_z)
+            circle = self.v_iso(i_z)
             if circle is None:
                 continue
             circles.append(circle)
@@ -4600,7 +4587,7 @@ class ConicalSurface3D(UPeriodicalSurface):
 
     def _hyperbola_helper(self, plane3d, hyperbola_center, hyperbola_positive_vertex):
         semi_major_axis = hyperbola_center.point_distance(hyperbola_positive_vertex)
-        circle = self.get_circle_at_z(2 * semi_major_axis)
+        circle = self.v_iso(2 * semi_major_axis)
         hyperbola_points = plane3d.circle_intersections(circle)
         if not hyperbola_points:
             return []
@@ -4825,13 +4812,13 @@ class ConicalSurface3D(UPeriodicalSurface):
         if line_intersections:
             local_surface = self.frame_mapping(self.frame, 'new')
             local_point = self.frame.global_to_local_coordinates(line_intersections[0])
-            local_circle = local_surface.get_circle_at_z(local_point.z)
+            local_circle = local_surface.v_iso(local_point.z)
             return [local_circle.frame_mapping(self.frame, 'old')]
         axis_line = curves.Line3D.from_point_and_vector(self.frame.origin, self.frame.w)
         if axis_line.point_distance(conical_surface.frame.origin) < 1e-6:
             return []
         intersections_points = [self.circle_intersections(circle) for circle in
-                                [conical_surface.get_circle_at_z(1), conical_surface.get_circle_at_z(2)]]
+                                [conical_surface.v_iso(1), conical_surface.v_iso(2)]]
         plane = Plane3D.from_3_points(intersections_points[0][0], intersections_points[0][1],
                                       intersections_points[1][0])
         return self.plane_intersections(plane)
@@ -4843,7 +4830,7 @@ class ConicalSurface3D(UPeriodicalSurface):
         :param conical_surface: intersecting conical surface.
         :return: list of intersecting curves.
         """
-        circle = self.get_circle_at_z(1)
+        circle = self.v_iso(1)
         circle_intersections = conical_surface.circle_intersections(circle)
         if not circle_intersections:
             return []
@@ -4909,8 +4896,10 @@ class ConicalSurface3D(UPeriodicalSurface):
         :return: A Circle 3D
         :rtype: :class:`curves.Circle3D`
         """
+        radius = abs(self.ref_radius + v * math.tan(self.semi_angle))
+        if radius < 1e-15:
+            return None
         frame = self.frame.translation(self.frame.w * v)
-        radius = self.ref_radius + v * math.tan(self.semi_angle)
         return curves.Circle3D(frame, radius)
 
 
@@ -4961,33 +4950,17 @@ class SphericalSurface3D(UVPeriodicalSurface):
         :param number_circles: number of circles to be created.
         :return: List of Circle 3D.
         """
-        circles = []
-        i_frame = volmdlr.Frame3D(self.frame.origin, self.frame.v, self.frame.w, self.frame.u)
-        for theta in np.linspace(0, volmdlr.TWO_PI / 2, number_circles):
-            i_frame_ = i_frame.rotation(self.frame.origin, self.frame.w, theta)
-            circle = curves.Circle3D(i_frame_, self.radius)
-            circles.append(circle)
-        return circles
+        return [self.u_iso(theta) for theta in np.linspace(0, math.pi, number_circles)]
 
     def _circle_generatrices_xy(self, number_circles: int):
         """
-        Gets the sphere circle generatrices in the a parallel planes.
+        Gets the sphere circle generatrices in parallel planes.
 
         :param number_circles: number of circles to be created.
         :return: List of Circle 3D.
         """
-        circles = []
-        initial_center = self.frame.origin.translation(-self.frame.w*self.radius)
-        for i in np.linspace(0, 2 * self.radius, number_circles):
-            center = initial_center.translation(self.frame.w * i)
-            frame = volmdlr.Frame3D(center, self.frame.u, self.frame.v, self.frame.w)
-            dist = center.point_distance(self.frame.origin)
-            if abs(self.radius - dist) < 1e-6:
-                continue
-            circle_radius = math.sqrt(self.radius ** 2 - dist ** 2)
-            circle = curves.Circle3D(frame, circle_radius)
-            circles.append(circle)
-        return circles
+        phi_angles = np.linspace(-0.5 * math.pi, 0.5 * math.pi, number_circles + 2)
+        return [self.v_iso(phi) for phi in phi_angles[1:-1]]
 
     @property
     def domain(self):
@@ -5949,9 +5922,11 @@ class SphericalSurface3D(UVPeriodicalSurface):
         :return: A Circle 3D
         :rtype: :class:`curves.Circle3D`
         """
+        radius = self.radius * math.cos(v)
+        if radius < 1e-15:
+            return None
         z = self.radius * math.sin(v)
         frame = self.frame.translation(self.frame.w * z)
-        radius = self.radius * math.cos(v)
         return curves.Circle3D(frame, radius)
 
 
@@ -6304,17 +6279,12 @@ class ExtrusionSurface3D(Surface3D):
         if math.isclose(u1, u2, abs_tol=1e-6):
             return [edges.LineSegment3D(start3d, end3d)]
         if math.isclose(param_z1, param_z2, abs_tol=1e-6):
-            primitive = self.edge.translation(self.direction * (param_z1 + param_z2) * 0.5)
-            if primitive.point_belongs(start3d) and primitive.point_belongs(end3d):
-                if math.isclose(abs(u1 - u2), 1.0, abs_tol=1e-6):
-                    if primitive.start.is_close(start3d) and primitive.end.is_close(end3d):
-                        return [primitive]
-                    if primitive.start.is_close(end3d) and primitive.end.is_close(start3d):
-                        return [primitive.reverse()]
-                primitive = primitive.trim(start3d, end3d)
-                return [primitive]
-        n = 10
-        degree = 3
+            curve = self.v_iso(param_z1)
+            if u1 > u2:
+                curve = curve.reverse()
+            return [curve.trim(start3d, end3d)]
+        n = 20
+        degree = 5
         points = [self.point2d_to_3d(point2d) for point2d in linesegment2d.discretization_points(number_points=n)]
         return [edges.BSplineCurve3D.from_points_interpolation(points, degree)]
 
@@ -6438,6 +6408,31 @@ class ExtrusionSurface3D(Surface3D):
         else:
             degree = 2
         return [edges.BSplineCurve2D.from_points_interpolation(points, degree)]
+
+    def u_iso(self, u: float) -> curves.Line3D:
+        """
+        Returns the u-iso curve of the surface.
+
+        :param u: The value of u where to extract the curve.
+        :type u: float
+        :return: A line 3D
+        :rtype: :class:`curves.Line3D`
+        """
+
+        point_at_u = self.point2d_to_3d(volmdlr.Point2D(u, 0.0))
+
+        return curves.Line3D.from_point_and_vector(point_at_u, self.frame.w)
+
+    def v_iso(self, v: float) -> curves.Curve:
+        """
+        Returns the v-iso curve of the surface.
+
+        :param v: The value of u where to extract the curve.
+        :type v: float
+        :return: A Curve
+        :rtype: :class:`curves.Curve`
+        """
+        return self.edge.curve().translation(self.direction * v)
 
 
 class RevolutionSurface3D(UPeriodicalSurface):
@@ -6835,7 +6830,7 @@ class RevolutionSurface3D(UPeriodicalSurface):
                     new_frame = volmdlr.Frame3D(intersections, self.frame.u, new_w.cross(self.frame.u), new_w)
                 else:
                     new_frame = volmdlr.Frame3D(intersections, self.frame.u, self.frame.v, self.frame.w)
-                return ConicalSurface3D(new_frame, semi_angle, self.name)
+                return ConicalSurface3D(new_frame, semi_angle, name=self.name)
             generatrix_line_direction = generatrix_line.unit_direction_vector()
             if self.axis.is_colinear_to(generatrix_line_direction):
                 radius = self.edge.point_distance(self.axis_point)
