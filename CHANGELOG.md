@@ -8,8 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v0.17.0 [Future]
 ### New Features
+
+#### curves.py
+- Ellipse3D: to_step
 #### edges.py
--
+- ArcEllipse3D/FullArcEllipse3D: to_step
 
 #### faces.py
 -
