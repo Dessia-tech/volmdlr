@@ -1836,7 +1836,7 @@ PLANE3D_OZX = Plane3D(volmdlr.OZXY)
 PLANE3D_OXZ = Plane3D(volmdlr.Frame3D(volmdlr.O3D, volmdlr.X3D, volmdlr.Z3D, volmdlr.Y3D))
 
 
-class PeriodicalSurface(Surface3D):
+class UPeriodicalSurface(Surface3D):
     """
     Abstract class for surfaces with two-pi periodicity that creates some problems.
     """
@@ -1856,6 +1856,12 @@ class PeriodicalSurface(Surface3D):
         :return: NotImplementedError: If the method is not implemented in the subclass.
         """
         raise NotImplementedError(f'point3d_to_2d is abstract and should be implemented in {self.__class__.__name__}')
+
+    def v_iso(self, v):
+        """
+        Abstract method.
+        """
+        raise NotImplementedError(f'v_iso is abstract and should be implemented in {self.__class__.__name__}')
 
     def _align_contours(self, inner_contour, theta_contours, z_outer_contour, z_inner_contour):
         """
@@ -2366,7 +2372,66 @@ class PeriodicalSurface(Surface3D):
         return points
 
 
-class CylindricalSurface3D(PeriodicalSurface):
+class UVPeriodicalSurface(UPeriodicalSurface):
+    """
+    Abstract class for surfaces with two-pi periodicity in both u and v parametric directions.
+    """
+
+    def point2d_to_3d(self, point2d):
+        """
+        Abstract method.
+        """
+        raise NotImplementedError(f'point2d_to_3d is abstract and should be implemented in {self.__class__.__name__}')
+
+    def point3d_to_2d(self, point3d):
+        """
+        Abstract method. Convert a 3D point to a 2D parametric point.
+
+        :param point3d: The 3D point to convert, represented by 3 coordinates (x, y, z).
+        :type point3d: `volmdlr.Point3D`
+        :return: NotImplementedError: If the method is not implemented in the subclass.
+        """
+        raise NotImplementedError(f'point3d_to_2d is abstract and should be implemented in {self.__class__.__name__}')
+
+    def u_iso(self, u):
+        """
+        Abstract method.
+        """
+        raise NotImplementedError(f'u_iso is abstract and should be implemented in {self.__class__.__name__}')
+
+    def v_iso(self, v):
+        """
+        Abstract method.
+        """
+        raise NotImplementedError(f'u_iso is abstract and should be implemented in {self.__class__.__name__}')
+
+    def linesegment2d_to_3d(self, linesegment2d):
+        """
+        Converts the parametric boundary representation into a 3D primitive.
+        """
+        if linesegment2d.name == "construction" or self.is_degenerated_brep(linesegment2d):
+            return None
+
+        theta1, phi1 = linesegment2d.start
+        theta2, phi2 = linesegment2d.end
+
+        start3d = self.point2d_to_3d(linesegment2d.start)
+        end3d = self.point2d_to_3d(linesegment2d.end)
+        if math.isclose(theta1, theta2, abs_tol=1e-4):
+            circle = self.u_iso(theta1)
+            if phi1 > phi2:
+                circle = circle.reverse()
+            return [circle.trim(start3d, end3d)]
+        if math.isclose(phi1, phi2, abs_tol=1e-4):
+            circle = self.v_iso(phi1)
+            if theta1 > theta2:
+                circle = circle.reverse()
+            return [circle.trim(start3d, end3d)]
+        points = [self.point2d_to_3d(point2d) for point2d in linesegment2d.discretization_points(number_points=10)]
+        return [edges.BSplineCurve3D.from_points_interpolation(points, degree=3).simplify]
+
+
+class CylindricalSurface3D(UPeriodicalSurface):
     """
     The local plane is defined by (theta, z).
 
@@ -2381,7 +2446,7 @@ class CylindricalSurface3D(PeriodicalSurface):
 
     def __init__(self, frame, radius: float, name: str = ''):
         self.radius = radius
-        PeriodicalSurface.__init__(self, frame=frame, name=name)
+        UPeriodicalSurface.__init__(self, frame=frame, name=name)
 
     def __hash__(self):
         return hash((self.__class__.__name__, self.frame, self.radius))
@@ -2962,7 +3027,7 @@ class CylindricalSurface3D(PeriodicalSurface):
         return curves.Circle3D(frame, self.radius)
 
 
-class ToroidalSurface3D(PeriodicalSurface):
+class ToroidalSurface3D(UVPeriodicalSurface):
     """
     The local plane is defined by (theta, phi).
 
@@ -2982,7 +3047,7 @@ class ToroidalSurface3D(PeriodicalSurface):
     def __init__(self, frame: volmdlr.Frame3D, major_radius: float, minor_radius: float, name: str = ''):
         self.major_radius = major_radius
         self.minor_radius = minor_radius
-        PeriodicalSurface.__init__(self, frame=frame, name=name)
+        UVPeriodicalSurface.__init__(self, frame=frame, name=name)
 
         self._bbox = None
 
@@ -3237,45 +3302,6 @@ class ToroidalSurface3D(PeriodicalSurface):
     def rectangular_cut(self, theta1: float, theta2: float, phi1: float, phi2: float, name: str = ""):
         """Deprecated method, Use ToroidalFace3D from_surface_rectangular_cut method."""
         raise AttributeError('Use ToroidalFace3D from_surface_rectangular_cut method')
-
-    def linesegment2d_to_3d(self, linesegment2d):
-        """
-        Converts the parametric boundary representation into a 3D primitive.
-        """
-        theta1, phi1 = linesegment2d.start
-        theta2, phi2 = linesegment2d.end
-
-        if math.isclose(theta1, theta2, abs_tol=1e-4):
-            center = self.frame.origin + self.major_radius * self.frame.u
-            center = center.rotation(self.frame.origin, self.frame.w, angle=theta1)  # todo Is this Correct?
-            u_vector = center - self.frame.origin
-            u_vector = u_vector.unit_vector()
-            if phi1 < phi2:
-                w_vector = u_vector.cross(self.frame.w)
-            else:
-                w_vector = self.frame.w.cross(u_vector)
-            v_vector = w_vector.cross(u_vector)
-            start3d = self.point2d_to_3d(linesegment2d.start)
-            frame = volmdlr.Frame3D(center, u_vector, v_vector, w_vector)
-            circle = curves.Circle3D(frame, start3d.point_distance(center))
-            if math.isclose(abs(phi1 - phi2), volmdlr.TWO_PI, abs_tol=1e-4):
-                return [edges.FullArc3D(circle, start_end=center + self.minor_radius * u_vector)]
-            # interior_point = self.point2d_to_3d(volmdlr.Point2D(theta1, 0.5 * (phi1 + phi2)))
-            return [edges.Arc3D(circle, start3d, self.point2d_to_3d(linesegment2d.end))]
-        if math.isclose(phi1, phi2, abs_tol=1e-4):
-            center = self.frame.origin + self.minor_radius * math.sin(phi1) * self.frame.w
-            if theta1 > theta2:
-                frame = volmdlr.Frame3D(center, self.frame.u, -self.frame.v, self.frame.u.cross(-self.frame.v))
-            else:
-                frame = volmdlr.Frame3D(center, self.frame.u, self.frame.v, self.frame.w)
-            start3d = self.point2d_to_3d(linesegment2d.start)
-            circle = curves.Circle3D(frame, start3d.point_distance(center))
-            if math.isclose(abs(theta1 - theta2), volmdlr.TWO_PI, abs_tol=1e-4):
-                start_end = center + self.frame.u * (self.minor_radius + self.major_radius)
-                return [edges.FullArc3D(circle=circle, start_end=start_end)]
-            return [edges.Arc3D(circle, start3d, self.point2d_to_3d(linesegment2d.end))]
-        points = [self.point2d_to_3d(point2d) for point2d in linesegment2d.discretization_points(number_points=10)]
-        return [edges.BSplineCurve3D.from_points_interpolation(points, degree=3).simplify]
 
     def bsplinecurve2d_to_3d(self, bspline_curve2d):
         """
@@ -4124,11 +4150,11 @@ class ToroidalSurface3D(PeriodicalSurface):
         """
         z = self.minor_radius * math.sin(v)
         frame = self.frame.translation(self.frame.w * z)
-        radius = self.major_radius + self.minor_radius * math.cos(v)
+        radius = abs(self.major_radius + self.minor_radius * math.cos(v))
         return curves.Circle3D(frame, radius)
 
 
-class ConicalSurface3D(PeriodicalSurface):
+class ConicalSurface3D(UPeriodicalSurface):
     """
     Describes a cone.
 
@@ -4167,7 +4193,7 @@ class ConicalSurface3D(PeriodicalSurface):
                  name: str = ''):
         self.semi_angle = semi_angle
         self.ref_radius = ref_radius
-        PeriodicalSurface.__init__(self, frame=frame, name=name)
+        UPeriodicalSurface.__init__(self, frame=frame, name=name)
 
     def __hash__(self):
         return hash((self.__class__.__name__, self.frame, self.semi_angle, self.ref_radius))
@@ -4888,7 +4914,7 @@ class ConicalSurface3D(PeriodicalSurface):
         return curves.Circle3D(frame, radius)
 
 
-class SphericalSurface3D(PeriodicalSurface):
+class SphericalSurface3D(UVPeriodicalSurface):
     """
     Defines a spherical surface.
 
@@ -4903,7 +4929,7 @@ class SphericalSurface3D(PeriodicalSurface):
 
     def __init__(self, frame, radius, name=''):
         self.radius = radius
-        PeriodicalSurface.__init__(self, frame=frame, name=name)
+        UVPeriodicalSurface.__init__(self, frame=frame, name=name)
 
         # Hidden Attributes
         self._bbox = None
@@ -5141,31 +5167,6 @@ class SphericalSurface3D(PeriodicalSurface):
         z_component = self.radius * np.sin(v_values) * z
 
         return center + common_term * (x_component + y_component) + z_component
-
-    def linesegment2d_to_3d(self, linesegment2d):
-        """
-        Converts a BREP line segment 2D onto a 3D primitive on the surface.
-        """
-        if linesegment2d.name == "construction":
-            return []
-        start = self.point2d_to_3d(linesegment2d.start)
-        interior = self.point2d_to_3d(0.5 * (linesegment2d.start + linesegment2d.end))
-        end = self.point2d_to_3d(linesegment2d.end)
-        if start.is_close(interior) and interior.is_close(end) and end.is_close(start):
-            return []
-        u_vector = start - self.frame.origin
-        u_vector = u_vector.unit_vector()
-        v_vector = interior - self.frame.origin
-        v_vector = v_vector.unit_vector()
-        normal = u_vector.cross(v_vector)
-        circle = curves.Circle3D(volmdlr.Frame3D(self.frame.origin, u_vector, v_vector, normal),
-                                 start.point_distance(self.frame.origin))
-        if start.is_close(end) or linesegment2d.length() == 2 * math.pi:
-            return [edges.FullArc3D(circle, start)]
-        arc = edges.Arc3D(circle, start, end)
-        if not arc.point_belongs(interior):
-            arc = edges.Arc3D(circle.reverse(), start, end)
-        return [arc]
 
     def contour3d_to_2d(self, contour3d, return_primitives_mapping: bool = False):
         """
@@ -6450,7 +6451,7 @@ class ExtrusionSurface3D(Surface3D):
         return [edges.BSplineCurve2D.from_points_interpolation(points, degree)]
 
 
-class RevolutionSurface3D(PeriodicalSurface):
+class RevolutionSurface3D(UPeriodicalSurface):
     """
     Defines a surface of revolution.
 
@@ -6484,7 +6485,7 @@ class RevolutionSurface3D(PeriodicalSurface):
         v_vector = w_vector.cross(u_vector)
         frame = volmdlr.Frame3D(origin=axis_point, u=u_vector, v=v_vector, w=w_vector)
 
-        PeriodicalSurface.__init__(self, frame=frame, name=name)
+        UPeriodicalSurface.__init__(self, frame=frame, name=name)
 
     def __hash__(self):
         return hash((self.__class__.__name__, self.edge, self.axis_point, self.axis))
@@ -6931,6 +6932,32 @@ class RevolutionSurface3D(PeriodicalSurface):
             end3d = self.point2d_to_3d(edge.end)
             return bool(start3d.is_close(end3d) and self.is_singularity_point(start3d))
         return False
+
+    def v_iso(self, u: float) -> curves.Curve:
+        """
+        Returns the u-iso curve of the surface.
+
+        :param u: The value of u where to extract the curve.
+        :type u: float
+        :return: A curve
+        :rtype: :class:`curves.Curve`
+        """
+        return self.edge.curve().rotation(self.axis_point, self.axis, u)
+
+    def v_iso(self, v: float) -> curves.Circle3D:
+        """
+        Returns the v-iso curve of the surface.
+
+        :param v: The value of u where to extract the curve.
+        :type v: float
+        :return: A Circle 3D
+        :rtype: :class:`curves.Circle3D`
+        """
+        point_at_v = self.point2d_to_3d(volmdlr.Point2D(0.0, v))
+        frame = self.frame.translation(self.frame.w * v)
+        axis_line = curves.Line3D.from_point_and_vector(self.axis_point, self.axis)
+        radius = axis_line.point_distance(point_at_v)
+        return curves.Circle3D(frame, radius)
 
 
 class BSplineSurface3D(Surface3D):
