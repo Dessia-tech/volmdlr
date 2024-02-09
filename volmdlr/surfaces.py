@@ -2292,6 +2292,15 @@ class UPeriodicalSurface(Surface3D):
             return True
         return False
 
+    def is_degenerated_brep(self, *args):
+        """
+        An edge is said to be degenerated when it corresponds to a single 3D point.
+        """
+        edge = args[0]
+        start3d = self.point2d_to_3d(edge.start)
+        end3d = self.point2d_to_3d(edge.end)
+        return bool(self.is_singularity_point(start3d) and start3d.is_close(end3d))
+
     def fix_undefined_brep_with_neighbors(self, edge, previous_edge, next_edge):
         """Uses neighbors edges to fix edge contained within the periodicity boundary."""
         delta_previous = previous_edge.end - edge.start
@@ -4787,15 +4796,6 @@ class ConicalSurface3D(UPeriodicalSurface):
             curves_.append(bspline)
         return curves_
 
-    def is_degenerated_brep(self, *args):
-        """
-        An edge is said to be degenerated when it corresponds to a single 3D point.
-        """
-        edge = args[0]
-        start3d = self.point2d_to_3d(edge.start)
-        end3d = self.point2d_to_3d(edge.end)
-        return bool(self.is_singularity_point(start3d) and start3d.is_close(end3d))
-
     def _conical_intersection_points(self, conical_surface: 'ConicalSurface3D', length: float):
         """
         Gets the points of intersections between the spherical surface and the toroidal surface.
@@ -5924,17 +5924,6 @@ class SphericalSurface3D(UVPeriodicalSurface):
             curves_.append(bspline)
         return curves_
 
-    def is_degenerated_brep(self, *args):
-        """
-        An edge is said to be degenerated when it corresponds to a single 3D point.
-        """
-        edge = args[0]
-        if "LineSegment2D" == edge.__class__.__name__:
-            start3d = self.point2d_to_3d(edge.start)
-            end3d = self.point2d_to_3d(edge.end)
-            return bool(start3d.is_close(end3d) and self.is_singularity_point(start3d))
-        return False
-
     def u_iso(self, u: float) -> curves.Circle3D:
         """
         Returns the u-iso curve of the surface.
@@ -6750,40 +6739,26 @@ class RevolutionSurface3D(UPeriodicalSurface):
         """
         Converts a BREP line segment 2D onto a 3D primitive on the surface.
         """
+        if linesegment2d.name == "construction" or self.is_degenerated_brep(linesegment2d):
+            return None
         start3d = self.point2d_to_3d(linesegment2d.start)
         end3d = self.point2d_to_3d(linesegment2d.end)
         theta1, abscissa1 = linesegment2d.start
         theta2, abscissa2 = linesegment2d.end
 
         if self.edge.point_at_abscissa(abscissa1).is_close(self.edge.point_at_abscissa(abscissa2)):
-            theta_i = 0.5 * (theta1 + theta2)
-            interior = self.point2d_to_3d(volmdlr.Point2D(theta_i, abscissa1))
-            if start3d.is_close(end3d):
-                theta_e = 0.25 * (theta1 + theta2)
-                extra_point = self.point2d_to_3d(volmdlr.Point2D(theta_e, abscissa1))
-                temp_arc = edges.Arc3D.from_3_points(start3d, extra_point, interior)
-                circle = temp_arc.circle
-                if theta1 > theta2:
-                    circle = temp_arc.circle.reverse()
-                return [edges.FullArc3D.from_curve(circle, start3d)]
-            return [edges.Arc3D.from_3_points(start3d, interior, end3d)]
+            circle = self.v_iso(abscissa1)
+            if theta1 > theta2:
+                circle = circle.reverse()
+            return [circle.trim(start3d, end3d)]
 
         if math.isclose(theta1, theta2, abs_tol=1e-3):
-            primitive = self.edge.rotation(self.axis_point, self.axis, 0.5 * (theta1 + theta2))
-            if primitive.point_belongs(start3d) and primitive.point_belongs(end3d):
-                if isinstance(self.edge, (curves.Line3D, edges.LineSegment3D)):
-                    return [edges.LineSegment3D(start3d, end3d)]
-                if self.edge.is_point_edge_extremity(start3d) and self.edge.is_point_edge_extremity(end3d):
-                    primitive = primitive.simplify
-                    if primitive.start.is_close(end3d) and primitive.end.is_close(start3d):
-                        primitive = primitive.reverse()
-                    return [primitive]
-                primitive = primitive.trim(start3d, end3d)
-                if abscissa1 > abscissa2:
-                    primitive = primitive.reverse()
-                return [primitive]
-        n = 10
-        degree = 3
+            curve = self.u_iso(theta1)
+            if abscissa1 > abscissa2:
+                curve = curve.reverse()
+            return [curve.trim(start3d, end3d)]
+        n = int(54 * abs(theta2 - theta1)/math.pi)
+        degree = 7
         points = [self.point2d_to_3d(point2d) for point2d in linesegment2d.discretization_points(number_points=n)]
         return [edges.BSplineCurve3D.from_points_interpolation(points, degree).simplify]
 
@@ -6922,18 +6897,7 @@ class RevolutionSurface3D(UPeriodicalSurface):
             lines.append(curves.Line2D(volmdlr.Point2D(a, d), volmdlr.Point2D(b, d)))
         return lines
 
-    def is_degenerated_brep(self, *args):
-        """
-        An edge is said to be degenerated when it corresponds to a single 3D point.
-        """
-        edge = args[0]
-        if "LineSegment2D" == edge.__class__.__name__:
-            start3d = self.point2d_to_3d(edge.start)
-            end3d = self.point2d_to_3d(edge.end)
-            return bool(start3d.is_close(end3d) and self.is_singularity_point(start3d))
-        return False
-
-    def v_iso(self, u: float) -> curves.Curve:
+    def u_iso(self, u: float) -> curves.Curve:
         """
         Returns the u-iso curve of the surface.
 
@@ -6942,6 +6906,8 @@ class RevolutionSurface3D(UPeriodicalSurface):
         :return: A curve
         :rtype: :class:`curves.Curve`
         """
+        if isinstance(self.edge, curves.Curve):
+            return self.edge.rotation(self.axis_point, self.axis, u)
         return self.edge.curve().rotation(self.axis_point, self.axis, u)
 
     def v_iso(self, v: float) -> curves.Circle3D:
