@@ -2273,8 +2273,6 @@ class UPeriodicalSurface(Surface3D):
 
         if math.isclose(param_z1, param_z2, abs_tol=1e-4):
             circle3d = self.v_iso(param_z1)
-            if not circle3d:
-                print(True)
             if theta1 > theta2:
                 circle3d = circle3d.reverse()
             return [circle3d.trim(start3d, end3d)]
