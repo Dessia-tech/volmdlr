@@ -51,7 +51,7 @@ class MeshMixin:
         return self.vertices.shape[1]
 
     # MANIPULATION
-    def resize(self, scale_factor: float) -> "MeshType":
+    def resize(self, scale_factor: float) -> MeshType:
         """
         Resize the Mesh instance by scaling its vertices.
 
@@ -63,7 +63,7 @@ class MeshMixin:
         """
         return self.__class__(self.vertices * scale_factor, self.triangles, name=self.name)
 
-    def round_vertices(self, decimals: int = 9) -> "MeshType":
+    def round_vertices(self, decimals: int = 9) -> MeshType:
         """
         Round the vertices of the Mesh instance to a given number of decimals.
 
@@ -77,7 +77,7 @@ class MeshMixin:
 
         return self.__class__(rounded_vertices, self.triangles, name=self.name)
 
-    def remove_degenerate_triangles(self, tol: float = 0.0) -> "MeshType":
+    def remove_degenerate_triangles(self, tol: float = 0.0) -> MeshType:
         """
         Remove degenerate triangles from the Mesh instance.
 
@@ -111,7 +111,7 @@ class MeshMixin:
         # Create a new Mesh3D instance with non-flat triangles
         return self.__class__(self.vertices, valid_triangles, name=self.name)
 
-    def merge(self, other: "MeshType", merge_vertices: bool = False, merge_triangles: bool = False) -> "MeshType":
+    def merge(self, other: MeshType, merge_vertices: bool = False, merge_triangles: bool = False) -> MeshType:
         """
         Merge two meshes.
 
@@ -145,7 +145,7 @@ class MeshMixin:
 
         return mesh
 
-    def merge_vertices(self) -> "MeshType":
+    def merge_vertices(self) -> MeshType:
         """
         Merge duplicated vertices in the Mesh instance and remap triangles accordingly.
 
@@ -160,7 +160,7 @@ class MeshMixin:
 
         return self.__class__(unique_vertices, remapped_triangles, name=self.name)
 
-    def merge_triangles(self) -> "MeshType":
+    def merge_triangles(self) -> MeshType:
         """
         Merge duplicated triangles in the Mesh instance.
 
@@ -176,7 +176,7 @@ class MeshMixin:
 
         return self.__class__(self.vertices, unique_triangles, name=self.name)
 
-    def split_shared_vertices(self) -> "MeshType":
+    def split_shared_vertices(self) -> MeshType:
         """
         Split the shared vertices between triangles in the Mesh instance.
 
@@ -191,7 +191,7 @@ class MeshMixin:
 
         return self.__class__(unmerged_vertices, unmerged_triangles, name=self.name)
 
-    def __add__(self, other: "MeshType") -> "MeshType":
+    def __add__(self, other: MeshType) -> MeshType:
         """
         Overload the "+" operator to merge two Mesh instances, without mutualization of vertices and triangles.
 
@@ -203,7 +203,7 @@ class MeshMixin:
         """
         return self.merge(other, merge_vertices=False, merge_triangles=False)
 
-    def __or__(self, other: "MeshType") -> "MeshType":
+    def __or__(self, other: MeshType) -> MeshType:
         """
         Overload the "|" operator to merge two Mesh instances, with mutualization of vertices and triangles.
 
@@ -217,8 +217,8 @@ class MeshMixin:
 
     @classmethod
     def from_meshes(
-        cls, meshes: List["MeshType"], merge_vertices: bool = False, merge_triangles: bool = False
-    ) -> "MeshType":
+        cls, meshes: List[MeshType], merge_vertices: bool = False, merge_triangles: bool = False
+    ) -> MeshType:
         """
         Merge two meshes.
 
@@ -307,7 +307,7 @@ class MeshMixin:
         return dict_
 
     @classmethod
-    def dict_to_object(cls, dict_: JsonSerializable, *args, **kwargs) -> "MeshType":
+    def dict_to_object(cls, dict_: JsonSerializable, *args, **kwargs) -> MeshType:
         """Overload of 'dict_to_object' for numpy usage and memory perf."""
 
         vertices = np.array(dict_["vertices"]).reshape(-1, 3)

@@ -474,7 +474,7 @@ class Voxelization(DiscreteRepresentation, PhysicalObject):
     @classmethod
     def from_mesh_data(
         cls, vertices: Iterable[Iterable[float]], faces: Iterable[Iterable[int]], voxel_size: float, name: str = ""
-    ) -> "VoxelizationType":
+    ) -> VoxelizationType:
         """
         Create a voxelization from mesh data.
 
