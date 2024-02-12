@@ -27,8 +27,9 @@ from volmdlr.discrete_compiled import (
 )
 from volmdlr.edges import LineSegment2D
 from volmdlr.faces import Face3D, Triangle3D
-from volmdlr.shells import ClosedTriangleShell3D, DisplayTriangleShell3D, Shell3D
+from volmdlr.shells import ClosedTriangleShell3D, Shell3D
 from volmdlr.wires import ClosedPolygon2D
+from volmdlr.display import Mesh3D
 
 # pylint: disable=no-name-in-module,too-many-lines,arguments-differ,unused-argument
 
@@ -604,12 +605,12 @@ class Voxelization(DiscreteRepresentation, PhysicalObject):
 
         return shell
 
-    def to_display_triangle_shell(self) -> DisplayTriangleShell3D:
+    def to_mesh(self) -> Mesh3D:
         """
-        Generate a closed triangle shell representing the voxelization.
+        Generate a Mesh3D representing the voxelization.
 
-        :return: A closed triangle shell representation of the voxelization.
-        :rtype: ClosedTriangleShell3D
+        :return: A mesh representation of the voxelization.
+        :rtype: Mesh3D
         """
         # Flatten and round the vertices array
         faces = self.to_triangles()
@@ -622,7 +623,7 @@ class Voxelization(DiscreteRepresentation, PhysicalObject):
         flattened_indices = unique_indices.reshape(-1, 3)
         faces = flattened_indices[: len(faces)]
 
-        return DisplayTriangleShell3D(vertices, faces, name=self.name)
+        return Mesh3D(vertices=vertices, triangles=faces, name=self.name)
 
     def volmdlr_primitives(self, **kwargs):
         """
@@ -631,9 +632,8 @@ class Voxelization(DiscreteRepresentation, PhysicalObject):
         :param kwargs: Additional keyword arguments.
 
         :return: A list of volmdlr primitives.
-        :rtype: List[ClosedTriangleShell3D]
         """
-        return [self.to_closed_triangle_shell()]
+        return [self.to_mesh().split_shared_vertices()]  # split shared vertices for shadow display purpose
 
     # HELPER METHODS
     @staticmethod
@@ -1184,8 +1184,8 @@ class PointBasedVoxelization(Voxelization):
 
         points_coords = np.array(list(self.voxel_centers))
 
-        display_triangle_shell = self.to_display_triangle_shell()
-        vertices, faces = display_triangle_shell.positions, display_triangle_shell.indices
+        mesh = self.to_mesh()
+        vertices, faces = mesh.vertices, mesh.triangles
         distances_array = signed_distance(points_coords, vertices, faces.astype(int), sign_type=3)[0]
 
         if len(self) == 1:
