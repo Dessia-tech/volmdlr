@@ -1827,25 +1827,29 @@ class OctreeBasedVoxelization(Voxelization):
 
     # CLASS METHODS
     @classmethod
-    def from_triangles(
-        cls, triangles: List[_Triangle3D], voxel_size: float, name: str = ""
+    def from_mesh_data(
+        cls, vertices: Iterable[Iterable[float]], faces: Iterable[Iterable[int]], voxel_size: float, name: str = ""
     ) -> "OctreeBasedVoxelization":
         """
-        Create a OctreeBasedVoxelization from a list of triangles.
+        Create a OctreeBasedVoxelization from mesh data.
 
-        :param triangles: The list of triangles to create the OctreeBasedVoxelization from.
-        :type triangles: list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]
+        :param vertices: The vertices of the mesh.
+        :type vertices: Iterable[Iterable[float]]
+        :param faces: The faces of the mesh, using vertices indexes.
+        :type faces: Iterable[Iterable[int]]
         :param voxel_size: The size of each voxel.
         :type voxel_size: float
-        :param name: Optional name for the OctreeBasedVoxelization.
+        :param name: Optional name for the voxelization.
         :type name: str
 
-        :return: A OctreeBasedVoxelization created from the list of triangles.
+        :return: A OctreeBasedVoxelization created from the mesh data.
         :rtype: OctreeBasedVoxelization
         """
-        triangles_np = np.array(triangles)
-        min_corner = np.min(np.min(triangles_np, axis=1), axis=0)
-        max_corner = np.max(np.max(triangles_np, axis=1), axis=0)
+        vertices = np.array(vertices)
+        faces = np.array(faces)
+
+        min_corner = np.amin(vertices, axis=0)
+        max_corner = np.amax(faces, axis=0)
 
         # Compute the corners in the implicit grid defined by the voxel size
         min_corner = (np.floor_divide(min_corner, voxel_size) - 2) * voxel_size
@@ -1860,7 +1864,9 @@ class OctreeBasedVoxelization(Voxelization):
         sizes = [round_to_digits(voxel_size * 2**i, DECIMALS) for i in range(max_depth, -1, -1)]
         sizes.append(round_to_digits(voxel_size * 1 / 2, DECIMALS))
 
-        octree = cls._subdivide_from_triangles(triangles, list(range(len(triangles))), center, sizes, 0, max_depth)
+        octree = cls._subdivide_from_mesh_data(vertices, faces, list(range(len(faces))), center, sizes, 0, max_depth)
+
+        triangles = cls._mesh_data_to_triangles(vertices, faces)
 
         return cls(octree, center, max_depth, voxel_size, triangles, name)
 
@@ -2476,15 +2482,16 @@ class OctreeBasedVoxelization(Voxelization):
 
     # HELPER CREATION METHODS
     @staticmethod
-    def _subdivide_from_triangles(
-        triangles: List[_Triangle3D],
+    def _subdivide_from_mesh_data(
+        vertices: NDArray[float],
+        faces: NDArray[int],
         intersecting_indices: List[int],
         center: _Point3D,
         sizes: List[float],
         depth: int,
         max_depth: int,
     ) -> Octree:
-        """Recursive method to create an OctreeBasedVoxelization from a list of triangles."""
+        """Recursive method to create an OctreeBasedVoxelization from mesh data."""
         if depth < max_depth:  # not yet reached max depth
             half_size = sizes[depth + 1]
             quarter_size = sizes[depth + 2]
@@ -2509,7 +2516,9 @@ class OctreeBasedVoxelization(Voxelization):
                             i
                             for i in intersecting_indices
                             if triangle_intersects_voxel(
-                                triangles[i], sub_voxel_center, (quarter_size, quarter_size, quarter_size)
+                                (vertices[faces[i][0]], vertices[faces[i][1]], vertices[faces[i][2]]),
+                                sub_voxel_center,
+                                (quarter_size, quarter_size, quarter_size),
                             )
                         ]
 
@@ -2521,8 +2530,9 @@ class OctreeBasedVoxelization(Voxelization):
                         else:
                             # If sub-voxel intersecting
                             sub_voxels.append(
-                                OctreeBasedVoxelization._subdivide_from_triangles(
-                                    triangles=triangles,
+                                OctreeBasedVoxelization._subdivide_from_mesh_data(
+                                    vertices=vertices,
+                                    faces=faces,
                                     intersecting_indices=sub_voxel_intersecting_indices,
                                     center=sub_voxel_center,
                                     sizes=sizes,
