@@ -987,7 +987,7 @@ class PointBasedVoxelization(Voxelization):
 
     # SERIALIZATION
     def to_dict(
-        self, use_pointers: bool = True, memo=None, path: str = "#", id_method=True, id_memo=None
+        self, use_pointers: bool = True, memo=None, path: str = "#", id_method=True, id_memo=None, **kwargs
     ) -> JsonSerializable:
         """Specific 'to_dict' method to allow serialization of a set."""
         dict_ = self.base_dict()
@@ -1436,7 +1436,7 @@ class MatrixBasedVoxelization(Voxelization):
 
     # SERIALIZATION
     def to_dict(
-        self, use_pointers: bool = True, memo=None, path: str = "#", id_method=True, id_memo=None
+        self, use_pointers: bool = True, memo=None, path: str = "#", id_method=True, id_memo=None, **kwargs
     ) -> JsonSerializable:
         """Specific 'to_dict' method to allow serialization of a numpy array."""
         dict_ = self.base_dict()
@@ -2998,7 +2998,7 @@ class OctreeBasedVoxelization(Voxelization):
 
     # SERIALIZATION
     def to_dict(
-        self, use_pointers: bool = True, memo=None, path: str = "#", id_method=True, id_memo=None
+        self, use_pointers: bool = True, memo=None, path: str = "#", id_method=True, id_memo=None, **kwargs
     ) -> JsonSerializable:
         """Specific 'to_dict' method."""
         dict_ = self.base_dict()
@@ -3510,7 +3510,7 @@ class PointBasedPixelization(Pixelization):
 
     # SERIALIZATION
     def to_dict(
-        self, use_pointers: bool = True, memo=None, path: str = "#", id_method=True, id_memo=None
+        self, use_pointers: bool = True, memo=None, path: str = "#", id_method=True, id_memo=None, **kwargs
     ) -> JsonSerializable:
         """Specific 'to_dict' method to allow serialization of a set."""
         dict_ = self.base_dict()
@@ -3836,7 +3836,7 @@ class MatrixBasedPixelization(Pixelization):
 
     # SERIALIZATION
     def to_dict(
-        self, use_pointers: bool = True, memo=None, path: str = "#", id_method=True, id_memo=None
+        self, use_pointers: bool = True, memo=None, path: str = "#", id_method=True, id_memo=None, **kwargs
     ) -> JsonSerializable:
         """Specific 'to_dict' method to allow serialization of a numpy array."""
         dict_ = self.base_dict()
