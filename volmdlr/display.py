@@ -314,7 +314,7 @@ class MeshMixin:
         triangles = np.array(dict_["triangles"]).reshape(-1, 3)
         name = dict_["name"]
 
-        return cls(vertices, triangles, name)
+        return cls(vertices=vertices, triangles=triangles, name=name)
 
     # HASH AND EQUALITY
     def __hash__(self):
