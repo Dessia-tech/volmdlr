@@ -1532,7 +1532,7 @@ class VolumeModel(dc.PhysicalObject):
             file.write(script)
         return filename
 
-    def to_mesh3d(self, merge_vertices: bool = True, merge_triangles: bool = True):
+    def to_mesh(self, merge_vertices: bool = True, merge_triangles: bool = True):
         """
         Converts to volume model to a Mesh3D object.
 
@@ -1554,7 +1554,7 @@ class VolumeModel(dc.PhysicalObject):
             DeprecationWarning
         )
 
-        mesh = self.to_mesh3d()
+        mesh = self.to_mesh()
 
         # from volmdlr import stl
         stl = volmdlr.stl.Stl.from_display_mesh(mesh)
@@ -1562,11 +1562,11 @@ class VolumeModel(dc.PhysicalObject):
 
     def to_stl(self, filepath: str):
         """Export a stl file of the model."""
-        self.to_mesh3d().save_to_stl_file(filepath)
+        self.to_mesh().save_to_stl_file(filepath)
 
     def to_stl_stream(self, stream: dcf.BinaryFile):
         """Converts the model into a stl stream file."""
-        self.to_mesh3d().save_to_stl_stream(stream)
+        self.to_mesh().save_to_stl_stream(stream)
         return stream
 
     def to_step(self, filepath: str):

@@ -66,7 +66,7 @@ class TestVolumeModel(unittest.TestCase):
         self.volume_model.to_stl("volume_model")
 
     def test_to_mesh3d(self):
-        mesh = self.volume_model.to_mesh3d()
+        mesh = self.volume_model.to_mesh()
 
         self.assertEqual(20, mesh.n_vertices)
         self.assertEqual(24, mesh.n_triangles)

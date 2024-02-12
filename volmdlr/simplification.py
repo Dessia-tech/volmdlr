@@ -56,7 +56,7 @@ class Simplify(DessiaObject):
     def _volume_model_to_mesh(volume_model: VolumeModel):
         """Convert the VolumeModel to a unique Mesh3D."""
 
-        return volume_model.to_mesh3d()
+        return volume_model.to_mesh()
 
 
 class TripleExtrusionSimplify(Simplify):

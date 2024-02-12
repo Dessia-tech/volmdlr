@@ -528,7 +528,7 @@ class Voxelization(DiscreteRepresentation, PhysicalObject):
         :return: A voxelization created from the VolumeModel.
         :rtype: VoxelizationType
         """
-        mesh = volume_model.to_mesh3d()
+        mesh = volume_model.to_mesh()
         return cls.from_mesh_data(mesh.vertices, mesh.triangles, voxel_size, name)
 
     @classmethod
