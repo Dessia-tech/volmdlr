@@ -1436,7 +1436,7 @@ class BSplineCurve(Edge):
         initial_condition_list = [u_min + index * (u_max - u_min) / (self.sample_size - 1) for index in indexes[:3]]
         for u0 in initial_condition_list:
             res = minimize(objective_function, np.array(u0), bounds=[(u_min, u_max)], jac=True)
-            if res.fun < 1e-6 or (res.success and abs(res.fun - distance) <= 1e-8):
+            if res.fun < 1e-6: # or (res.success and abs(res.fun - distance) <= 1e-8):
                 return float(res.x[0] * length)
 
         for patch, param in self.decompose(True):
