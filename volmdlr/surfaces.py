@@ -7257,6 +7257,9 @@ class BSplineSurface3D(Surface3D):
 
     @property
     def weights(self):
+        """
+        Gets the weights of the BSpline surface.
+        """
         if self._weights is None:
             return self._weights
         return self._weights.tolist()
