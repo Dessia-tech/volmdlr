@@ -986,9 +986,7 @@ class PointBasedVoxelization(Voxelization):
         return self.__class__(intersecting_voxels, self.voxel_size)
 
     # SERIALIZATION
-    def to_dict(
-        self, use_pointers: bool = True, memo=None, path: str = "#", id_method=True, id_memo=None, **kwargs
-    ) -> JsonSerializable:
+    def to_dict(self, *args, **kwargs) -> JsonSerializable:
         """Specific 'to_dict' method to allow serialization of a set."""
         dict_ = self.base_dict()
 
@@ -999,14 +997,7 @@ class PointBasedVoxelization(Voxelization):
         return dict_
 
     @classmethod
-    def dict_to_object(
-        cls,
-        dict_: JsonSerializable,
-        force_generic: bool = False,
-        global_dict=None,
-        pointers_memo: Dict[str, Any] = None,
-        path: str = "#",
-    ) -> "PointBasedVoxelization":
+    def dict_to_object(cls, dict_: JsonSerializable, *args, **kwargs) -> "PointBasedVoxelization":
         """Specific 'dict_to_object' method to allow deserialization of a set."""
 
         voxel_centers = set(tuple(voxel_center) for voxel_center in dict_["voxel_centers"])
@@ -1435,9 +1426,7 @@ class MatrixBasedVoxelization(Voxelization):
         return inner_filled_voxel_matrix
 
     # SERIALIZATION
-    def to_dict(
-        self, use_pointers: bool = True, memo=None, path: str = "#", id_method=True, id_memo=None, **kwargs
-    ) -> JsonSerializable:
+    def to_dict(self, *args, **kwargs) -> JsonSerializable:
         """Specific 'to_dict' method to allow serialization of a numpy array."""
         dict_ = self.base_dict()
 
@@ -1449,14 +1438,7 @@ class MatrixBasedVoxelization(Voxelization):
         return dict_
 
     @classmethod
-    def dict_to_object(
-        cls,
-        dict_: JsonSerializable,
-        force_generic: bool = False,
-        global_dict=None,
-        pointers_memo: Dict[str, Any] = None,
-        path: str = "#",
-    ) -> "MatrixBasedVoxelization":
+    def dict_to_object(cls, dict_: JsonSerializable, *args, **kwargs) -> "MatrixBasedVoxelization":
         """Specific 'dict_to_object' method to allow deserialization of a numpy array."""
 
         matrix = np.array(dict_["matrix"])
@@ -3007,9 +2989,7 @@ class OctreeBasedVoxelization(Voxelization):
         return octree_1, octree_2
 
     # SERIALIZATION
-    def to_dict(
-        self, use_pointers: bool = True, memo=None, path: str = "#", id_method=True, id_memo=None, **kwargs
-    ) -> JsonSerializable:
+    def to_dict(self, *args, **kwargs) -> JsonSerializable:
         """Specific 'to_dict' method."""
         dict_ = self.base_dict()
 
@@ -3023,14 +3003,7 @@ class OctreeBasedVoxelization(Voxelization):
         return dict_
 
     @classmethod
-    def dict_to_object(
-        cls,
-        dict_: JsonSerializable,
-        force_generic: bool = False,
-        global_dict=None,
-        pointers_memo: Dict[str, Any] = None,
-        path: str = "#",
-    ) -> "OctreeBasedVoxelization":
+    def dict_to_object(cls, dict_: JsonSerializable, *args, **kwargs) -> "OctreeBasedVoxelization":
         """Specific 'dict_to_object' method."""
 
         octree = dict_["octree"]
@@ -3519,9 +3492,7 @@ class PointBasedPixelization(Pixelization):
         return self.from_matrix_based_pixelization(self.to_matrix_based_pixelization().fill_enclosed_pixels())
 
     # SERIALIZATION
-    def to_dict(
-        self, use_pointers: bool = True, memo=None, path: str = "#", id_method=True, id_memo=None, **kwargs
-    ) -> JsonSerializable:
+    def to_dict(self, *args, **kwargs) -> JsonSerializable:
         """Specific 'to_dict' method to allow serialization of a set."""
         dict_ = self.base_dict()
 
@@ -3532,14 +3503,7 @@ class PointBasedPixelization(Pixelization):
         return dict_
 
     @classmethod
-    def dict_to_object(
-        cls,
-        dict_: JsonSerializable,
-        force_generic: bool = False,
-        global_dict=None,
-        pointers_memo: Dict[str, Any] = None,
-        path: str = "#",
-    ) -> "PointBasedPixelization":
+    def dict_to_object(cls, dict_: JsonSerializable, *args, **kwargs) -> "PointBasedPixelization":
         """Specific 'dict_to_object' method to allow deserialization of a set."""
 
         pixel_centers = set(tuple(pixel_center) for pixel_center in dict_["pixel_centers"])
@@ -3845,9 +3809,7 @@ class MatrixBasedPixelization(Pixelization):
         return inner_filled_pixel_matrix
 
     # SERIALIZATION
-    def to_dict(
-        self, use_pointers: bool = True, memo=None, path: str = "#", id_method=True, id_memo=None, **kwargs
-    ) -> JsonSerializable:
+    def to_dict(self, *args, **kwargs) -> JsonSerializable:
         """Specific 'to_dict' method to allow serialization of a numpy array."""
         dict_ = self.base_dict()
 
@@ -3859,14 +3821,7 @@ class MatrixBasedPixelization(Pixelization):
         return dict_
 
     @classmethod
-    def dict_to_object(
-        cls,
-        dict_: JsonSerializable,
-        force_generic: bool = False,
-        global_dict=None,
-        pointers_memo: Dict[str, Any] = None,
-        path: str = "#",
-    ) -> "MatrixBasedPixelization":
+    def dict_to_object(cls, dict_: JsonSerializable, *args, **kwargs) -> "MatrixBasedPixelization":
         """Specific 'dict_to_object' method to allow deserialization of a numpy array."""
 
         matrix = np.array(dict_["matrix"])
