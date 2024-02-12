@@ -4,7 +4,7 @@ Class for discrete representations of volmdlr models (voxelization for 3D geomet
 import itertools
 import math
 import warnings
-from typing import Any, Dict, Iterable, List, Set, Tuple, TypeVar, Union
+from typing import Dict, Iterable, List, Set, Tuple, TypeVar, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
