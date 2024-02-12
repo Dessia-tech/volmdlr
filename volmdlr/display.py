@@ -176,7 +176,7 @@ class MeshMixin:
 
         return self.__class__(self.vertices, unique_triangles, name=self.name)
 
-    def split_shared_vertices(self) -> "MeshMixin":
+    def split_shared_vertices(self) -> MeshType:
         """
         Split the shared vertices between triangles in the Mesh instance.
 
