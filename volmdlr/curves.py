@@ -2425,6 +2425,14 @@ class Ellipse2D(EllipseMixin, ClosedCurve):
         return -a*x*math.sin(t) + b*y*math.cos(t) + a*a*math.sin(t)*math.cos(t) - b*b*math.sin(t)*math.cos(t)
 
     def point_distance_1(self,point):
+        """
+        Calculates the distance between an Ellipse 2d and point 2d.
+
+        :param point: Other point to calculate distance.
+        :type point: volmdlr.Point2D.
+        :return: The distance between ellipse and point
+        :rtype: float.
+        """
         point_local = self.frame.global_to_local_coordinates(point)
         a = self.major_axis
         b = self.minor_axis
