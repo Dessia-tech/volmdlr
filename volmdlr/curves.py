@@ -2392,6 +2392,87 @@ class Ellipse2D(EllipseMixin, ClosedCurve):
         start = self.point_at_abscissa(0.0)
         return vm_common_operations.get_point_distance_to_edge(self, point, start, start)
 
+    def point_at_polar_abscissa(self,angle):
+        """
+        Given an angle as abscissa return a point on ellipse in local coordinates .
+
+        :param angle: Angle to calculate the point on ellipse.
+        :type angle: float.
+        :return: Point2D.
+        """
+        a = self.major_axis
+        b = self.minor_axis
+        return volmdlr.Point2D(a*math.cos(angle),b*math.sin(angle))
+
+
+    def intern_product(self, point, abscissa):
+        """
+        Given an angle as abscissa and a point, return the intern product between the tangent vector on ellipse and the
+         vector between de point on ellipse and the other point.
+
+        :param abscissa: Angle to calculate the point on ellipse.
+        :type abscissa: float.
+        :param point: Other point in local coordinates
+        :type point: Point2D.
+        :return: float
+        """
+
+        a = self.major_axis
+        b = self.minor_axis
+        x = point.x
+        y = point.y
+        t = abscissa
+        return -a*x*math.sin(t) + b*y*math.cos(t) + a*a*math.sin(t)*math.cos(t) - b*b*math.sin(t)*math.cos(t)
+
+    def point_distance_1(self,point):
+        point_local = self.frame.global_to_local_coordinates(point)
+        a = self.major_axis
+        b = self.minor_axis
+        x = point_local.x
+        y = point_local.y
+
+        if x >= 0:
+            if y >= 0:
+                initial_angle = 0
+                final_angle = math.pi/2
+            else:
+                initial_angle = (3/2)*math.pi
+                final_angle = 2*math.pi
+        else:
+            if y > 0:
+                initial_angle = math.pi / 2
+                final_angle = math.pi
+            else:
+                initial_angle = math.pi
+                final_angle = (3/2)*math.pi
+
+        if y == 0 and  abs(x) < a :
+            if x == 0:
+                return b
+            else:
+                t0 = math.acos((a*x)/(a*a - b*b))
+                ellipse_point0 = self.point_at_polar_abscissa(t0)
+                ellipse_point1 = self.point_at_polar_abscissa(initial_angle)
+                if ellipse_point0.point_distance(point_local) < ellipse_point1.point_distance(point_local):
+                    return ellipse_point0.point_distance(point_local)
+                else:
+                    return ellipse_point1.point_distance(point_local)
+        j = 0
+        #bisection method
+        while j < 100:
+            t_ = (initial_angle + final_angle) / 2
+            f = self.intern_product(point_local, t_)
+            if f > 0:
+                initial_angle = t_
+            else:
+                final_angle = t_
+            if abs(f) <= 1e-7:
+                j = 1000
+            j += 1
+        ellipse_point_ = self.point_at_polar_abscissa(t_)
+        return ellipse_point_.point_distance(point_local)
+
+
     def line_intersections(self, line: 'Line2D', abs_tol: float = 1e-6):
         """
         Calculates the intersections between a line and an ellipse.
