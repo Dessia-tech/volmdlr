@@ -25,11 +25,11 @@ from volmdlr.discrete_compiled import (
     triangle_intersects_voxel,
     voxel_triangular_faces,
 )
+from volmdlr.display import Mesh3D
 from volmdlr.edges import LineSegment2D
 from volmdlr.faces import Face3D, Triangle3D
-from volmdlr.shells import ClosedTriangleShell3D, Shell3D
+from volmdlr.shells import ClosedTriangleShell3D, DisplayTriangleShell3D, Shell3D
 from volmdlr.wires import ClosedPolygon2D
-from volmdlr.display import Mesh3D
 
 # pylint: disable=no-name-in-module,too-many-lines,arguments-differ,unused-argument
 
