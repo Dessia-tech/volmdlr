@@ -654,6 +654,30 @@ class Voxelization(DiscreteRepresentation, PhysicalObject):
         return unique_vertices, faces
 
     @staticmethod
+    def _mesh_data_to_triangles(
+        vertices: Iterable[Iterable[float]], faces: Iterable[Iterable[int]]
+    ) -> List[_Triangle3D]:
+        """
+        Helper method to convert mesh data to a list of triangles.
+
+        :param vertices: The vertices of the mesh.
+        :type vertices: Iterable[Iterable[float]]
+        :param faces: The faces of the mesh, using vertices indexes.
+        :type faces: Iterable[Iterable[int]]
+
+        :return: The list of triangles extracted from the triangulated primitives of the VolumeModel.
+        :rtype: List[Triangle]
+        """
+        triangles = []
+
+        points = list(vertices)
+
+        for i1, i2, i3 in faces:
+            triangles.append((tuple(points[i1]), tuple(points[i2]), tuple(points[i3])))
+
+        return triangles
+
+    @staticmethod
     def voxel_to_bounding_box(voxel_center: _Point3D, voxel_size: float) -> BoundingBox:
         """
         Creates a bounding box from a voxel.
