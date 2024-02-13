@@ -22,7 +22,6 @@ cimport numpy as np
 import plot_data
 import volmdlr
 from dessia_common.core import DessiaObject
-from dessia_common.schemas.core import BuiltinProperty, SchemaAttribute, ClassSchema, Schema
 from matplotlib.patches import FancyArrowPatch
 from mpl_toolkits.mplot3d import proj3d
 
@@ -474,31 +473,6 @@ class Arrow3D(FancyArrowPatch):
         return ax
 
 
-class VectorSchema(Schema):
-    def __init__(self, class_, annotations, attributes):
-        self.classname = f"{class_.__module__}.{class_.__name__}"
-
-        super().__init__(annotations=annotations, attributes=attributes)
-
-    def to_dict(self, **kwargs):
-        dict_ = super().to_dict()
-        dict_.update({"standalone_in_db": False, "classes": [self.classname]})
-        return dict_
-
-class Vector2Schema(VectorSchema):
-    def __init__(self, class_):
-        annotations = {"x": float, "y": float, "name": str}
-        attributes = [SchemaAttribute("x"), SchemaAttribute("y"), SchemaAttribute("name", default_value="")]
-        super().__init__(class_=class_, annotations=annotations, attributes=attributes)
-
-class Vector3Schema(Schema):
-    def __init__(self, class_):
-        annotations = {"x": float, "y": float, "z": float, "name": str}
-        attributes = [SchemaAttribute("x"), SchemaAttribute("y"),
-                      SchemaAttribute("z"), SchemaAttribute("name", default_value="")]
-        super().__init__(class_=class_, annotations=annotations, attributes=attributes)
-
-
 cdef class Vector:
     """
     Abstract class of vector
@@ -603,15 +577,6 @@ cdef class Vector:
 
     def to_vector(self):
         return self
-
-    @classmethod
-    def raw_schema(cls):
-        raise NotImplementedError("Cannot compute schema for base class 'Vector'. Should be one of its children class")
-
-    @classmethod
-    def schema(cls):
-        """ Write raw schema as a dict in order to make it jsonable. """
-        return cls.raw_schema().to_dict()
 
 
 cdef class Vector2D(Vector):
@@ -752,11 +717,6 @@ cdef class Vector2D(Vector):
             https://documentation.dessia.tech/dessia_common/customizing.html#overloading-the-dict-to-object-method
         """
         return cls(dict_["x"], dict_["y"], dict_.get("name", ""))
-
-    @classmethod
-    def raw_schema(cls):
-        """ Custom Schema implementation in order to allow vectors and points to be used in forms. """
-        return Vector2Schema(cls)
 
     def copy(self, deep=True, memo=None):
         """
@@ -1559,11 +1519,6 @@ cdef class Vector3D(Vector):
         """
 
         return cls(dict_["x"], dict_["y"], dict_["z"], dict_.get("name", ""))
-
-    @classmethod
-    def raw_schema(cls):
-        """ Custom Schema implementation in order to allow vectors and points to be used in forms. """
-        return Vector3Schema(cls)
 
     def dot(self, other_vector):
         """
