@@ -3073,7 +3073,8 @@ class Arc2D(ArcMixin, Edge):
     def arc_intersections(self, arc, abs_tol: float = 1e-6):
         """Intersections between two arc 2d."""
         circle_intersections = vm_utils_intersections.get_circle_intersections(self.circle, arc.circle)
-        arc_intersections = [inter for inter in circle_intersections if self.point_belongs(inter, abs_tol)]
+        arc_intersections = [inter for inter in circle_intersections
+                             if self.point_belongs(inter, abs_tol) and arc.point_belongs(inter, abs_tol)]
         return arc_intersections
 
     def arcellipse_intersections(self, arcellipse, abs_tol: float = 1e-6):
@@ -4980,8 +4981,10 @@ class BSplineCurve3D(BSplineCurve):
 
     def _bounding_box(self):
         """Creates a bounding box from the bspline points."""
-        xmin, ymin, zmin = self.ctrlpts.min(axis=0)
-        xmax, ymax, zmax = self.ctrlpts.max(axis=0)
+        if self._eval_points is None:
+            self.evaluate()
+        xmin, ymin, zmin = self._eval_points.min(axis=0)
+        xmax, ymax, zmax = self._eval_points.max(axis=0)
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
     def get_bounding_element(self):
@@ -6244,6 +6247,16 @@ class FullArc3D(FullArcMixin, Arc3D):
         if distance_center_lineseg > self.radius:
             return []
         return self.circle.linesegment_intersections(linesegment3d)
+
+    def fullarc_intersections(self, fullarc3d, abs_tol: float = 1e-6):
+        """
+        Calculates the intersections between two full arc 3d.
+
+        :param fullarc3d: linesegment 3d to verify intersections.
+        :param abs_tol: tolerance.
+        :return: list of points 3d, if there are any intersections, an empty list if otherwise.
+        """
+        return self.circle.circle_intersections(fullarc3d.circle, abs_tol)
 
     def get_reverse(self):
         """

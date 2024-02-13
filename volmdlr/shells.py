@@ -1218,8 +1218,8 @@ class ClosedShell3D(Shell3D):
                     continue
                 break
             else:
-                break
-            continue
+                continue
+            break
         is_inside = True
         if count % 2 == 0:
             is_inside = False
@@ -1251,12 +1251,13 @@ class ClosedShell3D(Shell3D):
         and as the values the resulting primitive from the two intersecting faces.
         It is done, so it is not needed to calculate the same intersecting primitive twice.
         """
-        debug_face = DessiaObject.from_json('/Users/wirajandasilva/Downloads/test_debug_planeface_itrs.json')
+        # debug_face = DessiaObject.from_json('/Users/wirajandasilva/Downloads/test_bspline_inters_boolops_bug.json')
         face_combinations1 = {face: [] for face in self.faces}
         face_combinations2 = {face: [] for face in shell2.faces}
         for face1 in self.faces:
-            if face1 == debug_face:
-                print(True)
+            # if face1 == debug_face:
+            #     print(True)
+
             for face2 in shell2.faces:
                 if face1.surface3d.is_coincident(face2.surface3d, abs_tol=tol):
                     contours1, contours2 = face1.get_coincident_face_intersections(face2)
@@ -1344,10 +1345,12 @@ class ClosedShell3D(Shell3D):
         :param list_coincident_faces: list of coincident faces.
         :return: list of new faces for union of two closed shell3.
         """
-        debug_face = DessiaObject.from_json('/Users/wirajandasilva/Downloads/test_debug_planeface_itrs.json')
+        # debug_face = DessiaObject.from_json('/Users/wirajandasilva/Downloads/test_bspline_inters_boolops_bug.json')
         faces = []
         for face in intersecting_faces:
-            if face == debug_face:
+            # if face == debug_face:
+            #     print(True)
+            if isinstance(face, volmdlr.faces.ToroidalFace3D):
                 print(True)
             new_faces = face.set_operations_new_faces(dict_faces_intersections)
             faces = self.set_operations_valid_exterior_faces(new_faces, faces, list_coincident_faces, shell2)
@@ -1492,7 +1495,7 @@ class ClosedShell3D(Shell3D):
             points = [center_of_mass]
 
         if face.surface2d.inner_contours:
-            normal_0 = face.surface2d.outer_contour.primitives[0].normal_vector()
+            normal_0 = face.surface2d.outer_contour.primitives[0].normal_vector(0.0)
             middle_point_0 = face.surface2d.outer_contour.primitives[0].middle_point()
             point1 = middle_point_0 + 0.0001 * normal_0
             point2 = middle_point_0 - 0.0001 * normal_0

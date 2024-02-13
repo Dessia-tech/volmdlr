@@ -117,6 +117,15 @@ class TestPlaneFace3D(unittest.TestCase):
         for area, expected_area in zip(areas, expected_areas):
             self.assertAlmostEqual(area, expected_area, 6)
 
+        #test2
+        expected_areas = [9.258187921229666e-06, 2.288892256789781e-05, 3.151836356237283e-05, 7.207171438556813e-05, 0.00011239889670704745]
+        face, intersections = faces.PlaneFace3D.from_json(os.path.join(folder, 'test_set_operations_new_faces090224.json')).primitives
+        divide_face = face.set_operations_new_faces({face: intersections})
+        self.assertEqual(len(divide_face), 5)
+        areas = sorted(f.area() for f in divide_face)
+        for area, expected_area in zip(areas, expected_areas):
+            self.assertAlmostEqual(area, expected_area, 6)
+
     def test_cylindricalface_intersections(self):
         R = 0.15
         cylindricalsurface = surfaces.CylindricalSurface3D(volmdlr.OXYZ, R)

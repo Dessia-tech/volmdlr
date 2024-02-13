@@ -244,7 +244,7 @@ class EdgeStyle:
     dashed: bool = True
     linestyle: str = '-'
     linewidth: float = 1
-    equal_aspect: bool = True
+    equal_aspect: bool = False
 
 
 class Primitive3D(dc.PhysicalObject):

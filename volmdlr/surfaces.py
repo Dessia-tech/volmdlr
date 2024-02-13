@@ -34,7 +34,7 @@ from volmdlr.nurbs.operations import (split_surface_u, split_surface_v, decompos
 from volmdlr.utils.parametric import (array_range_search, repair_start_end_angle_periodicity, angle_discontinuity,
                                       find_parametric_point_at_singularity, is_isocurve,
                                       verify_repeated_parametric_points, repair_undefined_brep)
-from OCP.GeomAPI import GeomAPI_IntSS
+from OCP.GeomAPI import GeomAPI_IntSS, GeomAPI_IntCS
 from OCP.Precision import Precision
 
 
@@ -1328,6 +1328,19 @@ class Surface3D(DessiaObject):
         if self.point_distance(point3d) < abs_tol:
             return True
         return False
+
+    def generic_surface_intersections_with_occt(self, other_surface):
+        occt_self_surface = getattr(to_occt, 'volmdlr_' + self.__class__.__name__.lower()[:-2] + '_to_occt')(
+            self)
+        occt_other_surface = getattr(
+            to_occt, 'volmdlr_' + other_surface.__class__.__name__.lower()[:-2] + '_to_occt')(other_surface)
+        api_intss = GeomAPI_IntSS(occt_self_surface, occt_other_surface, Precision.Confusion_s())
+        intersections = [api_intss.Line(i + 1) for i in range(api_intss.NbLines())]
+        surface_intersections = []
+        for intersection in intersections:
+            function = getattr(from_occt, intersection.__class__.__name__.lower()[5:] + '3d_from_occt')
+            surface_intersections.append(function(intersection))
+        return surface_intersections
 
 
 class Plane3D(Surface3D):
@@ -3786,26 +3799,27 @@ class ToroidalSurface3D(PeriodicalSurface):
         :param cylindrical_surface: other cylindrical surface.
         :return: List os curves intersecting Torus.
         """
-        line = curves.Line3D.from_point_and_vector(cylindrical_surface.frame.origin, cylindrical_surface.frame.w)
-        distance_to_self_origin = line.point_distance(self.frame.origin)
-
-        if math.isclose(abs(self.frame.w.dot(cylindrical_surface.frame.w)), 1.0, abs_tol=1e-6) and \
-                math.isclose(distance_to_self_origin, 0.0, abs_tol=1e-6):
-            if cylindrical_surface.radius < self.minor_radius:
-                return []
-            if math.isclose(cylindrical_surface.radius, self.minor_radius, abs_tol=1e-6):
-                return [curves.Circle3D(self.frame, self.minor_radius)]
-        intersection_points = self._cylinder_intersection_points(cylindrical_surface)
-        inters_points = vm_common_operations.separate_points_by_closeness(intersection_points)
-        curves_ = []
-        for list_points in inters_points:
-            bspline = edges.BSplineCurve3D.from_points_interpolation(list_points, 7, centripetal=False)
-            if isinstance(bspline.simplify, edges.FullArc3D):
-                curves_.append(bspline.simplify)
-                continue
-            curves_.append(bspline)
-
-        return curves_
+        return self.generic_surface_intersections_with_occt(cylindrical_surface)
+        # line = curves.Line3D.from_point_and_vector(cylindrical_surface.frame.origin, cylindrical_surface.frame.w)
+        # distance_to_self_origin = line.point_distance(self.frame.origin)
+        #
+        # if math.isclose(abs(self.frame.w.dot(cylindrical_surface.frame.w)), 1.0, abs_tol=1e-6) and \
+        #         math.isclose(distance_to_self_origin, 0.0, abs_tol=1e-6):
+        #     if cylindrical_surface.radius < self.minor_radius:
+        #         return []
+        #     if math.isclose(cylindrical_surface.radius, self.minor_radius, abs_tol=1e-6):
+        #         return [curves.Circle3D(self.frame, self.minor_radius)]
+        # intersection_points = self._cylinder_intersection_points(cylindrical_surface)
+        # inters_points = vm_common_operations.separate_points_by_closeness(intersection_points)
+        # curves_ = []
+        # for list_points in inters_points:
+        #     bspline = edges.BSplineCurve3D.from_points_interpolation(list_points, 7, centripetal=False)
+        #     if isinstance(bspline.simplify, edges.FullArc3D):
+        #         curves_.append(bspline.simplify)
+        #         continue
+        #     curves_.append(bspline)
+        #
+        # return curves_
 
     def is_coincident(self, surface3d, abs_tol: float = 1e-6):
         """
@@ -9499,6 +9513,13 @@ class BSplineSurface3D(Surface3D):
 
         return (u1, v1), (u2, v2)  # (uv1, uv2)
 
+    def line_intersections(self, line: curves.Line3D):
+        occt_bsplinesurface = to_occt.volmdlr_bsplinesurface_to_occt(self)
+        occt_line = to_occt.volmdlr_line3d_to_occt(line)
+        api_inters = GeomAPI_IntCS(occt_line, occt_bsplinesurface)
+        intersections = [from_occt.point3d_from_occt(api_inters.Point(i + 1)) for i in range(api_inters.NbPoints())]
+        return intersections
+
     def plane_intersections(self, plane3d):
         """
         Compute intersection points between a Bspline surface and a plane 3d.
@@ -9528,7 +9549,7 @@ class BSplineSurface3D(Surface3D):
     def bsplinesurface_intersections_helper(self, surface):
         occt_bsplinesurface = to_occt.volmdlr_bsplinesurface_to_occt(self)
         occt_other_surface = getattr(to_occt, 'volmdlr_'+surface.__class__.__name__.lower()[:-2]+'_to_occt')(surface)
-        api_intss = GeomAPI_IntSS(occt_bsplinesurface, occt_other_surface, Precision.Confusion_s())
+        api_intss = GeomAPI_IntSS(occt_bsplinesurface, occt_other_surface, Precision.Intersection_s())
         intersections = [api_intss.Line(i + 1) for i in range(api_intss.NbLines())]
         return [from_occt.bsplinecurve3d_from_occt(intersection) for intersection in intersections]
 
