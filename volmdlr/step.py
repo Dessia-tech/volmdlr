@@ -728,7 +728,6 @@ class Step(dc.DessiaObject):
                 # Sometimes the search don't instantiate the nodes of a
                 # depth in the right order, leading to error
                 if last_error == key.args[0]:
-                    print(True)
                     raise NotImplementedError('Error instantiating assembly') from key
                 if key.args[0] in assembly_shape_ids:
                     instantiate_ids.append(key.args[0])
