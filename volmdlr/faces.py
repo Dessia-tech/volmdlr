@@ -88,17 +88,33 @@ class Face3D(volmdlr.core.Primitive3D):
                  and self.surface2d == other_.surface2d)
         return equal
 
-    def point_belongs(self, point3d: volmdlr.Point3D, tol: float = 1e-6):
+    def point_belongs(self, point3d: volmdlr.Point3D, tol: float = 1e-6) -> bool:
         """
-        Tells you if a point is on the 3D face and inside its contour.
+        Checks if a 3D point lies on the face.
+
+        :param point3d: The 3D point to be checked.
+        :type point3d: volmdlr.Point3D
+
+        :param tol: Tolerance for the check.
+        :type tol: float, optional
+
+        :return: True if the point is on the ConicalFace3D, False otherwise.
+        :rtype: bool
         """
-        if not self.bounding_box.point_belongs(point3d, 1e-3):
-            return False
-        point2d = self.surface3d.point3d_to_2d(point3d)
-        # check_point3d = self.surface3d.point2d_to_3d(point2d)
-        # if check_point3d.point_distance(point3d) > tol:
         if not self.surface3d.point_on_surface(point3d, tol):
             return False
+        point2d = self.surface3d.point3d_to_2d(point3d)
+        u_min, u_max, v_min, v_max = self.surface2d.bounding_rectangle().bounds()
+        if self.surface3d.x_periodicity:
+            if point2d.x < u_min - tol:
+                point2d.x += self.surface3d.x_periodicity
+            elif point2d.x > u_max + tol:
+                point2d.x -= self.surface3d.x_periodicity
+        if self.surface3d.y_periodicity:
+            if point2d.y < v_min - tol:
+                point2d.y += self.surface3d.y_periodicity
+            elif point2d.y > v_max + tol:
+                point2d.y -= self.surface3d.y_periodicity
 
         return self.surface2d.point_belongs(point2d)
 

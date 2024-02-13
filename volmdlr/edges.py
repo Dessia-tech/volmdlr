@@ -1866,7 +1866,7 @@ class BSplineCurve(Edge):
             umin, umax = self.domain
             u_start = self.abscissa_to_parameter(abscissa1)
             u_end = self.abscissa_to_parameter(abscissa2)
-            number_points1 = int((abscissa1 / self.length()) * number_points)
+            number_points1 = max(int((abscissa1 / self.length()) * number_points), 2)
             if umin == u_end:
                 number_points1 = number_points
                 data["sample_size"] = number_points1
@@ -1881,7 +1881,7 @@ class BSplineCurve(Edge):
                 max_number_points = math.ceil(abscissa1 / 2e-6)
                 if number_points2 > max_number_points:
                     number_points2 = max(max_number_points, 2)
-
+                volmdlr.core.VolumeModel([self, abscissa1, abscissa2, number_points]).save_to_file('/Users/wirajandasilva/Downloads/test_bspline_abs_disc.json')
                 data["sample_size"] = number_points1
                 points1 = evaluate_curve(data, start=u_start, stop=umax)
                 data["sample_size"] = number_points2
