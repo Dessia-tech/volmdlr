@@ -3386,11 +3386,11 @@ class ToroidalSurface3D(PeriodicalSurface):
         """
         axis_angle = math.degrees(volmdlr.geometry.vectors3d_angle(self.frame.w, plane3d.frame.w))
         if 0 < axis_angle <= math.degrees(math.atan(self.minor_radius / self.major_radius)):
-            torus_circles = self.torus_arcs(80)
+            torus_circles = self.torus_arcs(200)
         elif axis_angle < 45:
-            torus_circles = self.torus_arcs(80) + self._torus_circle_generatrices_xy(80)
+            torus_circles = self.torus_arcs(200) + self._torus_circle_generatrices_xy(200)
         else:
-            torus_circles = self._torus_circle_generatrices_xy(80)
+            torus_circles = self._torus_circle_generatrices_xy(200)
         points_intersections = []
         for arc in torus_circles:
             inters = plane3d.curve_intersections(arc)
@@ -3435,7 +3435,7 @@ class ToroidalSurface3D(PeriodicalSurface):
                 return []
 
         points_intersections = self._plane_intersection_points(plane3d)
-        if not plane3d.point_belongs(self.frame.origin, 1e-6):
+        if not plane3d.point_on_surface(self.frame.origin, 1e-6):
             point_projection = plane3d.point_projection(self.frame.origin)
             vector = (point_projection - self.frame.origin).unit_vector()
             frame = volmdlr.Frame3D(point_projection, vector, self.frame.w, vector.cross(self.frame.w))
@@ -3453,7 +3453,7 @@ class ToroidalSurface3D(PeriodicalSurface):
             inters_points = [ordered_points+[ordered_points[0]]]
         else:
             inters_points = vm_common_operations.separate_points_by_closeness(points_intersections)
-        if len(inters_points) == 1 and plane3d.point_belongs(self.frame.origin):
+        if len(inters_points) == 1 and plane3d.point_on_surface(self.frame.origin):
             return self.get_villarceau_circles(plane3d)
         return [edges.BSplineCurve3D.from_points_interpolation(list_points, 8, centripetal=False)
                 for list_points in inters_points]
@@ -3478,7 +3478,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         :param cylindrical_surface: other Cylindrical 3d.
         :return: points of intersections.
         """
-        arcs = self.torus_arcs(100) + self._torus_circle_generatrices_xy(100)
+        arcs = self.torus_arcs(200) + self._torus_circle_generatrices_xy(200)
         points_intersections = []
         for arc in arcs:
             intersections = cylindrical_surface.circle_intersections(arc)
@@ -3562,7 +3562,10 @@ class ToroidalSurface3D(PeriodicalSurface):
         for arc in arcs:
             intersections = conical_surface.circle_intersections(arc)
             points_intersections.extend(intersections)
-        for edge in conical_surface.get_generatrices(self.outer_radius * 3, 300):
+        point1 = conical_surface.frame.global_to_local_coordinates(volmdlr.Point3D(0, 0, self.bounding_box.zmin))
+        point2 = conical_surface.frame.global_to_local_coordinates(volmdlr.Point3D(0, 0, self.bounding_box.zmax))
+        for edge in conical_surface.get_generatrices(self.outer_radius * 3, 300) + \
+                    conical_surface.get_circle_generatrices(100, point1.z, point2.z):
             intersections = self.edge_intersections(edge)
             for point in intersections:
                 if not point.in_list(points_intersections):
@@ -3666,12 +3669,26 @@ class ConicalSurface3D(PeriodicalSurface):
             list_generatrices.append(wire)
         return list_generatrices
 
-    def get_circle_generatrices(self, z, number_circles: int):
+    def get_circle_at_z(self, z):
+        """Gets a circle in the conical surface at given z position."""
+        i_frame = self.frame.translation(z * self.frame.w)
+        radius = z * math.tan(self.semi_angle)
+        circle = curves.Circle3D(i_frame, radius)
+        return circle
+
+    def get_circle_generatrices(self, number_circles: int, z1, z2):
+        """
+        Get circles generatrix of the cone.
+
+        :param z1: Initial height of cone.
+        :param z2: Final height of cone.
+        :param number_circles: number of expected circles.
+        """
         circles = []
-        for i_z in npy.linspace(0, z, number_circles):
-            i_frame = self.frame.translation(i_z*self.frame.w)
-            radius = i_z * math.tan(self.semi_angle)
-            circle = curves.Circle3D(i_frame, radius)
+        for i_z in npy.linspace(z1, z2, number_circles):
+            circle = self.get_circle_at_z(i_z)
+            if circle.radius == 0.0:
+                continue
             circles.append(circle)
         return circles
 
@@ -3685,7 +3702,7 @@ class ConicalSurface3D(PeriodicalSurface):
             ax = fig.add_subplot(111, projection='3d')
 
         line_generatrices = self.get_generatrices(z, 36)
-        circle_generatrices = self.get_circle_generatrices(z, 50)
+        circle_generatrices = self.get_circle_generatrices(50, 0, z)
         for edge in line_generatrices + circle_generatrices:
             edge.plot(ax, edge_style)
         return ax
@@ -4122,10 +4139,12 @@ class ConicalSurface3D(PeriodicalSurface):
         :param spherical_surface: other Spherical Surface 3d.
         :return: points of intersections.
         """
-        cyl_generatrices = self.get_generatrices(spherical_surface.radius*4, 200) +\
-                           self.get_circle_generatrices(200, spherical_surface.radius*4)
+        point1 = self.frame.global_to_local_coordinates(volmdlr.Point3D(0, 0, spherical_surface.bounding_box.zmin))
+        point2 = self.frame.global_to_local_coordinates(volmdlr.Point3D(0, 0, spherical_surface.bounding_box.zmax))
+        cone_generatrices = self.get_generatrices(spherical_surface.radius * 4, 200) + \
+                            self.get_circle_generatrices(200, point1.z, point2.z)
         intersection_points = []
-        for gene in cyl_generatrices:
+        for gene in cone_generatrices:
             intersections = spherical_surface.edge_intersections(gene)
             for intersection in intersections:
                 if not intersection.in_list(intersection_points):
