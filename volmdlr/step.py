@@ -728,10 +728,12 @@ class Step(dc.DessiaObject):
                 # Sometimes the search don't instantiate the nodes of a
                 # depth in the right order, leading to error
                 if last_error == key.args[0]:
+                    print(True)
                     raise NotImplementedError('Error instantiating assembly') from key
                 if key.args[0] in assembly_shape_ids:
                     instantiate_ids.append(key.args[0])
-
+                else:
+                    object_dict, _ = self._helper_instantiate(key.args[0], object_dict, {}, False)
                 last_error = key.args[0]
         return volmdlr_object
 
@@ -781,7 +783,8 @@ class Step(dc.DessiaObject):
         if self.root_nodes["NEXT_ASSEMBLY_USAGE_OCCURRENCE"]:
             return volmdlr.core.VolumeModel([self.instatiate_assembly(object_dict)])
         primitives = []
-        shapes = [object_dict[shape] for shape in shape_representations]
+        shapes = [object_dict[shape] for shape in shape_representations
+                  if self.functions[shape].name in STEP_REPRESENTATION_ENTITIES]
         for shape in shapes:
             if isinstance(shape, list):
                 primitives.extend(shape)

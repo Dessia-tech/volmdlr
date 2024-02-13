@@ -46,6 +46,11 @@ class TestStep(unittest.TestCase):
         arguments = step_reader.step_split_arguments_special(function_args)
         self.assertEqual(len(arguments), 4)
 
+    def test_shape_representation(self):
+        step = volmdlr.step.Step.from_file(filepath=os.path.join(folder, "cone.step"))
+        model = step.to_volume_model()
+        self.assertEqual(len(model.primitives), 1)
+
 
 if __name__ == '__main__':
     unittest.main()
