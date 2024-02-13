@@ -1440,7 +1440,6 @@ class VolumeModel(dc.PhysicalObject):
                         'lines': []}
         display_points = []
         for primitive in self.primitives:
-            print(primitive.reference_path)
             if hasattr(primitive, 'babylon_meshes'):
                 babylon_data['meshes'].extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
             elif hasattr(primitive, 'babylon_curves'):
