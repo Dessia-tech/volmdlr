@@ -1532,21 +1532,33 @@ class VolumeModel(dc.PhysicalObject):
             file.write(script)
         return filename
 
+    def to_mesh_list(self):
+        """
+        Converts the volume model to a list Mesh3D object.
+
+        :return: A list of Mesh3D objects representing the VolumeModel shells.
+        """
+        return [shell.triangulation() for shell in self.get_shells()]
+
     def to_mesh(self, merge_vertices: bool = True, merge_triangles: bool = True):
         """
-        Converts to volume model to a Mesh3D object.
+        Converts the volume model to a Mesh3D object.
 
         :param merge_vertices: Flag to indicate whether to merge vertices of the shells meshes.
-        :type merge_vertices: bool, optional
         :param merge_triangles: Flag to indicate whether to merge triangles of the shells meshes.
-        :type merge_triangles: bool, optional
-        """
-        shells = self.get_shells()
-        mesh = shells[0].triangulation()
-        for primitive in shells[1:]:
-            mesh = mesh.merge(primitive.triangulation(), merge_vertices=merge_vertices, merge_triangles=merge_triangles)
 
-        return mesh
+        :return: A Mesh3D of the VolumeModel
+        """
+        meshes = self.to_mesh_list()
+
+        if not meshes:
+            raise ValueError("VolumeModel has no primitive that can be converted to mesh.")
+
+        merged_mesh = meshes[0]
+        for mesh in meshes[1:]:
+            merged_mesh = mesh.merge(mesh, merge_vertices=merge_vertices, merge_triangles=merge_triangles)
+
+        return merged_mesh
 
     def to_stl_model(self):
         """Converts the model into a stl object."""
