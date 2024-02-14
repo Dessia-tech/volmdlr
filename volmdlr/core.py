@@ -1541,8 +1541,9 @@ class VolumeModel(dc.PhysicalObject):
         :param merge_triangles: Flag to indicate whether to merge triangles of the shells meshes.
         :type merge_triangles: bool, optional
         """
-        mesh = self.primitives[0].triangulation()
-        for primitive in self.primitives[1:]:
+        shells = self.get_shells()
+        mesh = shells[0].triangulation()
+        for primitive in shells[1:]:
             mesh = mesh.merge(primitive.triangulation(), merge_vertices=merge_vertices, merge_triangles=merge_triangles)
 
         return mesh
