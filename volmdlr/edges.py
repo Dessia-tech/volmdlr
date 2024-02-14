@@ -2919,9 +2919,8 @@ class Arc2D(ArcMixin, Edge):
     def __init__(self, circle: 'volmdlr.curves.Circle2D', start: volmdlr.Point2D, end: volmdlr.Point2D,
                  reference_path: str = PATH_ROOT, name: str = ''):
         self._bounding_rectangle = None
-        self.reference_path = reference_path
         ArcMixin.__init__(self, circle, start, end, name=name)
-        Edge.__init__(self, start=start, end=end, name=name)
+        Edge.__init__(self, start=start, end=end, reference_path=reference_path, name=name)
 
     def __hash__(self):
         return hash(('arc2d', self.circle, self.start, self.end, self.is_trigo))
