@@ -152,7 +152,7 @@ setup(
                  "Development Status :: 5 - Production/Stable"],
 
     ext_modules=cythonize(["volmdlr/core_compiled.pyx",
-                           "volmdlr/discrete_compiled.py",
+                           "volmdlr/discrete_representation_compiled.py",
                            "volmdlr/nurbs/core.pyx",
                            "volmdlr/nurbs/helpers.pyx",
                            "volmdlr/nurbs/fitting.py",
