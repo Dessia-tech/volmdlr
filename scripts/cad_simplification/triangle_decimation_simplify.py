@@ -3,7 +3,7 @@ Showcase of the 'TriangleDecimationSimplify' class.
 """
 import time
 
-from volmdlr.simplification import TriangleDecimationSimplify
+from volmdlr.cad_simplification import TriangleDecimationSimplify
 from volmdlr.step import Step
 
 # Load
