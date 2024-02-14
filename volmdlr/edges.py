@@ -3045,9 +3045,9 @@ class Arc2D(ArcMixin, Edge):
         :return: circle 2d.
         """
         circle = volmdlr_curves.Circle2D.from_3_points(point1, point2, point3)
-        arc = cls(circle, point1, point3)
+        arc = cls(circle=circle, start=point1, end=point3, name=name)
         if not arc.point_belongs(point2):
-            return cls(circle.reverse(), point1, point3, name=name)
+            return cls(circle=circle.reverse(), start=point1, end=point3, name=name)
         return arc
 
     @property
@@ -3568,6 +3568,19 @@ class FullArc2D(FullArcMixin, Arc2D):
         dict_['start_end'] = self.start.to_dict(use_pointers=use_pointers, memo=memo,
                                                 id_method=id_method, id_memo=id_memo, path=path + '/start_end')
         return dict_
+
+    @classmethod
+    def from_3_points(cls, point1, point2, point3, name: str = ''):
+        """
+        Creates a circle 2d from 3 points.
+
+        :return: circle 2d.
+        """
+        circle = volmdlr_curves.Circle2D.from_3_points(point1, point2, point3)
+        arc = cls(circle=circle, start_end=point1, name=name)
+        if not arc.point_belongs(point2):
+            return cls(circle=circle.reverse(), start_end=point1, name=name)
+        return arc
 
     def copy(self, *args, **kwargs):
         """Creates a copy of a fullarc 2d."""
