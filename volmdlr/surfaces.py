@@ -2971,6 +2971,12 @@ class ToroidalSurface3D(PeriodicalSurface):
         return self.major_radius - self.minor_radius
 
     def torus_arcs(self, number_arcs: int = 50):
+        """
+        Gets torus generatrices circles.
+
+        :param number_arcs: Number of expected circles.
+        :type number_arcs: int
+        """
         arcs = []
         center = self.frame.origin + self.frame.u * self.major_radius
         for i in range(number_arcs):
@@ -2983,6 +2989,12 @@ class ToroidalSurface3D(PeriodicalSurface):
         return arcs
 
     def _torus_circle_generatrices_xy(self, number_arcs: int = 50):
+        """
+        Gets torus generatrices circles parallel to xy torus local frame plane.
+
+        :param number_arcs: Number of expected circles.
+        :type number_arcs: int
+        """
         initial_point = self.frame.origin
         circles = []
         phis = np.linspace(-0.5*math.pi, 0.5*math.pi, number_arcs)
@@ -7185,6 +7197,9 @@ class BSplineSurface3D(Surface3D):
 
     @property
     def weights(self):
+        """
+        Gets BSpline surface weights.
+        """
         if self._weights is None:
             return self._weights
         return self._weights.tolist()
