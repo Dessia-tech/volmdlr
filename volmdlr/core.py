@@ -166,6 +166,8 @@ def map_primitive_with_initial_and_final_frames(primitive, initial_frame, final_
     """
     if initial_frame == final_frame:
         return primitive
+    if initial_frame == primitive:
+        return final_frame
     transfer_matrix = get_transfer_matrix_from_basis(initial_frame.basis(), final_frame.basis())
     u_vector = volmdlr.Vector3D(*transfer_matrix[0])
     v_vector = volmdlr.Vector3D(*transfer_matrix[1])
@@ -1406,17 +1408,6 @@ class VolumeModel(dc.PhysicalObject):
         new_primitives = [primitive.copy(deep=deep, memo=memo) for primitive in self.primitives]
         return VolumeModel(new_primitives, self.name)
 
-    def plot2d(self, ax=None, color=None):
-        fig = plt.figure()
-        if ax is None:
-            ax = fig.add_subplot(111, projection='3d')
-
-        for i, shell in enumerate(self.shells):
-            bbox = shell.bbox()
-            bbox.plot(ax, color[i])
-
-        return ax
-
     def plot(self, equal_aspect=True):
         """
         Matplotlib plot of model.
@@ -2114,6 +2105,9 @@ class VolumeModel(dc.PhysicalObject):
 
     @staticmethod
     def get_elements_lines(gmsh_model):
+        """
+        Gets lines from gmsh model.
+        """
         lines_elements = []
         lines_elements.append('$Elements')
 
@@ -2180,6 +2174,9 @@ class MovingVolumeModel(VolumeModel):
         return True
 
     def step_volume_model(self, istep: int):
+        """
+        Moves the volume model along a list of local frames.
+        """
         primitives = []
         for primitive, frame in zip(self.primitives, self.step_frames[istep]):
             primitives.append(
