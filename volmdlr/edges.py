@@ -424,7 +424,7 @@ class Edge(dc.DessiaObject):
         abscissa2 = self.abscissa(point2)
         return vm_common_operations.get_abscissa_discretization(self, abscissa1, abscissa2, number_points, False)
 
-    def trim(self, point1, point2):
+    def trim(self, point1, point2, *args, **kwargs):
         """
         Trims edge between two points.
 
@@ -1200,6 +1200,38 @@ class BSplineCurve(Edge):
         parameter = next((knot for knot in self.knots if abs(knot - parameter) < 1e-12), parameter)
         return split_curve(self, parameter)
 
+    def cut_before(self, parameter: float):
+        """
+        Returns the right side of the split curve at a given parameter.
+
+        :param parameter: parameter value that specifies where to split the curve.
+        :type parameter: float
+        """
+        parameter = next((knot for knot in self.knots if abs(knot - parameter) < 1e-12), parameter)
+        point = self.evaluate_single(parameter)
+        if self.start.is_close(point):
+            return self.copy()
+        if self.end.is_close(point):
+            return self.reverse()
+        curves = volmdlr.nurbs.operations.split_curve(self, parameter)
+        return curves[1]
+
+    def cut_after(self, parameter: float):
+        """
+        Returns the left side of the split curve at a given parameter.
+
+        :param parameter: parameter value that specifies where to split the curve.
+        :type parameter: float
+        """
+        parameter = next((knot for knot in self.knots if abs(knot - parameter) < 1e-12), parameter)
+        point = self.evaluate_single(parameter)
+        if self.start.is_close(point):
+            return self.reverse()
+        if self.end.is_close(point):
+            return self.copy()
+        curves = volmdlr.nurbs.operations.split_curve(self, parameter)
+        return curves[0]
+
     def get_reverse(self):
         """
         Reverses the BSpline's direction by reversing its control points.
@@ -1963,6 +1995,77 @@ class BSplineCurve(Edge):
         new_control_points = [control_point.frame_mapping(frame, side) for control_point in self.control_points]
         return self.__class__(self.degree, new_control_points, self.knot_multiplicities, self.knots, self.weights,
                               self.name)
+
+    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, same_sense: bool = True, abs_tol: float = 1e-6):
+        """
+        Trims a bspline curve between two points.
+
+        :param point1: point 1 used to trim.
+        :param point2: point2 used to trim.
+        :param same_sense: Used for periodical curves only. Indicates whether the curve direction agrees with (True)
+            or is in the opposite direction (False) to the edge direction. By default, it's assumed True
+        :param abs_tol: Point confusion precision.
+        :return: New BSpline curve between these two points.
+        """
+        if self.periodic:
+            return self._trim_periodic(point1, point2, same_sense)
+        bsplinecurve = self
+        if not same_sense:
+            bsplinecurve = self.reverse()
+        parameter1 = bsplinecurve.point_to_parameter(point1)
+        parameter2 = bsplinecurve.point_to_parameter(point2)
+
+        if (point1.is_close(bsplinecurve.start, abs_tol) and point2.is_close(bsplinecurve.end, abs_tol)) \
+                or (point1.is_close(bsplinecurve.end, abs_tol) and point2.is_close(bsplinecurve.start, abs_tol)):
+            return bsplinecurve
+
+        if point1.is_close(bsplinecurve.start, abs_tol) and not point2.is_close(bsplinecurve.end, abs_tol):
+            return bsplinecurve.cut_after(parameter2)
+
+        if point2.is_close(bsplinecurve.start, abs_tol) and not point1.is_close(bsplinecurve.end, abs_tol):
+            bsplinecurve = bsplinecurve.cut_after(parameter1)
+            return bsplinecurve
+
+        if not point1.is_close(bsplinecurve.start, abs_tol) and point2.is_close(bsplinecurve.end, abs_tol):
+            return bsplinecurve.cut_before(parameter1)
+
+        if not point2.is_close(bsplinecurve.start, abs_tol) and point1.is_close(bsplinecurve.end, abs_tol):
+            bsplinecurve = bsplinecurve.cut_before(parameter2)
+            return bsplinecurve
+
+        if parameter1 is None or parameter2 is None:
+            raise ValueError('Point not on BSplineCurve for trim method')
+
+        if parameter1 > parameter2:
+            parameter1, parameter2 = parameter2, parameter1
+            point1, point2 = point2, point1
+
+        bsplinecurve = bsplinecurve.cut_before(parameter1)
+        new_param2 = bsplinecurve.point_to_parameter(point2)
+        trimmed_bspline_curve = bsplinecurve.cut_after(new_param2)
+        return trimmed_bspline_curve
+
+    def _trim_periodic(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, same_sense: bool = True):
+        """
+        Creates a new BSplineCurve3D between point1 and point2 using interpolation method.
+        """
+        bspline_curve = self
+        if not same_sense:
+            bspline_curve = self.reverse()
+        abscissa1 = bspline_curve.abscissa(point1)
+        abscissa2 = bspline_curve.abscissa(point2)
+        if abscissa2 > abscissa1:
+            if abscissa1 == 0.0:
+                return bspline_curve.split(point2)[0]
+            if abscissa2 == bspline_curve.length():
+                return bspline_curve.split(point1)[1]
+            curve1 = bspline_curve.split(point1)[1]
+            return curve1.split(point2)[0]
+        if abscissa2 == 0.0:
+            return bspline_curve.split(point1)[1]
+        curve1 = bspline_curve.split(point1)[1]
+        curve2 = bspline_curve.split(point2)[0]
+        return curve1.merge_with(curve2)
 
 
 class BSplineCurve2D(BSplineCurve):
@@ -4688,7 +4791,8 @@ class LineSegment3D(LineSegment):
 
     def _conical_revolution(self, params):
         """Creates a conical revolution of a Line Segment 3D."""
-        axis, u, dist1, dist2, angle, cone_origin = params
+        axis, u, radius1, radius2, angle, apex = params
+
         v = axis.cross(u)
         direction_vector = self.direction_vector()
         direction_vector = direction_vector.unit_vector()
@@ -4696,15 +4800,18 @@ class LineSegment3D(LineSegment):
         semi_angle = math.atan2(direction_vector.dot(u), direction_vector.dot(axis))
         if semi_angle > 0.5 * math.pi:
             semi_angle = math.pi - semi_angle
-            cone_frame = volmdlr.Frame3D(cone_origin, u, -v, -axis)
+            axis = -axis
+            frame_origin = apex + axis * (radius1 / math.tan(semi_angle))
+            cone_frame = volmdlr.Frame3D(frame_origin, u, -v, axis)
             angle2 = - angle
         else:
             angle2 = angle
-            cone_frame = volmdlr.Frame3D(cone_origin, u, v, axis)
+            frame_origin = apex + axis * (radius1 / math.tan(semi_angle))
+            cone_frame = volmdlr.Frame3D(frame_origin, u, v, axis)
 
-        surface = volmdlr.surfaces.ConicalSurface3D(cone_frame, semi_angle)
+        surface = volmdlr.surfaces.ConicalSurface3D(cone_frame, semi_angle, radius1)
         return [volmdlr.faces.ConicalFace3D.from_surface_rectangular_cut(
-            surface, 0, angle2, z1=dist1 / math.tan(semi_angle), z2=dist2 / math.tan(semi_angle))]
+            surface, 0, angle2, z1=0.0, z2=(radius2 - radius1) / math.tan(semi_angle))]
 
     def _cylindrical_revolution(self, params):
         """Creates a cylindrical revolution of a Line Segment 3D."""
@@ -5137,77 +5244,6 @@ class BSplineCurve3D(BSplineCurve):
                                             self.knots, self.weights, self.name)
         return new_bsplinecurve3d
 
-    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, same_sense: bool = True, abs_tol: float = 1e-6):
-        """
-        Trims a bspline curve between two points.
-
-        :param point1: point 1 used to trim.
-        :param point2: point2 used to trim.
-        :param same_sense: Used for periodical curves only. Indicates whether the curve direction agrees with (True)
-            or is in the opposite direction (False) to the edge direction. By default, it's assumed True
-        :param abs_tol: Point confusion precision.
-        :return: New BSpline curve between these two points.
-        """
-        if self.periodic:
-            return self._trim_periodic(point1, point2, same_sense)
-        bsplinecurve = self
-        if not same_sense:
-            bsplinecurve = self.reverse()
-        parameter1 = bsplinecurve.point_to_parameter(point1)
-        parameter2 = bsplinecurve.point_to_parameter(point2)
-
-        if (point1.is_close(bsplinecurve.start, abs_tol) and point2.is_close(bsplinecurve.end, abs_tol)) \
-                or (point1.is_close(bsplinecurve.end, abs_tol) and point2.is_close(bsplinecurve.start, abs_tol)):
-            return bsplinecurve
-
-        if point1.is_close(bsplinecurve.start, abs_tol) and not point2.is_close(bsplinecurve.end, abs_tol):
-            return bsplinecurve.cut_after(parameter2)
-
-        if point2.is_close(bsplinecurve.start, abs_tol) and not point1.is_close(bsplinecurve.end, abs_tol):
-            bsplinecurve = bsplinecurve.cut_after(parameter1)
-            return bsplinecurve
-
-        if not point1.is_close(bsplinecurve.start, abs_tol) and point2.is_close(bsplinecurve.end, abs_tol):
-            return bsplinecurve.cut_before(parameter1)
-
-        if not point2.is_close(bsplinecurve.start, abs_tol) and point1.is_close(bsplinecurve.end, abs_tol):
-            bsplinecurve = bsplinecurve.cut_before(parameter2)
-            return bsplinecurve
-
-        if parameter1 is None or parameter2 is None:
-            raise ValueError('Point not on BSplineCurve for trim method')
-
-        if parameter1 > parameter2:
-            parameter1, parameter2 = parameter2, parameter1
-            point1, point2 = point2, point1
-
-        bsplinecurve = bsplinecurve.cut_before(parameter1)
-        new_param2 = bsplinecurve.point_to_parameter(point2)
-        trimmed_bspline_curve = bsplinecurve.cut_after(new_param2)
-        return trimmed_bspline_curve
-
-    def _trim_periodic(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, same_sense: bool = True):
-        """
-        Creates a new BSplineCurve3D between point1 and point2 using interpolation method.
-        """
-        bspline_curve = self
-        if not same_sense:
-            bspline_curve = self.reverse()
-        abscissa1 = bspline_curve.abscissa(point1)
-        abscissa2 = bspline_curve.abscissa(point2)
-        if abscissa2 > abscissa1:
-            if abscissa1 == 0.0:
-                return bspline_curve.split(point2)[0]
-            if abscissa2 == bspline_curve.length():
-                return bspline_curve.split(point1)[1]
-            curve1 = bspline_curve.split(point1)[1]
-            return curve1.split(point2)[0]
-        if abscissa2 == 0.0:
-            return bspline_curve.split(point1)[1]
-        curve1 = bspline_curve.split(point1)[1]
-        curve2 = bspline_curve.split(point2)[0]
-        return curve1.merge_with(curve2)
-
     def trim_between_evaluations(self, parameter1: float, parameter2: float):
         """
         Trims the Bspline between two abscissa evaluation parameters.
@@ -5253,38 +5289,6 @@ class BSplineCurve3D(BSplineCurve):
                               knots=new_knots,
                               weights=None,
                               name=bspline_curve.name)
-
-    def cut_before(self, parameter: float):
-        """
-        Returns the right side of the split curve at a given parameter.
-
-        :param parameter: parameter value that specifies where to split the curve.
-        :type parameter: float
-        """
-        parameter = next((knot for knot in self.knots if abs(knot - parameter) < 1e-12), parameter)
-        point3d = self.evaluate_single(parameter)
-        if self.start.is_close(point3d):
-            return self.copy()
-        if self.end.is_close(point3d):
-            return self.reverse()
-        curves = volmdlr.nurbs.operations.split_curve(self, parameter)
-        return curves[1]
-
-    def cut_after(self, parameter: float):
-        """
-        Returns the left side of the split curve at a given parameter.
-
-        :param parameter: parameter value that specifies where to split the curve.
-        :type parameter: float
-        """
-        parameter = next((knot for knot in self.knots if abs(knot - parameter) < 1e-12), parameter)
-        point3d = self.evaluate_single(parameter)
-        if self.start.is_close(point3d):
-            return self.reverse()
-        if self.end.is_close(point3d):
-            return self.copy()
-        curves = volmdlr.nurbs.operations.split_curve(self, parameter)
-        return curves[0]
 
     def insert_knot(self, knot: float, num: int = 1):
         """
