@@ -1538,7 +1538,16 @@ class VolumeModel(dc.PhysicalObject):
 
         :return: A list of Mesh3D objects representing the VolumeModel shells.
         """
-        return [shell.triangulation() for shell in self.get_shells()]
+        meshes = []
+
+        for shell in self.get_shells():
+            mesh = shell.triangulation()
+
+            if len(mesh.triangles) > 0:
+                meshes.append(mesh)
+                meshes[-1].name = shell.name
+
+        return meshes
 
     def to_mesh(self, merge_vertices: bool = True, merge_triangles: bool = True):
         """
@@ -1557,6 +1566,8 @@ class VolumeModel(dc.PhysicalObject):
         merged_mesh = meshes[0]
         for mesh in meshes[1:]:
             merged_mesh = mesh.merge(mesh, merge_vertices=merge_vertices, merge_triangles=merge_triangles)
+
+        merged_mesh.name = self.name
 
         return merged_mesh
 

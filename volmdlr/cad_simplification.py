@@ -38,26 +38,6 @@ class Simplify(DessiaObject):
 
         DessiaObject.__init__(self, name=name)
 
-    @staticmethod
-    def _volume_model_to_meshes(volume_model: VolumeModel) -> List[Mesh3D]:
-        """Convert the VolumeModel to a list of Mesh3D."""
-
-        meshes = []
-
-        for shell in volume_model.get_shells():
-            mesh = shell.triangulation()
-
-            if len(mesh.triangles) > 0:
-                meshes.append(mesh)
-
-        return meshes
-
-    @staticmethod
-    def _volume_model_to_mesh(volume_model: VolumeModel):
-        """Convert the VolumeModel to a unique Mesh3D."""
-
-        return volume_model.to_mesh()
-
 
 class TripleExtrusionSimplify(Simplify):
     """CAD simplification based on 'triple extrusion' method."""
@@ -69,7 +49,7 @@ class TripleExtrusionSimplify(Simplify):
         :return: The simplified volume model.
         :rtype: VolumeModel
         """
-        points = [Point3D(*point) for point in self._volume_model_to_mesh(self.volume_model).vertices]
+        points = [Point3D(*point) for point in self.volume_model.to_mesh().vertices]
 
         point_cloud3d = PointCloud3D([volmdlr.Point3D(*point) for point in points])
         simplified_volume_model = VolumeModel(
@@ -200,9 +180,9 @@ class TriangleDecimationSimplify(Simplify):
         decimated_meshes = []
 
         if preserve_shells:
-            meshes = self._volume_model_to_meshes(self.volume_model)
+            meshes = self.volume_model.to_mesh_list()
         else:
-            meshes = [self._volume_model_to_mesh(self.volume_model)]
+            meshes = [self.volume_model.to_mesh()]
 
         for mesh in meshes:
             decimated_meshes.append(
@@ -262,10 +242,10 @@ class AlphaWrapSimplify(Simplify):
         bbox, alpha, offset = None, None, None
 
         if preserve_shells:
-            meshes = self._volume_model_to_meshes(self.volume_model)
+            meshes = self.volume_model.to_mesh_list()
         else:
-            meshes = [self._volume_model_to_mesh(self.volume_model)]
-            # Use display shell bbox for performance
+            meshes = [self.volume_model.to_mesh()]
+
             bbox = meshes[0].bounding_box
 
         if equal_alpha:
@@ -357,4 +337,4 @@ class AlphaWrapSimplify(Simplify):
         points_array = np.array(points)
         faces_array = np.array(faces)
 
-        return Mesh3D(points_array, faces_array, "")
+        return Mesh3D(points_array, faces_array, name="")
