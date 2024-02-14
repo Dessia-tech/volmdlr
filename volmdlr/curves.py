@@ -2528,10 +2528,10 @@ class Ellipse2D(EllipseMixin, ClosedCurve):
         :param point: Other point to calculate distance.
         :type point: volmdlr.Point2D.
         :return: Two points on ellipse
-        :rtype: Point2D, Point2D.
+        :rtype: [Point2D, Point2D].
         """
         if self.point_inside(point) or self.point_belongs(point):
-            return point
+            return [point, point]
         point_local = self.frame.global_to_local_coordinates(point)
         a = self.major_axis
         b = self.minor_axis
@@ -2571,7 +2571,7 @@ class Ellipse2D(EllipseMixin, ClosedCurve):
             j += 1
         point_2 = self.point_at_polar_abscissa(t_)
 
-        return self.frame.local_to_global_coordinates(point_1), self.frame.local_to_global_coordinates(point_2)
+        return [self.frame.local_to_global_coordinates(point_1), self.frame.local_to_global_coordinates(point_2)]
 
 
 
