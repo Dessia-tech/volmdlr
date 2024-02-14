@@ -5,7 +5,7 @@ Unit testing for pixelization.
 import unittest
 
 from volmdlr import Point2D, Vector2D
-from volmdlr.discrete import MatrixBasedPixelization, PointBasedPixelization
+from volmdlr.discrete_representation import MatrixBasedPixelization, PointBasedPixelization
 from volmdlr.edges import LineSegment2D
 from volmdlr.wires import ClosedPolygon2D
 

@@ -4,7 +4,7 @@ Unit testing of 'DiscreteRepresentation' class.
 import math
 import unittest
 
-from volmdlr.discrete import DECIMALS, DiscreteRepresentation
+from volmdlr.discrete_representation import DECIMALS, DiscreteRepresentation
 
 
 class TestDiscreteRepresentation(unittest.TestCase):

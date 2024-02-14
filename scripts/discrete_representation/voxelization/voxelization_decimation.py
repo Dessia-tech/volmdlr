@@ -1,7 +1,7 @@
 """
 Example of voxelization decimation.
 """
-from volmdlr.discrete import MatrixBasedVoxelization
+from volmdlr.discrete_representation import MatrixBasedVoxelization
 from volmdlr.stl import Stl
 
 VOXEL_SIZE = 0.0015

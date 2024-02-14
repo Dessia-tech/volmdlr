@@ -3,7 +3,7 @@ Showcase of filling a voxelization.
 """
 import volmdlr
 from volmdlr.core import VolumeModel
-from volmdlr.discrete import MatrixBasedVoxelization
+from volmdlr.discrete_representation import MatrixBasedVoxelization
 from volmdlr.primitives3d import Cylinder
 
 VOXEL_SIZE = 0.005

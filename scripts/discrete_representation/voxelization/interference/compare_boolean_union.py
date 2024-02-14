@@ -6,7 +6,7 @@ import time
 
 import volmdlr
 from volmdlr.core import VolumeModel
-from volmdlr.discrete import MatrixBasedVoxelization, OctreeBasedVoxelization, PointBasedVoxelization
+from volmdlr.discrete_representation import MatrixBasedVoxelization, OctreeBasedVoxelization, PointBasedVoxelization
 from volmdlr.step import Step
 
 STEP_MODEL_FILE_PATH = "../../../step/tore1.step"

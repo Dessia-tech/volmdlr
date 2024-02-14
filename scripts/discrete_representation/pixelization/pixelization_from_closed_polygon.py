@@ -4,7 +4,7 @@ Showcase of creating a pixelization.
 
 from volmdlr import Point2D
 from volmdlr.core import EdgeStyle
-from volmdlr.discrete import PointBasedPixelization
+from volmdlr.discrete_representation import PointBasedPixelization
 from volmdlr.wires import ClosedPolygon2D
 
 PIXEL_SIZE = 0.05

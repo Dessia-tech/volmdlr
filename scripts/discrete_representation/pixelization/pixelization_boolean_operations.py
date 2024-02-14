@@ -3,7 +3,7 @@ Showcase of performing boolean operations using pixelization.
 """
 
 from volmdlr import Point2D, Vector2D
-from volmdlr.discrete import PointBasedPixelization
+from volmdlr.discrete_representation import PointBasedPixelization
 from volmdlr.wires import ClosedPolygon2D
 
 PIXEL_SIZE = 0.05
