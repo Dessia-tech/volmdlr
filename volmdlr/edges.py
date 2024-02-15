@@ -424,7 +424,7 @@ class Edge(dc.DessiaObject):
         abscissa2 = self.abscissa(point2)
         return vm_common_operations.get_abscissa_discretization(self, abscissa1, abscissa2, number_points, False)
 
-    def trim(self, point1, point2):
+    def trim(self, point1, point2, *args, **kwargs):
         """
         Trims edge between two points.
 
@@ -595,6 +595,38 @@ class Edge(dc.DessiaObject):
             if arc and not arc.point_belongs(shared_section[0].middle_point(), abs_tol):
                 new_arcs.append(arc)
         return new_arcs
+
+    def curve(self):
+        """Returns the curve that defines the geometry of the edge."""
+        edge_type = self.__class__.__name__[:-2]
+        curve = None
+        if edge_type == "LineSegment":
+            curve = self.line
+        elif edge_type in ("Arc", "FullArc"):
+            curve = self.circle
+        elif edge_type in ("ArcEllipse", "FullArcEllipse"):
+            curve = self.ellipse
+        elif edge_type == "BSplineCurve":
+            curve = self
+        return curve
+
+    def to_step(self, current_id, *args, **kwargs):
+        """
+        Converts the object to a STEP representation.
+
+        :param current_id: The ID of the last written primitive.
+        :type current_id: int
+        :return: The STEP representation of the object and the last ID.
+        :rtype: tuple[str, list[int]]
+        """
+        content, curve_id = self.curve().to_step(current_id)
+
+        start_content, start_id = self.start.to_step(curve_id, vertex=True)
+        end_content, end_id = self.end.to_step(start_id, vertex=True)
+        content += start_content + end_content
+        current_id = end_id + 1
+        content += f"#{current_id} = EDGE_CURVE('{self.name}',#{start_id},#{end_id},#{curve_id},.T.);\n"
+        return content, current_id
 
 
 class LineSegment(Edge):
@@ -796,21 +828,7 @@ class LineSegment(Edge):
         """
         Abstract method.
         """
-        raise NotImplementedError('the point_distance method must be'
-                                  'overloaded by subclassing class')
-
-    def to_step(self, current_id, *args, **kwargs):
-        """Exports to STEP format."""
-        line = self.line
-        content, line_id = line.to_step(current_id)
-
-        start_content, start_id = self.start.to_step(line_id, vertex=True)
-
-        end_content, end_id = self.end.to_step(start_id, vertex=True)
-        content += start_content + end_content
-        current_id = end_id + 1
-        content += f"#{current_id} = EDGE_CURVE('{self.name}',#{start_id},#{end_id},#{line_id},.T.);\n"
-        return content, current_id
+        raise NotImplementedError('the point_distance method must be overloaded by subclassing class')
 
     def is_close(self, other_edge, tol: float = 1e-6):
         """
@@ -1199,6 +1217,38 @@ class BSplineCurve(Edge):
         parameter = self.point_to_parameter(split_point)
         parameter = next((knot for knot in self.knots if abs(knot - parameter) < 1e-12), parameter)
         return split_curve(self, parameter)
+
+    def cut_before(self, parameter: float):
+        """
+        Returns the right side of the split curve at a given parameter.
+
+        :param parameter: parameter value that specifies where to split the curve.
+        :type parameter: float
+        """
+        parameter = next((knot for knot in self.knots if abs(knot - parameter) < 1e-12), parameter)
+        point = self.evaluate_single(parameter)
+        if self.start.is_close(point):
+            return self.copy()
+        if self.end.is_close(point):
+            return self.reverse()
+        curves = volmdlr.nurbs.operations.split_curve(self, parameter)
+        return curves[1]
+
+    def cut_after(self, parameter: float):
+        """
+        Returns the left side of the split curve at a given parameter.
+
+        :param parameter: parameter value that specifies where to split the curve.
+        :type parameter: float
+        """
+        parameter = next((knot for knot in self.knots if abs(knot - parameter) < 1e-12), parameter)
+        point = self.evaluate_single(parameter)
+        if self.start.is_close(point):
+            return self.reverse()
+        if self.end.is_close(point):
+            return self.copy()
+        curves = volmdlr.nurbs.operations.split_curve(self, parameter)
+        return curves[0]
 
     def get_reverse(self):
         """
@@ -1963,6 +2013,77 @@ class BSplineCurve(Edge):
         new_control_points = [control_point.frame_mapping(frame, side) for control_point in self.control_points]
         return self.__class__(self.degree, new_control_points, self.knot_multiplicities, self.knots, self.weights,
                               self.name)
+
+    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, same_sense: bool = True, abs_tol: float = 1e-6):
+        """
+        Trims a bspline curve between two points.
+
+        :param point1: point 1 used to trim.
+        :param point2: point2 used to trim.
+        :param same_sense: Used for periodical curves only. Indicates whether the curve direction agrees with (True)
+            or is in the opposite direction (False) to the edge direction. By default, it's assumed True
+        :param abs_tol: Point confusion precision.
+        :return: New BSpline curve between these two points.
+        """
+        if self.periodic:
+            return self._trim_periodic(point1, point2, same_sense)
+        bsplinecurve = self
+        if not same_sense:
+            bsplinecurve = self.reverse()
+        parameter1 = bsplinecurve.point_to_parameter(point1)
+        parameter2 = bsplinecurve.point_to_parameter(point2)
+
+        if (point1.is_close(bsplinecurve.start, abs_tol) and point2.is_close(bsplinecurve.end, abs_tol)) \
+                or (point1.is_close(bsplinecurve.end, abs_tol) and point2.is_close(bsplinecurve.start, abs_tol)):
+            return bsplinecurve
+
+        if point1.is_close(bsplinecurve.start, abs_tol) and not point2.is_close(bsplinecurve.end, abs_tol):
+            return bsplinecurve.cut_after(parameter2)
+
+        if point2.is_close(bsplinecurve.start, abs_tol) and not point1.is_close(bsplinecurve.end, abs_tol):
+            bsplinecurve = bsplinecurve.cut_after(parameter1)
+            return bsplinecurve
+
+        if not point1.is_close(bsplinecurve.start, abs_tol) and point2.is_close(bsplinecurve.end, abs_tol):
+            return bsplinecurve.cut_before(parameter1)
+
+        if not point2.is_close(bsplinecurve.start, abs_tol) and point1.is_close(bsplinecurve.end, abs_tol):
+            bsplinecurve = bsplinecurve.cut_before(parameter2)
+            return bsplinecurve
+
+        if parameter1 is None or parameter2 is None:
+            raise ValueError('Point not on BSplineCurve for trim method')
+
+        if parameter1 > parameter2:
+            parameter1, parameter2 = parameter2, parameter1
+            point1, point2 = point2, point1
+
+        bsplinecurve = bsplinecurve.cut_before(parameter1)
+        new_param2 = bsplinecurve.point_to_parameter(point2)
+        trimmed_bspline_curve = bsplinecurve.cut_after(new_param2)
+        return trimmed_bspline_curve
+
+    def _trim_periodic(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, same_sense: bool = True):
+        """
+        Creates a new BSplineCurve3D between point1 and point2 using interpolation method.
+        """
+        bspline_curve = self
+        if not same_sense:
+            bspline_curve = self.reverse()
+        abscissa1 = bspline_curve.abscissa(point1)
+        abscissa2 = bspline_curve.abscissa(point2)
+        if abscissa2 > abscissa1:
+            if abscissa1 == 0.0:
+                return bspline_curve.split(point2)[0]
+            if abscissa2 == bspline_curve.length():
+                return bspline_curve.split(point1)[1]
+            curve1 = bspline_curve.split(point1)[1]
+            return curve1.split(point2)[0]
+        if abscissa2 == 0.0:
+            return bspline_curve.split(point1)[1]
+        curve1 = bspline_curve.split(point1)[1]
+        curve2 = bspline_curve.split(point2)[0]
+        return curve1.merge_with(curve2)
 
 
 class BSplineCurve2D(BSplineCurve):
@@ -4688,7 +4809,8 @@ class LineSegment3D(LineSegment):
 
     def _conical_revolution(self, params):
         """Creates a conical revolution of a Line Segment 3D."""
-        axis, u, dist1, dist2, angle, cone_origin = params
+        axis, u, radius1, radius2, angle, apex = params
+
         v = axis.cross(u)
         direction_vector = self.direction_vector()
         direction_vector = direction_vector.unit_vector()
@@ -4696,15 +4818,18 @@ class LineSegment3D(LineSegment):
         semi_angle = math.atan2(direction_vector.dot(u), direction_vector.dot(axis))
         if semi_angle > 0.5 * math.pi:
             semi_angle = math.pi - semi_angle
-            cone_frame = volmdlr.Frame3D(cone_origin, u, -v, -axis)
+            axis = -axis
+            frame_origin = apex + axis * (radius1 / math.tan(semi_angle))
+            cone_frame = volmdlr.Frame3D(frame_origin, u, -v, axis)
             angle2 = - angle
         else:
             angle2 = angle
-            cone_frame = volmdlr.Frame3D(cone_origin, u, v, axis)
+            frame_origin = apex + axis * (radius1 / math.tan(semi_angle))
+            cone_frame = volmdlr.Frame3D(frame_origin, u, v, axis)
 
-        surface = volmdlr.surfaces.ConicalSurface3D(cone_frame, semi_angle)
+        surface = volmdlr.surfaces.ConicalSurface3D(cone_frame, semi_angle, radius1)
         return [volmdlr.faces.ConicalFace3D.from_surface_rectangular_cut(
-            surface, 0, angle2, z1=dist1 / math.tan(semi_angle), z2=dist2 / math.tan(semi_angle))]
+            surface, 0, angle2, z1=0.0, z2=(radius2 - radius1) / math.tan(semi_angle))]
 
     def _cylindrical_revolution(self, params):
         """Creates a cylindrical revolution of a Line Segment 3D."""
@@ -4726,9 +4851,9 @@ class LineSegment3D(LineSegment):
             if math.isclose(radius, 0, abs_tol=1e-9):
                 continue
             if i == 0:
-                arc_point1 = volmdlr.O2D + volmdlr.X2D * radius
-            else:
                 arc_point1 = volmdlr.O2D - volmdlr.X2D * radius
+            else:
+                arc_point1 = volmdlr.O2D + volmdlr.X2D * radius
             arc_point2 = arc_point1.rotation(volmdlr.O2D, angle / 2)
             arc_point3 = arc_point1.rotation(volmdlr.O2D, angle)
             arc = Arc2D.from_3_points(arc_point1, arc_point2, arc_point3)
@@ -4824,7 +4949,7 @@ class LineSegment3D(LineSegment):
             u = self.start - p1_proj  # Unit vector from p1_proj to p1
             u = u.unit_vector()
         elif not math.isclose(distance_2, 0., abs_tol=1e-9):
-            u = self.end - p2_proj  # Unit vector from p1_proj to p1
+            u = self.end - p2_proj  # Unit vector from p2_proj to p2
             u = u.unit_vector()
         else:
             return []
@@ -5137,77 +5262,6 @@ class BSplineCurve3D(BSplineCurve):
                                             self.knots, self.weights, self.name)
         return new_bsplinecurve3d
 
-    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, same_sense: bool = True, abs_tol: float = 1e-6):
-        """
-        Trims a bspline curve between two points.
-
-        :param point1: point 1 used to trim.
-        :param point2: point2 used to trim.
-        :param same_sense: Used for periodical curves only. Indicates whether the curve direction agrees with (True)
-            or is in the opposite direction (False) to the edge direction. By default, it's assumed True
-        :param abs_tol: Point confusion precision.
-        :return: New BSpline curve between these two points.
-        """
-        if self.periodic:
-            return self._trim_periodic(point1, point2, same_sense)
-        bsplinecurve = self
-        if not same_sense:
-            bsplinecurve = self.reverse()
-        parameter1 = bsplinecurve.point_to_parameter(point1)
-        parameter2 = bsplinecurve.point_to_parameter(point2)
-
-        if (point1.is_close(bsplinecurve.start, abs_tol) and point2.is_close(bsplinecurve.end, abs_tol)) \
-                or (point1.is_close(bsplinecurve.end, abs_tol) and point2.is_close(bsplinecurve.start, abs_tol)):
-            return bsplinecurve
-
-        if point1.is_close(bsplinecurve.start, abs_tol) and not point2.is_close(bsplinecurve.end, abs_tol):
-            return bsplinecurve.cut_after(parameter2)
-
-        if point2.is_close(bsplinecurve.start, abs_tol) and not point1.is_close(bsplinecurve.end, abs_tol):
-            bsplinecurve = bsplinecurve.cut_after(parameter1)
-            return bsplinecurve
-
-        if not point1.is_close(bsplinecurve.start, abs_tol) and point2.is_close(bsplinecurve.end, abs_tol):
-            return bsplinecurve.cut_before(parameter1)
-
-        if not point2.is_close(bsplinecurve.start, abs_tol) and point1.is_close(bsplinecurve.end, abs_tol):
-            bsplinecurve = bsplinecurve.cut_before(parameter2)
-            return bsplinecurve
-
-        if parameter1 is None or parameter2 is None:
-            raise ValueError('Point not on BSplineCurve for trim method')
-
-        if parameter1 > parameter2:
-            parameter1, parameter2 = parameter2, parameter1
-            point1, point2 = point2, point1
-
-        bsplinecurve = bsplinecurve.cut_before(parameter1)
-        new_param2 = bsplinecurve.point_to_parameter(point2)
-        trimmed_bspline_curve = bsplinecurve.cut_after(new_param2)
-        return trimmed_bspline_curve
-
-    def _trim_periodic(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, same_sense: bool = True):
-        """
-        Creates a new BSplineCurve3D between point1 and point2 using interpolation method.
-        """
-        bspline_curve = self
-        if not same_sense:
-            bspline_curve = self.reverse()
-        abscissa1 = bspline_curve.abscissa(point1)
-        abscissa2 = bspline_curve.abscissa(point2)
-        if abscissa2 > abscissa1:
-            if abscissa1 == 0.0:
-                return bspline_curve.split(point2)[0]
-            if abscissa2 == bspline_curve.length():
-                return bspline_curve.split(point1)[1]
-            curve1 = bspline_curve.split(point1)[1]
-            return curve1.split(point2)[0]
-        if abscissa2 == 0.0:
-            return bspline_curve.split(point1)[1]
-        curve1 = bspline_curve.split(point1)[1]
-        curve2 = bspline_curve.split(point2)[0]
-        return curve1.merge_with(curve2)
-
     def trim_between_evaluations(self, parameter1: float, parameter2: float):
         """
         Trims the Bspline between two abscissa evaluation parameters.
@@ -5253,38 +5307,6 @@ class BSplineCurve3D(BSplineCurve):
                               knots=new_knots,
                               weights=None,
                               name=bspline_curve.name)
-
-    def cut_before(self, parameter: float):
-        """
-        Returns the right side of the split curve at a given parameter.
-
-        :param parameter: parameter value that specifies where to split the curve.
-        :type parameter: float
-        """
-        parameter = next((knot for knot in self.knots if abs(knot - parameter) < 1e-12), parameter)
-        point3d = self.evaluate_single(parameter)
-        if self.start.is_close(point3d):
-            return self.copy()
-        if self.end.is_close(point3d):
-            return self.reverse()
-        curves = volmdlr.nurbs.operations.split_curve(self, parameter)
-        return curves[1]
-
-    def cut_after(self, parameter: float):
-        """
-        Returns the left side of the split curve at a given parameter.
-
-        :param parameter: parameter value that specifies where to split the curve.
-        :type parameter: float
-        """
-        parameter = next((knot for knot in self.knots if abs(knot - parameter) < 1e-12), parameter)
-        point3d = self.evaluate_single(parameter)
-        if self.start.is_close(point3d):
-            return self.reverse()
-        if self.end.is_close(point3d):
-            return self.copy()
-        curves = volmdlr.nurbs.operations.split_curve(self, parameter)
-        return curves[0]
 
     def insert_knot(self, knot: float, num: int = 1):
         """
@@ -5940,27 +5962,6 @@ class Arc3D(ArcMixin, Edge):
         phi_angles = sorted([start2d.y, start2d.y - self.angle * v.dot(self.frame.w)])
         return [volmdlr.faces.ToroidalFace3D.from_surface_rectangular_cut(
             surface, 0, angle, phi_angles[0], phi_angles[1])]
-
-    def to_step(self, current_id, *args, **kwargs):
-        """
-        Converts the object to a STEP representation.
-
-        :param current_id: The ID of the last written primitive.
-        :type current_id: int
-        :return: The STEP representation of the object and the last ID.
-        :rtype: tuple[str, list[int]]
-        """
-        content, frame_id = self.circle.frame.to_step(current_id)
-        curve_id = frame_id + 1
-        content += f"#{curve_id} = CIRCLE('{self.name}', #{frame_id}, {self.radius * 1000});\n"
-
-        current_id = curve_id
-        start_content, start_id = self.start.to_step(current_id, vertex=True)
-        end_content, end_id = self.end.to_step(start_id, vertex=True)
-        content += start_content + end_content
-        current_id = end_id + 1
-        content += f"#{current_id} = EDGE_CURVE('{self.name}',#{start_id},#{end_id},#{curve_id},.T.);\n"
-        return content, current_id
 
     def point_belongs(self, point, abs_tol: float = 1e-6):
         """
