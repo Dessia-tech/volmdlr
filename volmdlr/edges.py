@@ -597,6 +597,38 @@ class Edge(dc.DessiaObject):
                 new_arcs.append(arc)
         return new_arcs
 
+    def curve(self):
+        """Returns the curve that defines the geometry of the edge."""
+        edge_type = self.__class__.__name__[:-2]
+        curve = None
+        if edge_type == "LineSegment":
+            curve = self.line
+        elif edge_type in ("Arc", "FullArc"):
+            curve = self.circle
+        elif edge_type in ("ArcEllipse", "FullArcEllipse"):
+            curve = self.ellipse
+        elif edge_type == "BSplineCurve":
+            curve = self
+        return curve
+
+    def to_step(self, current_id, *args, **kwargs):
+        """
+        Converts the object to a STEP representation.
+
+        :param current_id: The ID of the last written primitive.
+        :type current_id: int
+        :return: The STEP representation of the object and the last ID.
+        :rtype: tuple[str, list[int]]
+        """
+        content, curve_id = self.curve().to_step(current_id)
+
+        start_content, start_id = self.start.to_step(curve_id, vertex=True)
+        end_content, end_id = self.end.to_step(start_id, vertex=True)
+        content += start_content + end_content
+        current_id = end_id + 1
+        content += f"#{current_id} = EDGE_CURVE('{self.name}',#{start_id},#{end_id},#{curve_id},.T.);\n"
+        return content, current_id
+
 
 class LineSegment(Edge):
     """
@@ -802,21 +834,7 @@ class LineSegment(Edge):
         """
         Abstract method.
         """
-        raise NotImplementedError('the point_distance method must be'
-                                  'overloaded by subclassing class')
-
-    def to_step(self, current_id, *args, **kwargs):
-        """Exports to STEP format."""
-        line = self.line
-        content, line_id = line.to_step(current_id)
-
-        start_content, start_id = self.start.to_step(line_id, vertex=True)
-
-        end_content, end_id = self.end.to_step(start_id, vertex=True)
-        content += start_content + end_content
-        current_id = end_id + 1
-        content += f"#{current_id} = EDGE_CURVE('{self.name}',#{start_id},#{end_id},#{line_id},.T.);\n"
-        return content, current_id
+        raise NotImplementedError('the point_distance method must be overloaded by subclassing class')
 
     def is_close(self, other_edge, tol: float = 1e-6):
         """
@@ -4855,9 +4873,9 @@ class LineSegment3D(LineSegment):
             if math.isclose(radius, 0, abs_tol=1e-9):
                 continue
             if i == 0:
-                arc_point1 = volmdlr.O2D + volmdlr.X2D * radius
-            else:
                 arc_point1 = volmdlr.O2D - volmdlr.X2D * radius
+            else:
+                arc_point1 = volmdlr.O2D + volmdlr.X2D * radius
             arc_point2 = arc_point1.rotation(volmdlr.O2D, angle / 2)
             arc_point3 = arc_point1.rotation(volmdlr.O2D, angle)
             arc = Arc2D.from_3_points(arc_point1, arc_point2, arc_point3)
@@ -4953,7 +4971,7 @@ class LineSegment3D(LineSegment):
             u = self.start - p1_proj  # Unit vector from p1_proj to p1
             u = u.unit_vector()
         elif not math.isclose(distance_2, 0., abs_tol=1e-9):
-            u = self.end - p2_proj  # Unit vector from p1_proj to p1
+            u = self.end - p2_proj  # Unit vector from p2_proj to p2
             u = u.unit_vector()
         else:
             return []
@@ -5965,27 +5983,6 @@ class Arc3D(ArcMixin, Edge):
         phi_angles = sorted([start2d.y, start2d.y - self.angle * v.dot(self.frame.w)])
         return [volmdlr.faces.ToroidalFace3D.from_surface_rectangular_cut(
             surface, 0, angle, phi_angles[0], phi_angles[1])]
-
-    def to_step(self, current_id, *args, **kwargs):
-        """
-        Converts the object to a STEP representation.
-
-        :param current_id: The ID of the last written primitive.
-        :type current_id: int
-        :return: The STEP representation of the object and the last ID.
-        :rtype: tuple[str, list[int]]
-        """
-        content, frame_id = self.circle.frame.to_step(current_id)
-        curve_id = frame_id + 1
-        content += f"#{curve_id} = CIRCLE('{self.name}', #{frame_id}, {self.radius * 1000});\n"
-
-        current_id = curve_id
-        start_content, start_id = self.start.to_step(current_id, vertex=True)
-        end_content, end_id = self.end.to_step(start_id, vertex=True)
-        content += start_content + end_content
-        current_id = end_id + 1
-        content += f"#{current_id} = EDGE_CURVE('{self.name}',#{start_id},#{end_id},#{curve_id},.T.);\n"
-        return content, current_id
 
     def point_belongs(self, point, abs_tol: float = 1e-6):
         """
