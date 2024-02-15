@@ -14,6 +14,7 @@ from volmdlr.step import Step
 from volmdlr.wires import Contour2D
 
 FOLDER = os.path.dirname(os.path.realpath(__file__))
+SHOW_BABYLONJS = False
 
 
 class TestDisplayPrimitives3D(unittest.TestCase):
@@ -21,43 +22,70 @@ class TestDisplayPrimitives3D(unittest.TestCase):
         self.contour_points = [Point2D(0.0, 0.1), Point2D(0.1, 2.1), Point2D(-1.4, 0.5)]
         self.contour2d = Contour2D.from_points(self.contour_points)
 
+        self.expected_keys_merge = ["positions", "indices", "alpha", "name", "color"]
+        self.expected_keys_no_merge = ["primitives_meshes", "alpha", "name", "color"]
+
     def test_diplay_block(self):
         block = p3d.Block(frame=OXYZ)
-        block.babylonjs()
 
-        VolumeModel([block]).babylonjs(merge_meshes=False)
+        self.assertEqual(self.expected_keys_merge, list(block.babylon_meshes(True)[0].keys()))
+        self.assertEqual(self.expected_keys_no_merge, list(block.babylon_meshes(False)[0].keys()))
+
+        if SHOW_BABYLONJS:
+            block.babylonjs()
+            VolumeModel([block]).babylonjs(merge_meshes=False)
 
     def test_display_extruded_profile(self):
         extruded_profile = p3d.ExtrudedProfile(
             frame=OXYZ, outer_contour2d=self.contour2d, inner_contours2d=[], extrusion_length=1.0
         )
-        extruded_profile.babylonjs()
 
-        VolumeModel([extruded_profile]).babylonjs(merge_meshes=False)
+        self.assertEqual(self.expected_keys_merge, list(extruded_profile.babylon_meshes(True)[0].keys()))
+        self.assertEqual(self.expected_keys_no_merge, list(extruded_profile.babylon_meshes(False)[0].keys()))
+
+        if SHOW_BABYLONJS:
+            extruded_profile.babylonjs()
+            VolumeModel([extruded_profile]).babylonjs(merge_meshes=False)
 
     def test_display_revolved_profile(self):
         revolved_profile = p3d.RevolvedProfile(frame=OXYZ, contour2d=self.contour2d, axis_point=O3D, axis=X3D)
-        revolved_profile.babylonjs()
 
-        VolumeModel([revolved_profile]).babylonjs(merge_meshes=False)
+        self.assertEqual(self.expected_keys_merge, list(revolved_profile.babylon_meshes(True)[0].keys()))
+        self.assertEqual(self.expected_keys_no_merge, list(revolved_profile.babylon_meshes(False)[0].keys()))
+
+        if SHOW_BABYLONJS:
+            revolved_profile.babylonjs()
+            VolumeModel([revolved_profile]).babylonjs(merge_meshes=False)
 
     def test_display_cylinder(self):
         cylinder = p3d.Cylinder(frame=OXYZ, radius=1.0, length=1.0)
-        cylinder.babylonjs()
 
-        VolumeModel([cylinder]).babylonjs(merge_meshes=False)
+        self.assertEqual(self.expected_keys_merge, list(cylinder.babylon_meshes(True)[0].keys()))
+        self.assertEqual(self.expected_keys_no_merge, list(cylinder.babylon_meshes(False)[0].keys()))
+
+        if SHOW_BABYLONJS:
+            cylinder.babylonjs()
+            VolumeModel([cylinder]).babylonjs(merge_meshes=False)
 
     def test_display_hollow_cylinder(self):
         hollow_cylinder = p3d.HollowCylinder(frame=OXYZ, inner_radius=0.5, outer_radius=1.0, length=1.0)
-        hollow_cylinder.babylonjs()
 
-        VolumeModel([hollow_cylinder]).babylonjs(merge_meshes=False)
+        self.assertEqual(self.expected_keys_merge, list(hollow_cylinder.babylon_meshes(True)[0].keys()))
+        self.assertEqual(self.expected_keys_no_merge, list(hollow_cylinder.babylon_meshes(False)[0].keys()))
+
+        if SHOW_BABYLONJS:
+            hollow_cylinder.babylonjs()
+            VolumeModel([hollow_cylinder]).babylonjs(merge_meshes=False)
 
     def test_display_sphere(self):
         sphere = p3d.Sphere(O3D, 1.0)
-        sphere.babylonjs()
 
-        VolumeModel([sphere]).babylonjs(merge_meshes=False)
+        self.assertEqual(self.expected_keys_merge, list(sphere.babylon_meshes(True)[0].keys()))
+        self.assertEqual(self.expected_keys_no_merge, list(sphere.babylon_meshes(False)[0].keys()))
+
+        if SHOW_BABYLONJS:
+            sphere.babylonjs()
+            VolumeModel([sphere]).babylonjs(merge_meshes=False)
 
     def test_display_sweep(self):
         sweep = p3d.Sweep(
@@ -66,9 +94,13 @@ class TestDisplayPrimitives3D(unittest.TestCase):
                 points=[Point3D(0, 0, 0), Point3D(0, 0, 1), Point3D(0, 1, 1)], radius={"1": 0.2}
             ),
         )
-        sweep.babylonjs()
 
-        VolumeModel([sweep]).babylonjs(merge_meshes=False)
+        self.assertEqual(self.expected_keys_merge, list(sweep.babylon_meshes(True)[0].keys()))
+        self.assertEqual(self.expected_keys_no_merge, list(sweep.babylon_meshes(False)[0].keys()))
+
+        if SHOW_BABYLONJS:
+            sweep.babylonjs()
+            VolumeModel([sweep]).babylonjs(merge_meshes=False)
 
 
 class TestDisplayStep(unittest.TestCase):
