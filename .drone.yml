@@ -60,7 +60,7 @@ steps:
   when:
     event: pull_request
   commands:
-    - git fetch --tags
+    - git fetch origin "$DRONE_TARGET_BRANCH" "$DRONE_SOURCE_BRANCH"
     - bash code_changelog.sh
 
 - name: check pep8 formatting
@@ -71,7 +71,6 @@ steps:
       - tag
       - pull_request
   commands:
-    - git fetch --tags
     - pip3 install -U pip autopep8==2.0.0
     - bash code_pep8.sh
 
