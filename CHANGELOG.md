@@ -45,7 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ToroidalSuface3D: toroidal_surface_intersections
 - Contour2D - point_belongs
 - ConicalSurface3D: Refactoring of the conical surface definition in accordance with ISO 10303.
-- BSplineSurface3D: point_inversion_grid_search
+- BSplineSurface3D: improves point_inversion_grid_search convergence.
 
 ### Changed
 - load_from_file -> from_json
