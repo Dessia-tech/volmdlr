@@ -2,7 +2,7 @@
 volmdlr cad simplification module.
 """
 import math
-from typing import List, Union
+from typing import Union
 
 import numpy as np
 from CGAL.CGAL_Alpha_wrap_3 import alpha_wrap_3
