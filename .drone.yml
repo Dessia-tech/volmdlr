@@ -88,6 +88,7 @@ steps:
       - pull_request
   commands:
   - pip install numpy Cython>3
+  - python setup.py build_ext --inplace
   - pip install pylint==2.17.3 pydocstyle==6.3.0 pre-commit shellcheck-py cython-lint pyenchant==3.2.2
   - python code_pylint.py
   - python code_pydocstyle.py
