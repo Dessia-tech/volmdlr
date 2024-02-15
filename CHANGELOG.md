@@ -8,8 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v0.17.0 [Future]
 ### New Features
+
+#### curves.py
+- Ellipse3D: to_step
 #### edges.py
--
+- ArcEllipse3D/FullArcEllipse3D: to_step
 
 #### faces.py
 -
@@ -54,7 +57,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - edges/curves.py cut_between_two_points -> trim
 - defines ordering of curve methods
 - npy -> np
-- 
+
+### Updates
+- Documentation
+
 ### Unittests
 - Toroidalface ConicalFace intersections.
 
