@@ -1,5 +1,6 @@
 import os
 import time
+import re
 
 import matplotlib.pyplot as _plt
 
@@ -108,6 +109,7 @@ scripts = [
     "grid.py",
 ]
 
+
 # Maximum time for a script
 CONTROLED_TIMES = {"showcases/casing.py": 15, "primitives/sweep.py": 15}
 
@@ -133,8 +135,13 @@ for script_name in scripts:
             os.chdir(script_folder)
     file_name = script_name.split("/")[-1]
     time_start_script = time.time()
+
     with open(file_name, "r", encoding="utf-8") as script:
-        exec(script.read())
+        # Call babylon_data instead of babylonjs to avoid opening browser windows
+        pattern = r'\.babylonjs\(.*?\)'
+        replacement = r'.volmdlr_volume_model().babylon_data()'
+        exec(re.sub(pattern, replacement, script.read()))
+
     time_start_script = time.time() - time_start_script
     times[script_name] = time_start_script
     _plt.close("all")
