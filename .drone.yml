@@ -62,7 +62,6 @@ steps:
   - git fetch --tags
   - pip install .[doc,test]
   - python setup.py build_ext --inplace
-  - pip install .
   - cd doc
   - make html
   - cd ../tests
