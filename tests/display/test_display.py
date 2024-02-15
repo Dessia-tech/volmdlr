@@ -159,26 +159,40 @@ class TestDisplaySTL(unittest.TestCase):
         self.double_space_path = os.path.join(FOLDER, "..", "..", "scripts", "stl", "double_space.stl")
         self.simple_path = os.path.join(FOLDER, "..", "..", "scripts", "stl", "simple.stl")
 
+        self.expected_keys = ["positions", "indices", "alpha", "name", "color"]
+
     def test_display_cube_ascii(self):
         mesh = Mesh3D.from_stl_file(self.cube_ascii_path)
-        mesh.babylonjs()
 
-        # Split shared vertices for better shadow rendering
-        mesh = mesh.split_shared_vertices()
-        mesh.babylonjs()
+        self.assertEqual(self.expected_keys, list(mesh.babylon_meshes()[0].keys()))
+
+        if SHOW_BABYLONJS:
+            mesh.babylonjs()
+
+            # Split shared vertices for better shadow rendering
+            mesh = mesh.split_shared_vertices()
+            mesh.babylonjs()
 
     def test_display_double_space(self):
         mesh = Mesh3D.from_stl_file(self.double_space_path)
-        mesh.babylonjs()
 
-        # Split shared vertices for better shadow rendering
-        mesh = mesh.split_shared_vertices()
-        mesh.babylonjs()
+        self.assertEqual(self.expected_keys, list(mesh.babylon_meshes()[0].keys()))
+
+        if SHOW_BABYLONJS:
+            mesh.babylonjs()
+
+            # Split shared vertices for better shadow rendering
+            mesh = mesh.split_shared_vertices()
+            mesh.babylonjs()
 
     def test_display_simple(self):
         mesh = Mesh3D.from_stl_file(self.simple_path)
-        mesh.babylonjs()
 
-        # Split shared vertices for better shadow rendering
-        mesh = mesh.split_shared_vertices()
-        mesh.babylonjs()
+        self.assertEqual(self.expected_keys, list(mesh.babylon_meshes()[0].keys()))
+
+        if SHOW_BABYLONJS:
+            mesh.babylonjs()
+
+            # Split shared vertices for better shadow rendering
+            mesh = mesh.split_shared_vertices()
+            mesh.babylonjs()
