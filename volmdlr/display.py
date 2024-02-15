@@ -454,13 +454,28 @@ class Mesh3D(MeshMixin, PhysicalObject):
         # Calculate the minimum distance between vertices using vectorized operations
         self_to_other_distances = np.linalg.norm(self.vertices - other_mesh.vertices[self_to_other_indices], axis=1)
         other_to_self_distances = np.linalg.norm(other_mesh.vertices - self.vertices[other_to_self_indices], axis=1)
-
-        min_distance = min(self_to_other_distances.min(), other_to_self_distances.min())
+        min_distances = [self_to_other_distances.min(), other_to_self_distances.min()]
+        if min_distances[0] < min_distances[1]:
+            min_distance = min_distances[0]
+            # Get the points corresponding to the minimum distance
+            min_distance_index = np.argmin(self_to_other_distances)
+            closest_point_self = self.vertices[min_distance_index]
+            closest_point_other = other_mesh.vertices[self_to_other_indices[min_distance_index]]
+        else:
+            min_distance = min_distances[1]
+            # Get the points corresponding to the minimum distance
+            min_distance_index = np.argmin(other_to_self_distances)
+            closest_point_self = self.vertices[other_to_self_indices[min_distance_index]]
+            closest_point_other = other_mesh.vertices[min_distance_index]
 
         if return_points:
-            closest_points_self = self.vertices[other_to_self_indices]
-            closest_points_other = other_mesh.vertices[self_to_other_indices]
-            return min_distance, closest_points_self, closest_points_other
+
+            closest_point_self = volmdlr.Point3D(closest_point_self[0],
+                                                 closest_point_self[1], closest_point_self[2])
+            closest_point_other = volmdlr.Point3D(closest_point_other[0],
+                                                  closest_point_other[1], closest_point_other[2])
+            return min_distance, closest_point_self, closest_point_other
+
         return min_distance
 
     def get_edges_triangles(self):
