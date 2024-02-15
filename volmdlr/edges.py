@@ -4851,9 +4851,9 @@ class LineSegment3D(LineSegment):
             if math.isclose(radius, 0, abs_tol=1e-9):
                 continue
             if i == 0:
-                arc_point1 = volmdlr.O2D + volmdlr.X2D * radius
-            else:
                 arc_point1 = volmdlr.O2D - volmdlr.X2D * radius
+            else:
+                arc_point1 = volmdlr.O2D + volmdlr.X2D * radius
             arc_point2 = arc_point1.rotation(volmdlr.O2D, angle / 2)
             arc_point3 = arc_point1.rotation(volmdlr.O2D, angle)
             arc = Arc2D.from_3_points(arc_point1, arc_point2, arc_point3)
@@ -4949,7 +4949,7 @@ class LineSegment3D(LineSegment):
             u = self.start - p1_proj  # Unit vector from p1_proj to p1
             u = u.unit_vector()
         elif not math.isclose(distance_2, 0., abs_tol=1e-9):
-            u = self.end - p2_proj  # Unit vector from p1_proj to p1
+            u = self.end - p2_proj  # Unit vector from p2_proj to p2
             u = u.unit_vector()
         else:
             return []
