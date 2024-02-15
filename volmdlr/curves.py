@@ -2822,6 +2822,19 @@ class Ellipse3D(ConicMixin, EllipseMixin, ClosedCurve):
         # _d2 = self.minor_dir.to_2d(plane_origin, x, y)
         return Ellipse2D(self.major_axis, self.minor_axis, volmdlr.Frame2D(center, major_dir_2d, minor_dir_2d))
 
+    def to_step(self, current_id, *args, **kwargs):
+        """
+        Exports the circle 3d to STEP.
+
+        """
+        content, frame_id = self.frame.to_step(current_id)
+        curve_id = frame_id + 1
+        content += (f"#{curve_id} = ELLIPSE('{self.name}',#{frame_id},{self.major_axis * 1000},"
+                    f"{self.minor_axis * 1000});\n")
+        current_id = curve_id
+
+        return content, current_id
+
     def _bounding_box(self):
         """
         Computes the bounding box.
