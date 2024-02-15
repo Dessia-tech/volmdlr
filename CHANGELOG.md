@@ -62,6 +62,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Toroidalface ConicalFace intersections.
 - Avoid showing babylonjs in unit tests / ci_scripts
 
+
 ## v0.16.0
 
 ### New Features
