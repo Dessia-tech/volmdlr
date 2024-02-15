@@ -75,6 +75,11 @@ steps:
     - pip3 install -U pip autopep8==2.0.0
     - bash code_pep8.sh
 
+  volumes:
+    # Mount pip cache from host
+    - name: pip_cache
+      path: /root/.cache/pip
+
 - name: check code complexity
   image: dessia/python-ci:3.9
   when:
