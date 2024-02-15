@@ -55,11 +55,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - defines ordering of curve methods
 - npy -> np
 
+#### CI
+- Avoid calling babylonjs method in CI to reduce CI time
+- Avoid `pip install .` in drone as it is redundant with `python setup.py build_ext --inplace`
+- Re-order CI steps to build doc in the end / perform shortest test first
+- Avoid duplication of test between push and PR
+
+
 ### Updates
 - Documentation
 
 ### Unittests
 - Toroidalface ConicalFace intersections.
+- Avoid showing babylonjs in unit tests / ci_scripts
+
 
 ## v0.16.0
 
