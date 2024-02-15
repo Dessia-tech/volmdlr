@@ -511,8 +511,6 @@ class TetrahedralElement(DessiaObject):
 class TetrahedralElementQuadratic(DessiaObject):
     """ Class to define a 3D quadratic tetrahedral element. """
 
-    # pylint: disable=too-few-public-methods
-
     _standalone_in_db = False
     _non_serializable_attributes = []
     _non_data_eq_attributes = ['name']

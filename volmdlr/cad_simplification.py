@@ -24,8 +24,6 @@ from volmdlr.wires import Contour2D
 
 class Simplify(DessiaObject):
     """CAD simplification abstract class."""
-    
-    # pylint: disable=too-few-public-methods
 
     def __init__(self, volume_model: VolumeModel, name: str = ""):
         """

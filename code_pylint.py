@@ -42,6 +42,7 @@ MAX_ERROR_BY_TYPE = {
                      'too-many-lines': 4,
                      'signature-differs': 1,
                      'consider-using-enumerate': 2,
+                     'too-few-public-methods': 2,
                     }
 
 ERRORS_WITHOUT_TIME_DECREASE = ["signature-differs", "broad-exception-caught", 'invalid-name', "too-many-locals",
