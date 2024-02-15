@@ -55,11 +55,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - defines ordering of curve methods
 - npy -> np
 
+
 ### Updates
 - Documentation
 
 ### Unittests
 - Toroidalface ConicalFace intersections.
+- Avoid showing babylonjs in unit tests
 
 ## v0.16.0
 

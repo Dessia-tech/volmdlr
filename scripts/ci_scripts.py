@@ -108,6 +108,20 @@ scripts = [
     "grid.py",
 ]
 
+
+def dummy_babylonjs(*args, **kwargs):
+    print("Skipping babylonjs call")
+    # Do nothing or log the call
+
+
+# Custom global environment
+CUSTOM_GLOBALS = {
+    "__builtins__": __builtins__,
+    "babylonjs": dummy_babylonjs,
+    # Add other necessary globals or functions
+}
+
+
 # Maximum time for a script
 CONTROLED_TIMES = {"showcases/casing.py": 15, "primitives/sweep.py": 15}
 
@@ -133,8 +147,10 @@ for script_name in scripts:
             os.chdir(script_folder)
     file_name = script_name.split("/")[-1]
     time_start_script = time.time()
+
     with open(file_name, "r", encoding="utf-8") as script:
-        exec(script.read())
+        exec(script.read(), CUSTOM_GLOBALS)
+
     time_start_script = time.time() - time_start_script
     times[script_name] = time_start_script
     _plt.close("all")
