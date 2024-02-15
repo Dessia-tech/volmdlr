@@ -62,14 +62,14 @@ steps:
   - git fetch --tags
   - pip install .[doc,test]
   - python setup.py build_ext --inplace
-  - cd doc
-  - make html
-  - cd ../tests
+  - cd tests
   - coverage run --rcfile=../.coveragerc --data-file=../.coverage --source volmdlr -m unittest discover -v
   - cd ../scripts  
   - coverage run --rcfile=../.coveragerc --data-file=../.coverage --source volmdlr -a ci_scripts.py
   - cd ../tutorials
   - coverage run --rcfile=../.coveragerc --data-file=../.coverage --source volmdlr -a ci_tutorials.py
+  - cd ../doc
+  - make html
   - cd ..
   - coverage json
   - coverage report
