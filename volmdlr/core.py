@@ -1554,7 +1554,7 @@ class VolumeModel(dc.PhysicalObject):
 
         merged_mesh = meshes[0]
         for mesh in meshes[1:]:
-            merged_mesh = mesh.merge(mesh, merge_vertices=merge_vertices, merge_triangles=merge_triangles)
+            merged_mesh = merged_mesh.merge(mesh, merge_vertices=merge_vertices, merge_triangles=merge_triangles)
 
         merged_mesh.name = self.name
 
