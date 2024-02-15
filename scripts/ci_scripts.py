@@ -1,5 +1,6 @@
 import os
 import time
+import re
 
 import matplotlib.pyplot as _plt
 
