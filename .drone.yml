@@ -55,12 +55,32 @@ steps:
     - name: cache
       path: /root/.cache
 
+- name: check changelog update
+  image: python:3.9
+  when:
+    event: pull_request
+  commands:
+    - bash code_changelog.sh
+
+- name: check pep8 formatting
+  image: python:3.9
+  when:
+    event:
+      exclude:
+      - tag
+      - pull_request
+  commands:
+    - git fetch --tags
+    - pip3 install -U pip autopep8==2.0.0
+    - bash code_pep8.sh
+
 - name: check code complexity
   image: dessia/python-ci:3.9
   when:
     event:
       exclude:
       - tag
+      - pull_request
   commands:
   - git fetch --tags
   - pip install numpy Cython>3
@@ -71,17 +91,6 @@ steps:
   - python code_pydocstyle.py
   - pre-commit run -a
 
-- name: check pep8 formatting
-  image: python:3.9
-  when:
-    event:
-      exclude:
-      - tag
-  commands:
-    - git fetch --tags
-    - pip3 install -U pip autopep8==2.0.0
-    - bash code_pep8.sh
-
   volumes:
     # Mount pip cache from host
     - name: pip_cache
@@ -89,6 +98,8 @@ steps:
 
 - name: install, build doc run scripts and tutorials
   image: python:3.9
+  when:
+    event: pull_request
   commands:
   - git fetch --tags
   - pip install .[doc,test]
@@ -143,16 +154,6 @@ steps:
     - name: pip_cache
       path: /root/.cache/pip
 
-
-- name: check changelog update
-  image: python:3.9
-  when:
-    event: pull_request
-  commands:
-    - bash code_changelog.sh
-
-
-
 - name: upload to pypi
   image: plugins/pypi
   when:
@@ -180,7 +181,7 @@ steps:
 - name: upload coverage
   image: appleboy/drone-scp
   when:
-    event: push
+    event: pull_request
   failure: ignore
   settings:
     host: magenta.dessia.tech
