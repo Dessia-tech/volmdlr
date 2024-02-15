@@ -81,10 +81,10 @@ class TestBoundingBox(unittest.TestCase):
         self.assertEqual(self.bbox3.volume(), 1.0)
 
     def test_bbox_intersection(self):
-        self.assertTrue(self.bbox1.bbox_intersection(self.bbox2))
-        self.assertTrue(self.bbox2.bbox_intersection(self.bbox1))
-        self.assertTrue(self.bbox1.bbox_intersection(self.bbox1))
-        self.assertFalse(self.bbox1.bbox_intersection(self.bbox3))
+        self.assertTrue(self.bbox1.is_intersecting(self.bbox2))
+        self.assertTrue(self.bbox2.is_intersecting(self.bbox1))
+        self.assertTrue(self.bbox1.is_intersecting(self.bbox1))
+        self.assertFalse(self.bbox1.is_intersecting(self.bbox3))
 
     def test_is_inside_bbox(self):
         self.assertFalse(self.bbox2.is_inside_bbox(self.bbox1))
@@ -105,9 +105,9 @@ class TestBoundingBox(unittest.TestCase):
         self.assertEqual(bbox5.distance_to_bbox(self.bbox1), 3**0.5)
 
     def test_point_belongs(self):
-        self.assertTrue(self.bbox1.point_belongs(volmdlr.Point3D(1.0, 1.0, 1.0)))
-        self.assertTrue(self.bbox1.point_belongs(volmdlr.Point3D(1.0, 1.0, 0.0)))
-        self.assertFalse(self.bbox1.point_belongs(volmdlr.Point3D(3.0, 3.0, 3.0)))
+        self.assertTrue(self.bbox1.point_inside(volmdlr.Point3D(1.0, 1.0, 1.0)))
+        self.assertTrue(self.bbox1.point_inside(volmdlr.Point3D(1.0, 1.0, 0.0)))
+        self.assertFalse(self.bbox1.point_inside(volmdlr.Point3D(3.0, 3.0, 3.0)))
 
     def test_distance_to_point(self):
         p0 = volmdlr.O3D

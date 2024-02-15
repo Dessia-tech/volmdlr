@@ -6,7 +6,62 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## v0.16.0 [future]
+## v0.17.0 [Future]
+### New Features
+
+#### curves.py
+- Ellipse3D: to_step
+#### edges.py
+- ArcEllipse3D/FullArcEllipse3D: to_step
+
+#### faces.py
+-
+
+#### edges.py
+-
+
+#### surfaces.py
+-
+
+### Fixed
+#### edges.py
+- BSplineCurve3D: move_frame_along
+- arc2d: start and end angle, and arc angle.
+
+#### faces.py
+- Toroidalface ConicalFace intersections.
+
+#### edges.py
+- edge: intersections -> new parameter force_sort, to force sorting intersection points along curve.
+
+#### surfaces.py
+-
+
+#### wires.py
+
+### Refactor
+
+#### surfaces.py
+- ToroidalSuface3D: toroidal_surface_intersections
+- Contour2D - point_belongs
+- ConicalSurface3D: Refactoring of the conical surface definition in accordance with ISO 10303.
+
+### Changed
+- load_from_file -> from_json
+- Delete outdated_methods: bbox_intersections -> is_intersecting | b_rectangle_intersections -> is_intersecting
+- For points in the interior of an object: point_belongs -> point_inside
+- For points ON an object: point_belongs
+- edges/curves.py cut_between_two_points -> trim
+- defines ordering of curve methods
+- npy -> np
+
+### Updates
+- Documentation
+
+### Unittests
+- Toroidalface ConicalFace intersections.
+
+## v0.16.0
 
 ### New Features
 - added missing hash and eq methods to several classes
@@ -267,7 +322,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - core_compiled.pyx: update typing because Point2D, Point3D, Vector2D and Vector3D are now extension types (C structures.)
 - BSplineCurve: improve line_intersections performance.
 - SphericalSurface3D: enhance bsplinecurve3d_to_2d.
-
 
 ### Unittests
 #### curves 

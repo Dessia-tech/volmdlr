@@ -10,7 +10,7 @@ from itertools import combinations
 from typing import List
 
 import matplotlib.pyplot as plt
-import numpy as npy
+import numpy as np
 
 from dessia_common.core import DessiaObject  # isort: skip
 
@@ -486,7 +486,7 @@ class TetrahedralElement(DessiaObject):
         for i in range(3):
             data.extend([*self.points[i + 1] - self.points[0]])
 
-        return abs(1 / 6 * (npy.linalg.det(npy.array(data).reshape(3, 3))))
+        return abs(1 / 6 * (np.linalg.det(np.array(data).reshape(3, 3))))
 
     def _form_functions(self):
         coeff = [1, -1, 1, -1]
@@ -500,10 +500,10 @@ class TetrahedralElement(DessiaObject):
                     data_betha.extend([1, self.points[c_coef].y, self.points[c_coef].z])
                     data_delta.extend([1, self.points[c_coef].x, self.points[c_coef].y])
 
-            form_funct.append([(coeff[i] * (npy.linalg.det(npy.array(data_alpha).reshape(3, 3)))),
-                               ((-1) * coeff[i] * (npy.linalg.det(npy.array(data_betha).reshape(3, 3)))),
-                               (coeff[i] * (npy.linalg.det(npy.array(data_gamma).reshape(3, 3)))),
-                               ((-1) * coeff[i] * (npy.linalg.det(npy.array(data_delta).reshape(3, 3))))])
+            form_funct.append([(coeff[i] * (np.linalg.det(np.array(data_alpha).reshape(3, 3)))),
+                               ((-1) * coeff[i] * (np.linalg.det(np.array(data_betha).reshape(3, 3)))),
+                               (coeff[i] * (np.linalg.det(np.array(data_gamma).reshape(3, 3)))),
+                               ((-1) * coeff[i] * (np.linalg.det(np.array(data_delta).reshape(3, 3))))])
 
         return form_funct[0], form_funct[1], form_funct[2], form_funct[3]
 

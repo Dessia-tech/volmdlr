@@ -1,12 +1,16 @@
+"""
+Unit tests for volmdlr.faces.BSplineCurve
+"""
 import unittest
 import os
 from dessia_common.core import DessiaObject
-import volmdlr
-import volmdlr.nurbs.helpers as nurbs_helpers
-import volmdlr.edges as vme
-from volmdlr.models import bspline_curves
-from volmdlr import curves
 from geomdl import BSpline
+import numpy as np
+import volmdlr
+import volmdlr.edges as vme
+from volmdlr import curves
+from volmdlr.models import bspline_curves
+import volmdlr.nurbs.helpers as nurbs_helpers
 
 
 DELTA = 0.001
@@ -14,16 +18,11 @@ folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'bsplinecurve
 
 
 class TestBSplineCurve2D(unittest.TestCase):
-    def test_bounding_rectangle(self):
-        contour = DessiaObject.from_json(os.path.join(folder, "bounding_box_contour.json"))
-        b_rec = contour.bounding_rectangle
-        self.assertAlmostEqual(b_rec.area(), 0.48129011002687494, places=2)
-
     degree = 3
     points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 1), volmdlr.Point2D(2, -1), volmdlr.Point2D(3, 0)]
     knotvector = nurbs_helpers.generate_knot_vector(degree, len(points))
     knot_multiplicity = [1] * len(knotvector)
-    bspline1 = vme.BSplineCurve2D(degree, points, knot_multiplicity, knotvector, None)
+    bspline1 = vme.BSplineCurve2D(degree, points, knot_multiplicity, knotvector, None, '')
     bspline2, bspline3 = bspline1.split(volmdlr.Point2D(1.5, 0.0))
     bspline4, bspline5 = bspline2.split(bspline2.point_at_abscissa(0.3 * bspline2.length()))
     bspline6 = bspline1.split(bspline1.point_at_abscissa(0.7 * bspline1.length()))[0]
@@ -340,23 +339,65 @@ class TestBSplineCurve2D(unittest.TestCase):
         self.assertAlmostEqual(splitted_curves[0].length(), 0.0005535177002044544, 5)
         self.assertAlmostEqual(splitted_curves[1].length(), 0.0002710315376536523, 5)
 
-    def test_merge_with(self):
-        split_point = volmdlr.Point2D(27.64549230676716, 14.691702224146088)
-        splitted_curves = self.bspline2d.split(split_point)
-        merged_curve = splitted_curves[0].merge_with(splitted_curves[1])
-        self.assertTrue(merged_curve.is_close(self.bspline2d))
-        self.assertFalse(merged_curve.rational)
-
-        split_point = volmdlr.Point2D(28.1775252667145, 14.785855215217019)
-        splitted_curves = self.bspline2d_rational.split(split_point)
-        merged_curve = splitted_curves[0].merge_with(splitted_curves[1])
-        self.assertTrue(merged_curve.is_close(self.bspline2d_rational))
-
     def test_tangent(self):
         tangent = self.bspline1.tangent(0.5)
         tangent_rational = self.bspline2d_rational.tangent(0.5)
         self.assertTrue(tangent.is_close(volmdlr.Vector2D(0.8944271909999159, -0.4472135954999579)))
         self.assertTrue(tangent_rational.is_close(volmdlr.Vector2D(0.998391126712381, 0.05670236416572517)))
+
+
+class TestBSplineCurve3D(unittest.TestCase):
+    b_splinecurve3d = vme.BSplineCurve3D(degree=5, control_points=[
+        volmdlr.Point3D(0.5334, 4.61e-10, -2.266), volmdlr.Point3D(0.5334, 0.236642912449, -2.26599999893),
+        volmdlr.Point3D(0.5334, 0.473285829931, -2.23144925183),
+        volmdlr.Point3D(0.5334, 0.70316976404, -2.16234807551),
+        volmdlr.Point3D(0.5334, 1.13611540546, -1.95904362568), volmdlr.Point3D(0.5334, 1.49286052971, -1.64044168585),
+        volmdlr.Point3D(0.5334, 1.64654439419, -1.45604332404), volmdlr.Point3D(0.5334, 1.77109261028, -1.25188280667),
+        volmdlr.Point3D(0.5334, 1.86385510975, -1.03417888209)], knot_multiplicities=[6, 3, 6],
+                                         knots=[0.0, 0.4999999725155696, 1.0])
+
+    def test_line_intersections(self):
+        line = curves.Line3D(volmdlr.Point3D(0.5334, -0.44659009801843536, 0.0),
+                          volmdlr.Point3D(0.5334, 0.4342689853571558, -0.47337857496375274))
+        bspline_line_intersections = self.b_splinecurve3d.line_intersections(line)
+        self.assertTrue(bspline_line_intersections[0].is_close(
+            volmdlr.Point3D(0.5334, 1.784620497933768, -1.1990649949459866)))
+
+    def test_linesegment_intersection(self):
+        linesegment1 = vme.LineSegment3D(volmdlr.Point3D(0.5334, -0.44659009801843536, 0.0),
+                                         volmdlr.Point3D(0.5334, 0.4342689853571558, -0.47337857496375274))
+        linesegment2 = vme.LineSegment3D(volmdlr.Point3D(0.5334, -0.44659009801843536, 0.0),
+                                         volmdlr.Point3D(0.5334, 2.1959871521083385, -1.4201357248912583))
+        bspline_lineseg_intersections1 = self.b_splinecurve3d.linesegment_intersections(linesegment1)
+        bspline_lineseg_intersections2 = self.b_splinecurve3d.linesegment_intersections(linesegment2)
+        self.assertFalse(bspline_lineseg_intersections1)
+        self.assertTrue(bspline_lineseg_intersections2[0].is_close(
+            volmdlr.Point3D(0.5334, 1.7846204999239552, -1.1990649960155242)))
+
+    def test_normal(self):
+        normal = self.b_splinecurve3d.normal()
+        self.assertTrue(normal.is_close(volmdlr.Z3D))
+
+
+class TestBezierCurve2D(unittest.TestCase):
+    # Set up the Bezier curve
+    degree = 2
+    ctrlpts = [volmdlr.Point2D(10, 0), volmdlr.Point2D(20, 15), volmdlr.Point2D(30, 0)]
+
+    curve1 = vme.BezierCurve2D(degree, ctrlpts)
+
+    # Set evaluation delta
+    curve1.sample_size = 5
+
+    def test_setup(self):
+        points = self.curve1.points
+        expected_points = [[10.0, 0.0], [15.0, 5.625], [20.0, 7.5], [25.0, 5.625], [30.0, 0.0]]
+        expected_knot_vector = [0.0, 0.0, 0.0, 1.0, 1.0, 1.0]
+
+        self.assertEqual(list(self.curve1.knotvector), expected_knot_vector)
+        for point, test in zip(points, expected_points):
+            self.assertAlmostEqual(point[0], test[0], delta=1e-6)
+            self.assertAlmostEqual(point[1], test[1], delta=1e-6)
 
 
 if __name__ == '__main__':

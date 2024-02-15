@@ -12,12 +12,12 @@ class TestCone(unittest.TestCase):
         self.cone = Cone(frame=volmdlr.OXYZ, radius=self.radius, length=self.length)
 
     def test_point_belongs(self):
-        self.assertTrue(self.cone.point_belongs(volmdlr.O3D))
-        self.assertTrue(self.cone.point_belongs(volmdlr.Point3D(0.0, 0.0, self.length / 2)))
-        self.assertTrue(self.cone.point_belongs(volmdlr.Point3D(-self.radius, 0.0, -self.length / 2)))
-        self.assertTrue(self.cone.point_belongs(volmdlr.Point3D(0.0, -self.radius, -self.length / 2)))
-        self.assertFalse(self.cone.point_belongs(volmdlr.Point3D(0.0, 0.0, self.length)))
-        self.assertFalse(self.cone.point_belongs(volmdlr.Point3D(0.01, 0.01, self.length / 2)))
+        self.assertTrue(self.cone.point_inside(volmdlr.O3D))
+        self.assertTrue(self.cone.point_inside(volmdlr.Point3D(0.0, 0.0, self.length / 2)))
+        self.assertTrue(self.cone.point_inside(volmdlr.Point3D(-self.radius, 0.0, -self.length / 2)))
+        self.assertTrue(self.cone.point_inside(volmdlr.Point3D(0.0, -self.radius, -self.length / 2)))
+        self.assertFalse(self.cone.point_inside(volmdlr.Point3D(0.0, 0.0, self.length)))
+        self.assertFalse(self.cone.point_inside(volmdlr.Point3D(0.01, 0.01, self.length / 2)))
 
     def test_volume(self):
         self.assertEqual(self.cone.volume(), (math.pi * 0.1 * self.radius**2) / 3)

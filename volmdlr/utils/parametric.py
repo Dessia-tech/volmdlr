@@ -313,7 +313,7 @@ def update_face_grid_points_with_inner_polygons(inner_polygons, grid_points_data
                 index = grid_point_index.get((i, j))
                 if not index:
                     continue
-                if inner_polygon.point_belongs(points_grid[index], include_edge_points=True):
+                if inner_polygon.point_inside(points_grid[index], include_edge_points=True):
                     indexes.append(index)
     points_grid = np.delete(points_grid, indexes, axis=0)
     return points_grid
@@ -356,10 +356,8 @@ def contour2d_healing_self_intersection(contour2d):
             zip(contour2d.primitives, contour2d.primitives[1:] + [contour2d.primitives[0]])):
         if not prim1.end.is_close(prim2.start):
             # check intersection
-            intersections = prim1.intersections(prim2)
+            intersections = prim1.intersections(prim2, force_sort=True)
             if intersections:
-                if len(intersections) > 1:
-                    intersections = prim1.sort_points_along_curve(intersections)
                 split_point = intersections[0]
                 if prim1.is_point_edge_extremity(split_point):
                     new_prim1 = prim1

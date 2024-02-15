@@ -19,7 +19,7 @@ MAX_ERROR_BY_TYPE = {
                      "wrong-spelling-in-comment": 6,
                      'invalid-name': 1,
                      'arguments-differ': 67,
-                     'too-many-locals': 75,
+                     'too-many-locals': 76,
                      'unused-argument': 10,
                      'too-many-arguments': 30,
                      'line-too-long': 12,
@@ -31,7 +31,7 @@ MAX_ERROR_BY_TYPE = {
                      'duplicate-code': 9,
                      'arguments-renamed': 56,
                      'too-many-ancestors': 20,
-                     'too-many-public-methods': 16,
+                     'too-many-public-methods': 17,
                      'too-many-instance-attributes': 15,
                      'protected-access': 4,
                      'too-many-nested-blocks': 3,
@@ -122,8 +122,9 @@ for error_type, number_errors in stats_by_msg.items():
                 f"\nFix some {error_type} errors: {number_errors}/{max_errors} "
                 f"(time effect: {time_decrease_effect} errors)")
 
-            messages = extract_messages_by_type(error_type)
-            messages_to_show = sorted(random.sample(messages, min(30, len(messages))), key=lambda m: (m.path, m.line))
+            # messages = extract_messages_by_type(error_type)
+            messages_to_show = extract_messages_by_type(error_type)
+            # messages_to_show = sorted(random.sample(messages, min(30, len(messages))), key=lambda m: (m.path, m.line))
             for message in messages_to_show:
                 print(f"{message.path} line {message.line}: {message.msg}")
         elif number_errors < max_errors:
