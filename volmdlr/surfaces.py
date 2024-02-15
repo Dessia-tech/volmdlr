@@ -6785,7 +6785,7 @@ class RevolutionSurface3D(PeriodicalSurface):
                     new_frame = volmdlr.Frame3D(intersections, self.frame.u, new_w.cross(self.frame.u), new_w)
                 else:
                     new_frame = volmdlr.Frame3D(intersections, self.frame.u, self.frame.v, self.frame.w)
-                return ConicalSurface3D(new_frame, semi_angle, self.name)
+                return ConicalSurface3D(new_frame, semi_angle, name=self.name)
             generatrix_line_direction = generatrix_line.unit_direction_vector()
             if self.axis.is_colinear_to(generatrix_line_direction):
                 radius = self.edge.point_distance(self.axis_point)
@@ -7671,7 +7671,7 @@ class BSplineSurface3D(Surface3D):
         point_array = evaluate_surface(self.data, start=(u, v), stop=(u, v))[0]
         return volmdlr.Point3D(*point_array)
 
-    def _get_grid_bounds(self, params, delta_u, delta_v, sample_size_u, sample_size_v):
+    def _get_grid_bounds(self, params, delta_u, delta_v):
         """
         Update bounds and grid_size at each iteration of point inversion grid search.
         """
@@ -7688,6 +7688,7 @@ class BSplineSurface3D(Surface3D):
         else:
             u_start = max(u - delta_u, self.domain[0])
             u_stop = min(u + delta_u, self.domain[1])
+            sample_size_u = 10
 
         if v == self.domain[2]:
             v_start = self.domain[2]
@@ -7700,10 +7701,10 @@ class BSplineSurface3D(Surface3D):
         else:
             v_start = max(v - delta_v, self.domain[2])
             v_stop = min(v + delta_v, self.domain[3])
+            sample_size_v = 10
         return u_start, u_stop, v_start, v_stop, sample_size_u, sample_size_v
 
-    @staticmethod
-    def _update_parameters(bounds, sample_size_u, sample_size_v, index):
+    def _update_parameters(self, bounds, sample_size_u, sample_size_v, index):
         """
         Helper function to update parameters of point inversion grid search at each iteration.
         """
@@ -7719,74 +7720,66 @@ class BSplineSurface3D(Surface3D):
             delta_v = 0.0
             v = v_start
         else:
-            if index == 0:
-                u_idx, v_idx = 0, 0
-            else:
-                u_idx = int(index / sample_size_v)
-                v_idx = index % sample_size_v
-            delta_u = (u_stop - u_start) / (sample_size_u - 1)
-            delta_v = (v_stop - v_start) / (sample_size_v - 1)
-            u = u_start + u_idx * delta_u
-            v = v_start + v_idx * delta_v
+            u, v, delta_u, delta_v =  self._get_params_from_evaluation_position_bounds_and_sizes(index, bounds,
+                                                                                                 sample_size_u,
+                                                                                                 sample_size_v)
+
         return u, v, delta_u, delta_v
 
     @staticmethod
     def _find_index_min(matrix_points, point):
         """Helper function to find point of minimal distance."""
         distances = np.linalg.norm(matrix_points - point, axis=1)
-
-        return np.argmin(distances), distances.min()
+        indexes = np.argsort(distances)
+        index = indexes[0]
+        return index, distances[index]
 
     def _point_inversion_initialization(self, point3d_array):
         """
         Helper function to initialize parameters.
         """
-        sample_size_u = 10
-        sample_size_v = 10
+
+        if self.nb_u > 15 * self.nb_v:
+            self.sample_size_u, self.sample_size_v = 80, 5
+        elif self.nb_v > 15 * self.nb_u:
+            self.sample_size_u, self.sample_size_v = 5, 80
+
         initial_index, minimal_distance = self._find_index_min(self.evalpts, point3d_array)
 
-        if initial_index == 0:
-            u_idx, v_idx = 0, 0
-        else:
-            u_idx = int(initial_index / self.sample_size_v)
-            v_idx = initial_index % self.sample_size_v
-
+        u, v, delta_u, delta_v = self._get_params_from_evaluation_position_bounds_and_sizes(initial_index, self.domain,
+                                                                                            self.sample_size_u,
+                                                                                            self.sample_size_v)
         u_start, u_stop, v_start, v_stop = self.domain
-        delta_u = (u_stop - u_start) / (self.sample_size_u - 1)
-        delta_v = (v_stop - v_start) / (self.sample_size_v - 1)
-        u = u_start + u_idx * delta_u
-        v = v_start + v_idx * delta_v
-
+        sample_size_u = 10
+        sample_size_v = 10
         if u == u_start:
             u_stop = u + delta_u
-            sample_size_u = 2
+            sample_size_u = 5
         elif u == u_stop:
             u_start = u - delta_u
-            sample_size_u = 2
+            sample_size_u = 5
         else:
             u_start = max(u - delta_u, self.domain[0])
             u_stop = min(u + delta_u, self.domain[1])
 
         if v == v_start:
             v_stop = v + delta_v
-            sample_size_v = 2
+            sample_size_v = 5
         elif v == v_stop:
             v_start = v - delta_v
-            sample_size_v = 2
+            sample_size_v = 5
         else:
             v_start = max(v - delta_v, self.domain[2])
             v_stop = min(v + delta_v, self.domain[3])
         return u, v, u_start, u_stop, v_start, v_stop, delta_u, delta_v, sample_size_u, sample_size_v, minimal_distance
 
-    def point_inversion_grid_search(self, point3d, acceptable_distance):
+    def _helper_point_inversion_grid_search_update_evaluation_data(self, sample_size_u, sample_size_v):
         """
-        Find the parameters (u, v) of a 3D point on the BSpline surface using a grid search algorithm.
+        Helper function to get the evaluation data of the surface adding a given sample size in both u and v direction.
+
+        This function is required for performance and coherence purposes to avoid modifying the surface sample size
+        in each iteration.
         """
-        point3d_array = np.asarray(point3d)
-        u, v, u_start, u_stop, v_start, v_stop, delta_u, delta_v, sample_size_u, sample_size_v, minimal_distance = \
-            self._point_inversion_initialization(point3d_array)
-        if minimal_distance <= acceptable_distance:
-            return (u, v), minimal_distance
         datadict = {
             "degree": (self.degree_u, self.degree_v),
             "knotvector": self.knotvector,
@@ -7799,26 +7792,57 @@ class BSplineSurface3D(Surface3D):
             datadict["control_points"] = self.ctrlptsw
         else:
             datadict["control_points"] = self.ctrlpts
+        return datadict
+
+    @staticmethod
+    def _get_params_from_evaluation_position_bounds_and_sizes(index, bounds, sample_size_u, sample_size_v):
+        """
+        Gets the values of u, v of an evalution point from its index in a list that follows a known structure.
+        """
+        u_start, u_stop, v_start, v_stop = bounds
+        u_idx = int(index / sample_size_v)
+        v_idx = index % sample_size_v
+        delta_u = (u_stop - u_start) / (sample_size_u - 1)
+        delta_v = (v_stop - v_start) / (sample_size_v - 1)
+        u = u_start + u_idx * delta_u
+        v = v_start + v_idx * delta_v
+
+        return u, v, delta_u, delta_v
+
+    def point_inversion_grid_search(self, point3d, acceptable_distance, max_iter: int = 15):
+        """
+        Find the parameters (u, v) of a 3D point on the BSpline surface using a grid search algorithm.
+        """
+        point3d_array = np.asarray(point3d)
+        u, v, u_start, u_stop, v_start, v_stop, delta_u, delta_v, sample_size_u, sample_size_v, minimal_distance = \
+            self._point_inversion_initialization(point3d_array)
+        if minimal_distance <= acceptable_distance:
+            return (u, v), minimal_distance
+
+        datadict = self._helper_point_inversion_grid_search_update_evaluation_data(sample_size_u, sample_size_v)
         last_distance = 0.0
         count = 0
-        while minimal_distance > acceptable_distance and count < 15:
+        while minimal_distance > acceptable_distance and count < max_iter:
             if count > 0:
                 u_start, u_stop, v_start, v_stop, sample_size_u, sample_size_v = self._get_grid_bounds(
-                    (u, v), delta_u, delta_v, sample_size_u, sample_size_v)
+                    (u, v), delta_u, delta_v)
 
             if sample_size_u == 1 and sample_size_v == 1:
-                return (u, v), minimal_distance
+                break
             datadict["sample_size"] = [sample_size_u, sample_size_v]
-            matrix = np.asarray(evaluate_surface(datadict,
-                                                  start=(u_start, v_start),
-                                                  stop=(u_stop, v_stop)), dtype=np.float64)
+            matrix = np.asarray(evaluate_surface(datadict, start=(u_start, v_start), stop=(u_stop, v_stop)),
+                                dtype=np.float64)
             index, distance = self._find_index_min(matrix, point3d_array)
-            if distance < minimal_distance:
-                minimal_distance = distance
-            if abs(distance - last_distance) < acceptable_distance * 0.01:
-                return (u, v), minimal_distance
             u, v, delta_u, delta_v = self._update_parameters([u_start, u_stop, v_start, v_stop], sample_size_u,
                                                              sample_size_v, index)
+
+            if distance < minimal_distance:
+                minimal_distance = distance
+            if minimal_distance < acceptable_distance:
+                break
+            if abs(distance - last_distance) < acceptable_distance * 0.01:
+                break
+
             last_distance = distance
             count += 1
 
