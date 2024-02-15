@@ -110,25 +110,47 @@ class TestDisplayStep(unittest.TestCase):
         self.bracket2_path = os.path.join(FOLDER, "..", "..", "scripts", "step", "bracket2.step")
         self.engine_path = os.path.join(FOLDER, "..", "..", "scripts", "step", "engine.step")
 
+        self.expected_keys = ["meshes", "lines", "max_length", "center"]
+
     def test_display_block(self):
         volume_model = Step.from_file(self.block_path).to_volume_model()
-        volume_model.babylonjs()
-        volume_model.babylonjs(merge_meshes=False)
+
+        self.assertEqual(self.expected_keys, list(volume_model.babylon_data(merge_meshes=True).keys()))
+        self.assertEqual(self.expected_keys, list(volume_model.babylon_data(merge_meshes=False).keys()))
+
+        if SHOW_BABYLONJS:
+            volume_model.babylonjs()
+            volume_model.babylonjs(merge_meshes=False)
 
     def test_display_cheese(self):
         volume_model = Step.from_file(self.cheese_path).to_volume_model()
-        volume_model.babylonjs()
-        volume_model.babylonjs(merge_meshes=False)
+
+        self.assertEqual(self.expected_keys, list(volume_model.babylon_data(merge_meshes=True).keys()))
+        self.assertEqual(self.expected_keys, list(volume_model.babylon_data(merge_meshes=False).keys()))
+
+        if SHOW_BABYLONJS:
+            volume_model.babylonjs()
+            volume_model.babylonjs(merge_meshes=False)
 
     def test_display_bracket2(self):
         volume_model = Step.from_file(self.bracket2_path).to_volume_model()
-        volume_model.babylonjs()
-        volume_model.babylonjs(merge_meshes=False)
+
+        self.assertEqual(self.expected_keys, list(volume_model.babylon_data(merge_meshes=True).keys()))
+        self.assertEqual(self.expected_keys, list(volume_model.babylon_data(merge_meshes=False).keys()))
+
+        if SHOW_BABYLONJS:
+            volume_model.babylonjs()
+            volume_model.babylonjs(merge_meshes=False)
 
     def test_display_engine(self):
         volume_model = Step.from_file(self.engine_path).to_volume_model()
-        volume_model.babylonjs()
-        volume_model.babylonjs(merge_meshes=False)
+
+        self.assertEqual(self.expected_keys, list(volume_model.babylon_data(merge_meshes=True).keys()))
+        self.assertEqual(self.expected_keys, list(volume_model.babylon_data(merge_meshes=False).keys()))
+
+        if SHOW_BABYLONJS:
+            volume_model.babylonjs()
+            volume_model.babylonjs(merge_meshes=False)
 
 
 class TestDisplaySTL(unittest.TestCase):
