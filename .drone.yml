@@ -55,22 +55,65 @@ steps:
     - name: cache
       path: /root/.cache
 
+- name: check changelog update
+  image: python:3.9
+  when:
+    event: pull_request
+  commands:
+    - git fetch origin "$DRONE_TARGET_BRANCH" "$DRONE_SOURCE_BRANCH"
+    - bash code_changelog.sh
+
+- name: check pep8 formatting
+  image: python:3.9
+  when:
+    event:
+      exclude:
+      - tag
+      - pull_request
+  commands:
+    - pip3 install -U pip autopep8==2.0.0
+    - bash code_pep8.sh
+
+  volumes:
+    # Mount pip cache from host
+    - name: pip_cache
+      path: /root/.cache/pip
+
+- name: check code complexity
+  image: dessia/python-ci:3.9
+  when:
+    event:
+      exclude:
+      - tag
+      - pull_request
+  commands:
+  - pip install numpy Cython>3
+  - pip install pylint==2.17.3 pydocstyle==6.3.0 pre-commit shellcheck-py cython-lint pyenchant==3.2.2
+  - python code_pylint.py
+  - python code_pydocstyle.py
+  - pre-commit run -a
+
+  volumes:
+    # Mount pip cache from host
+    - name: pip_cache
+      path: /root/.cache/pip
 
 - name: install, build doc run scripts and tutorials
   image: python:3.9
+  when:
+    event: pull_request
   commands:
   - git fetch --tags
   - pip install .[doc,test]
   - python setup.py build_ext --inplace
-  - pip install .
-  - cd doc
-  - make html
-  - cd ../tests
+  - cd tests
   - coverage run --rcfile=../.coveragerc --data-file=../.coverage --source volmdlr -m unittest discover -v
   - cd ../scripts  
   - coverage run --rcfile=../.coveragerc --data-file=../.coverage --source volmdlr -a ci_scripts.py
   - cd ../tutorials
   - coverage run --rcfile=../.coveragerc --data-file=../.coverage --source volmdlr -a ci_tutorials.py
+  - cd ../doc
+  - make html
   - cd ..
   - coverage json
   - coverage report
@@ -113,47 +156,6 @@ steps:
     - name: pip_cache
       path: /root/.cache/pip
 
-- name: check code complexity
-  image: dessia/python-ci:3.9
-  when:
-    event:
-      exclude:
-      - tag
-  commands:
-  - git fetch --tags
-  - pip install numpy Cython>3
-  - python setup.py build_ext --inplace
-  - pip install .
-  - pip install pylint==2.17.3 pydocstyle==6.3.0 pre-commit shellcheck-py cython-lint pyenchant==3.2.2
-  - python code_pylint.py
-  - python code_pydocstyle.py
-  - pre-commit run -a
-
-- name: check pep8 formatting
-  image: python:3.9
-  when:
-    event:
-      exclude:
-      - tag
-  commands:
-    - git fetch --tags
-    - pip3 install -U pip autopep8==2.0.0
-    - bash code_pep8.sh
-
-  volumes:
-    # Mount pip cache from host
-    - name: pip_cache
-      path: /root/.cache/pip
-
-- name: check changelog update
-  image: python:3.9
-  when:
-    event: pull_request
-  commands:
-    - bash code_changelog.sh
-
-
-
 - name: upload to pypi
   image: plugins/pypi
   when:
@@ -181,7 +183,7 @@ steps:
 - name: upload coverage
   image: appleboy/drone-scp
   when:
-    event: push
+    event: pull_request
   failure: ignore
   settings:
     host: magenta.dessia.tech
