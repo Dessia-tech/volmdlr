@@ -419,7 +419,8 @@ def repair_undefined_brep(surface, primitives2d, primitives_mapping, i, previous
     primitives_mapping[primitives2d[i]] = primitives_mapping.pop(old_primitive)
     delta = previous_primitive.end - primitives2d[i].start
     if not math.isclose(delta.norm(), 0, abs_tol=1e-3):
-        primitives2d.insert(i, vme.LineSegment2D(previous_primitive.end, primitives2d[i].start,
-                                                 name="construction"))
-        if i < len(primitives2d):
-            i += 1
+        if surface.is_singularity_point(surface.point2d_to_3d(primitives2d[i - 1].end), tol=1e-5) and \
+             surface.is_singularity_point(surface.point2d_to_3d(primitives2d[i].start), tol=1e-5):
+            surface.repair_singularity(primitives2d, i, primitives2d[i - 1])
+        else:
+            surface.repair_translation(primitives2d, primitives_mapping, i, delta)

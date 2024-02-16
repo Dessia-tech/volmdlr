@@ -2684,6 +2684,9 @@ class ToroidalFace3D(PeriodicalFaceMixin, Face3D):
 
     @staticmethod
     def points_resolution(line, pos, resolution):  # With a resolution wished
+        """
+        Legacy?.
+        """
         points = [line.points[0]]
         limit = line.points[1].vector[pos]
         start = line.points[0].vector[pos]

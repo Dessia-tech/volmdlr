@@ -35,7 +35,6 @@ from volmdlr import get_minimum_distance_points_lines, PATH_ROOT
 import volmdlr.utils.common_operations as vm_common_operations
 import volmdlr.utils.intersections as vm_utils_intersections
 from volmdlr.core import EdgeStyle
-
 # pylint: disable=arguments-differ
 
 
@@ -2324,7 +2323,7 @@ class BSplineCurve2D(BSplineCurve):
             self.abscissa(point)) for point in points]
         offseted_points = [point.translation(normal_vector * offset_length) for point, normal_vector
                            in zip(points, unit_normal_vectors)]
-        offseted_bspline = BSplineCurve2D.from_points_interpolation(offseted_points, self.degree)
+        offseted_bspline = BSplineCurve2D.from_points_interpolation(offseted_points, self.degree, centripetal=True)
         return offseted_bspline
 
     def is_shared_section_possible(self, other_bspline2, tol):

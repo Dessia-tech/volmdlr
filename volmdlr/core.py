@@ -2098,7 +2098,7 @@ class VolumeModel(dc.PhysicalObject):
     @staticmethod
     def get_elements_lines(gmsh_model):
         """
-        Gets lines from gmsh model.
+        Helper function to export the volume model into gmsh format.
         """
         lines_elements = []
         lines_elements.append('$Elements')
@@ -2167,7 +2167,7 @@ class MovingVolumeModel(VolumeModel):
 
     def step_volume_model(self, istep: int):
         """
-        Moves the volume model along a list of local frames.
+        Moves the volume model with a list of local frames.
         """
         primitives = []
         for primitive, frame in zip(self.primitives, self.step_frames[istep]):
