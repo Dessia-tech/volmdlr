@@ -6,7 +6,7 @@ import volmdlr
 import volmdlr.edges as vme
 
 
-class TestBezierCurve2D(unittest.TestCase):
+class TestBezierCurve3D(unittest.TestCase):
     # Set up the Bézier curve
     degree = 3
     ctrlpts = [volmdlr.Point3D(0, 0, 0),
