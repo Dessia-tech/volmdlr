@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -
 
 #### edges.py
--
+- Fix FullArc2D generation from 3 points
 
 #### surfaces.py
 -
@@ -33,7 +33,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### step.py
 - Fix Step.create_connections with wireframe models
-- Fix TRIMMED_CURVE import
 
 #### core.py
 - Fix Compound step export for wireframe models.
@@ -48,6 +47,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Refactor
 
+#### Global
+- Leverage Mesh3D class capabilities in simplification and voxelization
+
 #### surfaces.py
 - ToroidalSuface3D: toroidal_surface_intersections
 - Contour2D - point_belongs
@@ -61,9 +63,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - edges/curves.py cut_between_two_points -> trim
 - defines ordering of curve methods
 - npy -> np
-- 
+
+#### CI
+- Avoid calling babylonjs method in CI to reduce CI time
+- Avoid `pip install .` in drone as it is redundant with `python setup.py build_ext --inplace`
+- Re-order CI steps to build doc in the end / perform shortest test first
+- Avoid duplication of test between push and PR
+
+
+### Updates
+- Documentation
+
 ### Unittests
 - Toroidalface ConicalFace intersections.
+- Avoid showing babylonjs in unit tests / ci_scripts
+
 
 ## v0.16.0
 
@@ -114,7 +128,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Arc2D: plot_data
 - LineSegment3D: planar_revolution.
 - BSplineCurve: abscissa: use curve decomposition.
-- BSplineCurve: trim.
+- BSplineCurve: trim on periodic curves.
 
 #### faces.py
 - Face3D: enhance from_contours3d.
@@ -133,6 +147,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Surface3D: repeair_primitives_periodicity. Treat special case on surfaces with singularities.
 - ToroidalSurface3D: plane_intersections.
 - Remove duplicated attributes.
+- BSplineSurface3D: point_inversion_grid_search.
+- BSplineSurface3D: implements a more robust point3d_to_2d method.
 
 #### wires.py
 - Contour2D: cut_by_line.

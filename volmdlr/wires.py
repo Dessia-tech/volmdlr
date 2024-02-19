@@ -4869,7 +4869,23 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
 
         return closing_point_index, list_remove_closing_points, passed_by_zero_index
 
-    def concave_sewing(self, polygon2, x, y):
+    def concave_sewing(self, polygon2: "ClosedPolygon3D", x: float, y: float):
+        """
+        Sews the current polygon with another specified polygon when one of them is concave.
+
+        This method performs sewing between the current polygon and the specified polygon
+        when one of the polygons is concave, using the provided x and y directions of the plane used to project the
+        polygons in.
+
+        :param polygon2: The polygon to sew with the current polygon.
+        :type polygon2: ClosedPolygon3D
+        :param x: The x-direction of the projection plane.
+        :type x: float
+        :param y: The y-direction of the projection plane.
+        :type y: float
+        :return: A list of triangles' points representing the sewn polygons.
+        :rtype: list[list[Point3D]]
+        """
         polygon1_2d = self.to_2d(volmdlr.O3D, x, y)
         polygon2_2d = polygon2.to_2d(volmdlr.O3D, x, y)
         polygon1_3d = self

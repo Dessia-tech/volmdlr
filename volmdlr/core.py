@@ -1529,13 +1529,44 @@ class VolumeModel(dc.PhysicalObject):
             file.write(script)
         return filename
 
-    def to_mesh3d(self):
-        """Converts to volume model to a Mesh3D object."""
-        mesh = self.primitives[0].triangulation()
-        for primitive in self.primitives[1:]:
-            mesh = mesh.merge(primitive.triangulation(), merge_vertices=True, merge_triangles=True)
+    def to_mesh_list(self):
+        """
+        Converts the volume model to a list Mesh3D object.
 
-        return mesh
+        :return: A list of Mesh3D objects representing the VolumeModel shells.
+        """
+        meshes = []
+
+        for shell in self.get_shells():
+            mesh = shell.triangulation()
+
+            if len(mesh.triangles) > 0:
+                meshes.append(mesh)
+                meshes[-1].name = shell.name
+
+        return meshes
+
+    def to_mesh(self, merge_vertices: bool = True, merge_triangles: bool = True):
+        """
+        Converts the volume model to a Mesh3D object.
+
+        :param merge_vertices: Flag to indicate whether to merge vertices of the shells meshes.
+        :param merge_triangles: Flag to indicate whether to merge triangles of the shells meshes.
+
+        :return: A Mesh3D of the VolumeModel
+        """
+        meshes = self.to_mesh_list()
+
+        if not meshes:
+            raise ValueError("VolumeModel has no primitive that can be converted to mesh.")
+
+        merged_mesh = meshes[0]
+        for mesh in meshes[1:]:
+            merged_mesh = merged_mesh.merge(mesh, merge_vertices=merge_vertices, merge_triangles=merge_triangles)
+
+        merged_mesh.name = self.name
+
+        return merged_mesh
 
     def to_stl_model(self):
         """Converts the model into a stl object."""
@@ -1544,7 +1575,7 @@ class VolumeModel(dc.PhysicalObject):
             DeprecationWarning
         )
 
-        mesh = self.to_mesh3d()
+        mesh = self.to_mesh()
 
         # from volmdlr import stl
         stl = volmdlr.stl.Stl.from_display_mesh(mesh)
@@ -1552,11 +1583,11 @@ class VolumeModel(dc.PhysicalObject):
 
     def to_stl(self, filepath: str):
         """Export a stl file of the model."""
-        self.to_mesh3d().save_to_stl_file(filepath)
+        self.to_mesh().save_to_stl_file(filepath)
 
     def to_stl_stream(self, stream: dcf.BinaryFile):
         """Converts the model into a stl stream file."""
-        self.to_mesh3d().save_to_stl_stream(stream)
+        self.to_mesh().save_to_stl_stream(stream)
         return stream
 
     def to_step(self, filepath: str):
@@ -2106,7 +2137,7 @@ class VolumeModel(dc.PhysicalObject):
     @staticmethod
     def get_elements_lines(gmsh_model):
         """
-        Gets lines from gmsh model.
+        Helper function to export the volume model into gmsh format.
         """
         lines_elements = []
         lines_elements.append('$Elements')
@@ -2175,7 +2206,7 @@ class MovingVolumeModel(VolumeModel):
 
     def step_volume_model(self, istep: int):
         """
-        Moves the volume model along a list of local frames.
+        Moves the volume model with a list of local frames.
         """
         primitives = []
         for primitive, frame in zip(self.primitives, self.step_frames[istep]):

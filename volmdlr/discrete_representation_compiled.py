@@ -28,15 +28,18 @@ _Triangle2D = Tuple[_Point2D, _Point2D, _Point2D]
 # PYTHON FUNCTIONS
 
 
-def triangles_to_voxel_matrix(
-    triangles: List[_Triangle3D],
+def mesh_data_to_voxel_matrix(
+    vertices: NDArray[float],
+    triangles: NDArray[int],
     voxel_size: float,
 ) -> Tuple[NDArray[np.bool_], Tuple[float, float, float]]:
     """
-    Helper function to compute the voxel matrix of all the voxels intersecting with a given list of triangles.
+    Helper function to compute the voxel matrix of all the voxels intersecting with a given list of triangles of a mesh.
 
-    :param triangles: The triangles to compute the intersecting voxels.
-    :type triangles: list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]
+    :param vertices: An array of 3D vertices specifying the 3D mesh.
+    :type vertices: ndarray[float]
+    :param triangles: An array of triangles representing the connectivity of the 3D mesh.
+    :type triangles: ndarray[int]
     :param voxel_size: The voxel edges size.
     :type voxel_size: float
 
@@ -44,24 +47,35 @@ def triangles_to_voxel_matrix(
     :rtype: tuple[np.ndarray[np.bool_, np.ndim == 3], tuple[float, float, float]]
     """
     # compute the size of the matrix and min matrix origin center
-    min_point, max_point = _triangles_min_max_points(triangles)
+    min_x = np.min(vertices[:, 0])
+    max_x = np.max(vertices[:, 0])
+
+    min_y = np.min(vertices[:, 1])
+    max_y = np.max(vertices[:, 1])
+
+    min_z = np.min(vertices[:, 2])
+    max_z = np.max(vertices[:, 2])
+
     shape = (
-        int(max_point[0] // voxel_size + 1) - int(min_point[0] // voxel_size) + 2,
-        int(max_point[1] // voxel_size + 1) - int(min_point[1] // voxel_size) + 2,
-        int(max_point[2] // voxel_size + 1) - int(min_point[2] // voxel_size) + 2,
+        int(max_x // voxel_size + 1) - int(min_x // voxel_size) + 2,
+        int(max_y // voxel_size + 1) - int(min_y // voxel_size) + 2,
+        int(max_z // voxel_size + 1) - int(min_z // voxel_size) + 2,
     )
+
     matrix = np.zeros(shape, dtype=np.bool_)
+
     matrix_origin_center = (
-        round((min_point[0] // voxel_size - 0.5) * voxel_size, 9),
-        round((min_point[1] // voxel_size - 0.5) * voxel_size, 9),
-        round((min_point[2] // voxel_size - 0.5) * voxel_size, 9),
+        round((min_x // voxel_size - 0.5) * voxel_size, 9),
+        round((min_y // voxel_size - 0.5) * voxel_size, 9),
+        round((min_z // voxel_size - 0.5) * voxel_size, 9),
     )
 
     # compute the intersecting voxel
     return (
         np.asarray(
-            _triangles_to_voxel_matrix(
-                np.array(triangles),
+            _mesh_data_to_voxel_matrix(
+                vertices,
+                triangles,
                 len(triangles),
                 voxel_size,
                 matrix,
@@ -975,50 +989,47 @@ def _triangle_2d_to_pixels(
 @cython.cdivision(True)
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def _triangles_to_voxel_matrix(
-    triangles: vector[
-        Tuple[
-            Tuple[cython.double, cython.double, cython.double],
-            Tuple[cython.double, cython.double, cython.double],
-            Tuple[cython.double, cython.double, cython.double],
-        ]
-    ],
+def _mesh_data_to_voxel_matrix(
+    vertices: vector[Tuple[cython.double, cython.double, cython.double]],
+    triangles: vector[Tuple[cython.int, cython.int, cython.int]],
     n_triangles: cython.int,
     voxel_size: cython.double,
     matrix: bool_C[:, :, :],
     matrix_origin_center: Tuple[cython.double, cython.double, cython.double],
 ) -> bool_C[:, :, :]:
-    """Convert 3D triangles to a voxel matrix representation using intersection tests."""
+    """Convert 3D mesh data to a voxel matrix representation using intersection tests."""
     # pylint: disable=too-many-locals, too-many-branches, too-many-statements, invalid-name
 
     # Check interface voxels
     for i in range(n_triangles):
-        x_abscissa = _round_to_digits(triangles[i][0][0], 9)
-        y_abscissa = _round_to_digits(triangles[i][0][1], 9)
-        z_abscissa = _round_to_digits(triangles[i][0][2], 9)
+        x_abscissa = _round_to_digits(vertices[triangles[i][0]][0], 9)
+        y_abscissa = _round_to_digits(vertices[triangles[i][0]][1], 9)
+        z_abscissa = _round_to_digits(vertices[triangles[i][0]][2], 9)
 
         # Check if two points of the triangle are equal
-        if _check_triangle_equal_point(triangles[i]):
+        if _check_triangle_equal_point(
+            (vertices[triangles[i][0]], vertices[triangles[i][1]], vertices[triangles[i][2]])
+        ):
             pass
 
         # Check if the triangle is in the Y-Z plane at the interface between voxels
         elif (
-            _round_to_digits(triangles[i][0][0], 9)
-            == _round_to_digits(triangles[i][1][0], 9)
-            == _round_to_digits(triangles[i][2][0], 9)
+            _round_to_digits(vertices[triangles[i][0]][0], 9)
+            == _round_to_digits(vertices[triangles[i][1]][0], 9)
+            == _round_to_digits(vertices[triangles[i][2]][0], 9)
         ) and _is_integer(_round_to_digits(x_abscissa / voxel_size, 9)):
             # Define the 3D triangle in 2D
             p0: Tuple[cython.double, cython.double] = (
-                triangles[i][0][1],
-                triangles[i][0][2],
+                vertices[triangles[i][0]][1],
+                vertices[triangles[i][0]][2],
             )
             p1: Tuple[cython.double, cython.double] = (
-                triangles[i][1][1],
-                triangles[i][1][2],
+                vertices[triangles[i][1]][1],
+                vertices[triangles[i][1]][2],
             )
             p2: Tuple[cython.double, cython.double] = (
-                triangles[i][2][1],
-                triangles[i][2][2],
+                vertices[triangles[i][2]][1],
+                vertices[triangles[i][2]][2],
             )
 
             triangle_2d: Tuple[
@@ -1085,22 +1096,22 @@ def _triangles_to_voxel_matrix(
 
         # Check if the triangle is in the X-Z plane at the interface between voxels
         elif (
-            _round_to_digits(triangles[i][0][1], 9)
-            == _round_to_digits(triangles[i][1][1], 9)
-            == _round_to_digits(triangles[i][2][1], 9)
+            _round_to_digits(vertices[triangles[i][0]][1], 9)
+            == _round_to_digits(vertices[triangles[i][1]][1], 9)
+            == _round_to_digits(vertices[triangles[i][2]][1], 9)
         ) and _is_integer(_round_to_digits(y_abscissa / voxel_size, 9)):
             # Define the 3D triangle in 2D
             p0: Tuple[cython.double, cython.double] = (
-                triangles[i][0][0],
-                triangles[i][0][2],
+                vertices[triangles[i][0]][0],
+                vertices[triangles[i][0]][2],
             )
             p1: Tuple[cython.double, cython.double] = (
-                triangles[i][1][0],
-                triangles[i][1][2],
+                vertices[triangles[i][1]][0],
+                vertices[triangles[i][1]][2],
             )
             p2: Tuple[cython.double, cython.double] = (
-                triangles[i][2][0],
-                triangles[i][2][2],
+                vertices[triangles[i][2]][0],
+                vertices[triangles[i][2]][2],
             )
 
             triangle_2d: Tuple[
@@ -1167,22 +1178,22 @@ def _triangles_to_voxel_matrix(
 
         # Check if the triangle is in the X-Y plane at the interface between voxels
         elif (
-            _round_to_digits(triangles[i][0][2], 9)
-            == _round_to_digits(triangles[i][1][2], 9)
-            == _round_to_digits(triangles[i][2][2], 9)
+            _round_to_digits(vertices[triangles[i][0]][2], 9)
+            == _round_to_digits(vertices[triangles[i][1]][2], 9)
+            == _round_to_digits(vertices[triangles[i][2]][2], 9)
         ) and _is_integer(_round_to_digits(z_abscissa / voxel_size, 9)):
             # Define the 3D triangle in 2D
             p0: Tuple[cython.double, cython.double] = (
-                triangles[i][0][0],
-                triangles[i][0][1],
+                vertices[triangles[i][0]][0],
+                vertices[triangles[i][0]][1],
             )
             p1: Tuple[cython.double, cython.double] = (
-                triangles[i][1][0],
-                triangles[i][1][1],
+                vertices[triangles[i][1]][0],
+                vertices[triangles[i][1]][1],
             )
             p2: Tuple[cython.double, cython.double] = (
-                triangles[i][2][0],
-                triangles[i][2][1],
+                vertices[triangles[i][2]][0],
+                vertices[triangles[i][2]][1],
             )
 
             triangle_2d: Tuple[
@@ -1253,7 +1264,7 @@ def _triangles_to_voxel_matrix(
                 Tuple[cython.double, cython.double, cython.double],
                 Tuple[cython.double, cython.double, cython.double],
                 Tuple[cython.double, cython.double, cython.double],
-            ] = triangles[i]
+            ] = (vertices[triangles[i][0]], vertices[triangles[i][1]], vertices[triangles[i][2]])
             min_point: Tuple[cython.double, cython.double, cython.double]
             max_point: Tuple[cython.double, cython.double, cython.double]
             min_point, max_point = _triangle_min_max_points(triangle)
@@ -1454,53 +1465,6 @@ def _triangle_2d_min_max_points(
     max_y = max(max_y, triangle[2][1])
 
     return (min_x, min_y), (max_x, max_y)
-
-
-@cython.cfunc
-def _triangles_min_max_points(
-    triangles: vector[
-        Tuple[
-            Tuple[cython.double, cython.double, cython.double],
-            Tuple[cython.double, cython.double, cython.double],
-            Tuple[cython.double, cython.double, cython.double],
-        ]
-    ]
-) -> Tuple[Tuple[cython.double, cython.double, cython.double], Tuple[cython.double, cython.double, cython.double],]:
-    """Calculate and return the minimum and maximum coordinates across a collection of 3D triangles."""
-
-    min_x: cython.double = math_c.INFINITY
-    min_y: cython.double = math_c.INFINITY
-    min_z: cython.double = math_c.INFINITY
-    max_x: cython.double = -math_c.INFINITY
-    max_y: cython.double = -math_c.INFINITY
-    max_z: cython.double = -math_c.INFINITY
-
-    for i in range(triangles.size()):
-        min_x = min(min_x, triangles[i][0][0])
-        min_x = min(min_x, triangles[i][1][0])
-        min_x = min(min_x, triangles[i][2][0])
-
-        min_y = min(min_y, triangles[i][0][1])
-        min_y = min(min_y, triangles[i][1][1])
-        min_y = min(min_y, triangles[i][2][1])
-
-        min_z = min(min_z, triangles[i][0][2])
-        min_z = min(min_z, triangles[i][1][2])
-        min_z = min(min_z, triangles[i][2][2])
-
-        max_x = max(max_x, triangles[i][0][0])
-        max_x = max(max_x, triangles[i][1][0])
-        max_x = max(max_x, triangles[i][2][0])
-
-        max_y = max(max_y, triangles[i][0][1])
-        max_y = max(max_y, triangles[i][1][1])
-        max_y = max(max_y, triangles[i][2][1])
-
-        max_z = max(max_z, triangles[i][0][2])
-        max_z = max(max_z, triangles[i][1][2])
-        max_z = max(max_z, triangles[i][2][2])
-
-    return (min_x, min_y, min_z), (max_x, max_y, max_z)
 
 
 @cython.cfunc

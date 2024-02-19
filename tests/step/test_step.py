@@ -59,7 +59,5 @@ class TestStep(unittest.TestCase):
         self.assertEqual(step.functions[327014].arg[-1], '.UNSPECIFIED.')
 
 
-
-
 if __name__ == '__main__':
     unittest.main()

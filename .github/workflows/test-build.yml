@@ -7,10 +7,11 @@ on:
    push:
      branches:
       - testing
+      - fix_ci
 
 jobs:
   build_wheels:
-    name: Build wheels on ${{ matrix.os }}
+    name: Build distribution on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -33,7 +34,7 @@ jobs:
         run: |
           python -m cibuildwheel --output-dir wheelhouse
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
           path: ./wheelhouse/*.whl
@@ -42,11 +43,12 @@ jobs:
     name: Build source distribution
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Build sdist
-        run: |
-          python setup.py sdist
+        run: pipx run build --sdist
 
       - uses: actions/upload-artifact@v4
         with:
@@ -54,6 +56,7 @@ jobs:
           path: dist/*.tar.gz
 
   upload_pypi:
+    name: upload to TestPyPi
     needs: [build_wheels, build_sdist]
     runs-on: ubuntu-latest
     environment: testpypi
@@ -65,11 +68,12 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          # unpacks all CIBW artifacts into dist/
-          pattern: cibw-*
-          path: dist
-          merge-multiple: true
+          path: dist/
+      - name: Display structure of downloaded files
+        run: ls -R dist
 
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          repository_url: https://test.pypi.org/legacy/
+          repository-url: https://test.pypi.org/legacy/
+          verbose: true
+          packages-dir: dist/*
