@@ -45,6 +45,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Refactor
 
+#### Global
+- Leverage Mesh3D class capabilities in simplification and voxelization
+
 #### surfaces.py
 - ToroidalSuface3D: toroidal_surface_intersections
 - Contour2D - point_belongs
