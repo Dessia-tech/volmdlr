@@ -2,10 +2,9 @@
 volmdlr cad simplification module.
 """
 import math
-from typing import List, Union
+from typing import Union
 
 import numpy as np
-import pyfqmr
 from CGAL.CGAL_Alpha_wrap_3 import alpha_wrap_3
 from CGAL.CGAL_Kernel import Point_3
 from CGAL.CGAL_Polyhedron_3 import Polyhedron_3
@@ -16,9 +15,10 @@ from volmdlr import Point3D
 from volmdlr.cloud import PointCloud3D
 from volmdlr.core import VolumeModel
 from volmdlr.discrete_representation import MatrixBasedVoxelization
+from volmdlr.display import Mesh3D
 from volmdlr.faces import Triangle3D
 from volmdlr.primitives3d import ExtrudedProfile
-from volmdlr.shells import ClosedTriangleShell3D, DisplayTriangleShell3D, OpenTriangleShell3D
+from volmdlr.shells import ClosedTriangleShell3D, OpenTriangleShell3D
 from volmdlr.wires import Contour2D
 
 
@@ -38,41 +38,6 @@ class Simplify(DessiaObject):
 
         DessiaObject.__init__(self, name=name)
 
-    @staticmethod
-    def _volume_model_to_display_shells(volume_model: VolumeModel) -> List[DisplayTriangleShell3D]:
-        """Convert the VolumeModel to a list of DisplayTriangleShell3D."""
-
-        display_shells = []
-
-        for shell in volume_model.get_shells():
-            display_shell = shell.to_triangle_shell().to_display_triangle_shell()
-
-            if len(display_shell.indices) > 0:
-                display_shells.append(display_shell)
-
-        return display_shells
-
-    @staticmethod
-    def _volume_model_to_display_shell(volume_model: VolumeModel):
-        """Convert the VolumeModel to a unique DisplayTriangleShell3D."""
-
-        display_shell = None
-
-        for shell in volume_model.get_shells():
-            new_display_shell = shell.to_triangle_shell().to_display_triangle_shell()
-
-            if len(new_display_shell.indices) == 0:
-                continue
-
-            if display_shell:
-                display_shell += new_display_shell
-            else:
-                display_shell = new_display_shell
-
-        display_shell.name = volume_model.name
-
-        return display_shell
-
 
 class TripleExtrusionSimplify(Simplify):
     """CAD simplification based on 'triple extrusion' method."""
@@ -84,7 +49,7 @@ class TripleExtrusionSimplify(Simplify):
         :return: The simplified volume model.
         :rtype: VolumeModel
         """
-        points = [Point3D(*point) for point in self._volume_model_to_display_shell(self.volume_model).positions]
+        points = [Point3D(*point) for point in self.volume_model.to_mesh().vertices]
 
         point_cloud3d = PointCloud3D([volmdlr.Point3D(*point) for point in points])
         simplified_volume_model = VolumeModel(
@@ -212,39 +177,36 @@ class TriangleDecimationSimplify(Simplify):
         """
         # pylint: disable=too-many-arguments
 
-        decimated_shells = []
-        simplifier = pyfqmr.Simplify()
+        decimated_meshes = []
 
         if preserve_shells:
-            meshes = self._volume_model_to_display_shells(self.volume_model)
+            meshes = self.volume_model.to_mesh_list()
         else:
-            meshes = [self._volume_model_to_display_shell(self.volume_model)]
+            meshes = [self.volume_model.to_mesh()]
 
         for mesh in meshes:
-            vertices, triangles = mesh.positions, mesh.indices
-
-            simplifier.setMesh(vertices, triangles)
-            simplifier.simplify_mesh(
-                target_count=int(target_ratio * len(triangles)),
-                update_rate=update_rate,
-                aggressiveness=aggressiveness,
-                max_iterations=max_iterations,
-                verbose=verbose,
-                lossless=lossless,
-                threshold_lossless=threshold_lossless,
-                alpha=alpha,
-                K=k,
-                preserve_border=preserve_border,
+            decimated_meshes.append(
+                mesh.round_vertices()
+                .merge_vertices()
+                .decimate(
+                    target_count=int(target_ratio * mesh.n_triangles),
+                    update_rate=update_rate,
+                    aggressiveness=aggressiveness,
+                    max_iterations=max_iterations,
+                    verbose=verbose,
+                    lossless=lossless,
+                    threshold_lossless=threshold_lossless,
+                    alpha=alpha,
+                    k=k,
+                    preserve_border=preserve_border,
+                )
             )
 
-            vertices, faces, _ = simplifier.getMesh()
+            decimated_meshes[-1].name = mesh.name
+            decimated_meshes[-1].color = mesh.color
+            decimated_meshes[-1].alpha = mesh.alpha
 
-            decimated_shells.append(OpenTriangleShell3D.from_mesh_data(vertices, faces))
-            decimated_shells[-1].name = mesh.name
-            decimated_shells[-1].color = mesh.color
-            decimated_shells[-1].alpha = mesh.alpha
-
-        return VolumeModel(decimated_shells)
+        return VolumeModel(decimated_meshes)
 
 
 class AlphaWrapSimplify(Simplify):
@@ -280,10 +242,10 @@ class AlphaWrapSimplify(Simplify):
         bbox, alpha, offset = None, None, None
 
         if preserve_shells:
-            meshes = self._volume_model_to_display_shells(self.volume_model)
+            meshes = self.volume_model.to_mesh_list()
         else:
-            meshes = [self._volume_model_to_display_shell(self.volume_model)]
-            # Use display shell bbox for performance
+            meshes = [self.volume_model.to_mesh()]
+
             bbox = meshes[0].bounding_box
 
         if equal_alpha:
@@ -296,8 +258,8 @@ class AlphaWrapSimplify(Simplify):
             offset = diag_length / relative_offset
 
         for mesh in meshes:
-            vertices = [Point_3(x, y, z) for (x, y, z) in mesh.positions]
-            triangles = mesh.indices.tolist()
+            vertices = [Point_3(x, y, z) for (x, y, z) in mesh.vertices]
+            triangles = mesh.triangles.tolist()
 
             if not equal_alpha:
                 bbox = mesh.bounding_box
@@ -310,7 +272,7 @@ class AlphaWrapSimplify(Simplify):
             wrap = Polyhedron_3()
             alpha_wrap_3(vertices, triangles, alpha, offset, wrap)
 
-            wrapped_shells.append(self._polyhedron_to_shell(wrap))
+            wrapped_shells.append(self._polyhedron_to_mesh(wrap))
             wrapped_shells[-1].name = mesh.name
             wrapped_shells[-1].color = mesh.color
             wrapped_shells[-1].alpha = mesh.alpha
@@ -345,14 +307,14 @@ class AlphaWrapSimplify(Simplify):
         return OpenTriangleShell3D(triangles)
 
     @staticmethod
-    def _polyhedron_to_display_shell(polyhedron: Polyhedron_3) -> DisplayTriangleShell3D:
-        """Convert a CGAL Polyhedron_3 to a volmdlr display shell."""
+    def _polyhedron_to_mesh(polyhedron: Polyhedron_3) -> Mesh3D:
+        """Convert a CGAL Polyhedron_3 to a Mesh3D."""
         points = []
         faces = []
-        point_map = {}  # Map CGAL points to their indices
+        point_map = {}  # Map CGAL points to their triangles
 
         for facet in polyhedron.facets():
-            face_indices = []
+            face_triangles = []
             halfedge = facet.halfedge()
             start_halfedge = halfedge
 
@@ -365,14 +327,14 @@ class AlphaWrapSimplify(Simplify):
                     points.append(point_tuple)
                     point_map[point_tuple] = len(points) - 1
 
-                face_indices.append(point_map[point_tuple])
+                face_triangles.append(point_map[point_tuple])
                 halfedge = halfedge.next()
                 if halfedge == start_halfedge:
                     break
 
-            faces.append(face_indices)
+            faces.append(face_triangles)
 
         points_array = np.array(points)
         faces_array = np.array(faces)
 
-        return DisplayTriangleShell3D(points_array, faces_array, "")
+        return Mesh3D(points_array, faces_array, name="")
