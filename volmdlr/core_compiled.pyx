@@ -604,14 +604,14 @@ cdef class Vector:
     def to_vector(self):
         return self
 
-    @classmethod
-    def raw_schema(cls):
-        raise NotImplementedError("Cannot compute schema for base class 'Vector'. Should be one of its children class")
+    # @classmethod
+    # def raw_schema(cls):
+    #     raise NotImplementedError("Cannot compute schema for base class 'Vector'. Should be one of its children class")
 
-    @classmethod
-    def schema(cls):
-        """ Write raw schema as a dict in order to make it jsonable. """
-        return cls.raw_schema().to_dict()
+    # @classmethod
+    # def schema(cls):
+    #     """ Write raw schema as a dict in order to make it jsonable. """
+    #     return cls.raw_schema().to_dict()
 
 
 cdef class Vector2D(Vector):
@@ -753,10 +753,10 @@ cdef class Vector2D(Vector):
         """
         return cls(dict_["x"], dict_["y"], dict_.get("name", ""))
 
-    @classmethod
-    def raw_schema(cls):
-        """ Custom Schema implementation in order to allow vectors and points to be used in forms. """
-        return Vector2Schema(cls)
+    # @classmethod
+    # def raw_schema(cls):
+    #     """ Custom Schema implementation in order to allow vectors and points to be used in forms. """
+    #     return Vector2Schema(cls)
 
     def copy(self, deep=True, memo=None):
         """
@@ -1047,7 +1047,7 @@ cdef class Point2D(Vector2D):
     :type name: str
     """
 
-    def __init__(self, x, y, name = ""):
+    def __init__(self, x: float, y: float, name: str = ""):
         self.x = x
         self.y = y
         self.name = name
@@ -1410,7 +1410,7 @@ cdef class Vector3D(Vector):
     :type name: str
     """
 
-    def __init__(self, double x, double y, double z, name: str = ""):
+    def __init__(self, double x: float, double y: float, double z, name: str = ""):
         self.x = x
         self.y = y
         self.z = z
@@ -1560,10 +1560,10 @@ cdef class Vector3D(Vector):
 
         return cls(dict_["x"], dict_["y"], dict_["z"], dict_.get("name", ""))
 
-    @classmethod
-    def raw_schema(cls):
-        """ Custom Schema implementation in order to allow vectors and points to be used in forms. """
-        return Vector3Schema(cls)
+    # @classmethod
+    # def raw_schema(cls):
+    #     """ Custom Schema implementation in order to allow vectors and points to be used in forms. """
+    #     return Vector3Schema(cls)
 
     def dot(self, other_vector):
         """

@@ -2227,3 +2227,14 @@ class MovingVolumeModel(VolumeModel):
                         'center': center,
                         'steps': steps}
         return babylon_data
+
+
+class Point2DBlueprint(volmdlr.Point2D, dc.DessiaObject):
+    pass
+
+
+class TestSchema(dc.PhysicalObject):
+    def __init__(self, point: Point2DBlueprint, name: str = ""):
+        self.point = point
+
+        super().__init__(name)
