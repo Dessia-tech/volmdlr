@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### edges.py
 - BSplineCurve3D: move_frame_along
 - arc2d: start and end angle, and arc angle.
+- BezierCurve: trim.
 
 #### faces.py
 - Toroidalface ConicalFace intersections.
