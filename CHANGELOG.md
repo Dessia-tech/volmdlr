@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -
 
 #### edges.py
--
+- Fix FullArc2D generation from 3 points
 
 #### surfaces.py
 -
@@ -31,6 +31,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### faces.py
 - Toroidalface ConicalFace intersections.
 
+#### step.py
+- Fix Step.create_connections with wireframe models
+
 #### edges.py
 - edge: intersections -> new parameter force_sort, to force sorting intersection points along curve.
 
@@ -40,6 +43,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### wires.py
 
 ### Refactor
+
+#### Global
+- Leverage Mesh3D class capabilities in simplification and voxelization
 
 #### surfaces.py
 - ToroidalSuface3D: toroidal_surface_intersections

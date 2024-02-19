@@ -46,6 +46,12 @@ class TestStep(unittest.TestCase):
         arguments = step_reader.step_split_arguments_special(function_args)
         self.assertEqual(len(arguments), 4)
 
+    def test_create_connections(self):
+        step = volmdlr.step.Step.from_file(filepath=os.path.join(folder, "test_wireframe.step"))
+        _ = step.to_volume_model()
+        self.assertEqual(len(step.functions[327014].arg), 9)
+        self.assertEqual(step.functions[327014].arg[-1], '.UNSPECIFIED.')
+
 
 if __name__ == '__main__':
     unittest.main()
