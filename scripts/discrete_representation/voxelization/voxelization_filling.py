@@ -32,7 +32,7 @@ voxelization_cs = voxelization.to_closed_triangle_shell()
 voxelization_cs.color = (1, 0, 0)
 voxelization_cs.alpha = 0.5
 
-filled_voxelization_cs = filled_voxelization.to_closed_triangle_shell()
+filled_voxelization_cs = filled_voxelization.to_mesh().split_shared_vertices()
 filled_voxelization_cs.color = (0, 0, 1)
 filled_voxelization_cs.alpha = 0.5
 
