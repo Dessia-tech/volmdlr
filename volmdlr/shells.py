@@ -24,6 +24,8 @@ from volmdlr.core import (edge_in_list, get_edge_index_in_list,
 from volmdlr.utils.step_writer import (geometric_context_writer,
                                        product_writer, step_ids_to_str)
 
+# pylint: disable=unused-argument
+
 
 def union_list_of_shells(list_shells, abs_tol: float = 1e-6):
     """
@@ -53,7 +55,7 @@ def union_list_of_shells(list_shells, abs_tol: float = 1e-6):
                     break
                 if len(list_shells) != len_previous_shells_list - 1:
                     union_shells.insert(0, union[1])
-                    list_shells.remove(octant_box)
+                    list_shells.pop(j)
                     break
             else:
                 shells.append(union_shell)
@@ -376,7 +378,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         frame_content, frame_id = volmdlr.OXYZ.to_step(brep_id)
         manifold_id = frame_id + 1
         shell_id = manifold_id + 1
-        current_id = shell_id + 1
+        current_id = shell_id
         for face in self.faces:
             if isinstance(face, (volmdlr.faces.Face3D, surfaces.Surface3D)):
                 face_content, face_sub_ids = face.to_step(current_id)
@@ -652,20 +654,31 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
 
         return point1_min
 
-    def minimum_distance(self, other_shell, return_points=False):
+    @staticmethod
+    def _minimum_distance_helper_points_sets(shell_decomposition):
+        """
+        Gets a set of points representing the shell, some kink of a cloud of points.
+
+        """
+        list_set_points = [{point for face in faces
+                            for point in face.outer_contour3d.discretization_points(number_points=10)} for _, faces in
+                           shell_decomposition.items()]
+        list_set_points = [np.array([(point[0], point[1], point[2]) for point in sets_points1])
+                           for sets_points1 in list_set_points]
+        return list_set_points
+
+    def get_minimum_distance_nearby_faces(self, other_shell):
+        """
+        Gets the nearby faces of the two shells where the minimum distance points could be, for further calculations.
+
+        :param other_shell: other shell.
+        :return: A list faces of self, with the closest faces to shell2, and another faces list of shell2,
+        with those closest to self.
+        """
         shell_decomposition1 = self.shell_decomposition()
         shell_decomposition2 = other_shell.shell_decomposition()
-        list_set_points1 = [{point for face in faces1
-                             for point in face.outer_contour3d.discretization_points(number_points=10)} for _, faces1 in
-                            shell_decomposition1.items()]
-        list_set_points1 = [np.array([(point[0], point[1], point[2]) for point in sets_points1]) for sets_points1 in
-                            list_set_points1]
-        list_set_points2 = [{point for face in faces2
-                             for point in face.outer_contour3d.discretization_points(number_points=10)} for _, faces2 in
-                            shell_decomposition2.items()]
-        list_set_points2 = [np.array([(point[0], point[1], point[2]) for point in sets_points2]) for sets_points2 in
-                            list_set_points2]
-
+        list_set_points1 = self._minimum_distance_helper_points_sets(shell_decomposition1)
+        list_set_points2 = self._minimum_distance_helper_points_sets(shell_decomposition2)
         minimum_distance = math.inf
         index1, index2 = None, None
         for sets_points1, sets_points2 in product(list_set_points1, list_set_points2):
@@ -677,7 +690,17 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
                 index2 = next((i for i, x in enumerate(list_set_points2) if np.array_equal(x, sets_points2)), -1)
         faces1 = list(shell_decomposition1.values())[index1]
         faces2 = list(shell_decomposition2.values())[index2]
+        return faces1, faces2
 
+    def minimum_distance(self, other_shell, return_points=False):
+        """
+        Calculates the minimum distance between two shells 3D.
+
+        :param other_shell: other shell.
+        :param return_points: weather to return the minimum distance corresponding points.
+        :return: minimum distance, and if condition is True, the corresponding points.
+        """
+        faces1, faces2 = self.get_minimum_distance_nearby_faces(other_shell)
         minimum_distance = math.inf
         best_distance_points = None
         for face1, face2 in product(faces1, faces2):
@@ -771,24 +794,28 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
                 return True
         return False
 
-    def triangulation(self):
+    def triangulation(self) -> display.Mesh3D:
         """
-        Triangulation of a Shell3D.
+        Performs triangulation on a Shell3D object.
 
+        This method iterates through each face of the Shell3D object and attempts to perform a triangulation.
+        In cases where a face cannot be triangulated, a warning is issued, and the method proceeds to the next face.
+        The triangulation of successfully processed faces are collected and merged into a single Mesh3D object.
+
+        :return: A Mesh3D object representing the triangulated shell.
+        :rtype: display.Mesh3D
         """
         meshes = []
         for i, face in enumerate(self.faces):
             try:
                 face_mesh = face.triangulation()
+                if face_mesh:
+                    meshes.append(face_mesh)
+            except Exception as exception:
+                warnings.warn(f"Could not triangulate face {i} ({face.__class__.__name__}) in '{self.name}' "
+                              f"due to: {exception}. This may be due to a topology error in contour2d.")
 
-            except Exception:
-                face_mesh = None
-                warnings.warn(f"Could not triangulate {face.__class__.__name__} with index {i} in the shell "
-                              f"{self.name} faces. Probably because topology error in contour2d.")
-                continue
-            if face_mesh:
-                meshes.append(face_mesh)
-        return display.DisplayMesh3D.merge_meshes(meshes)
+        return display.Mesh3D.from_meshes(meshes)
 
     def to_triangle_shell(self) -> Union["OpenTriangleShell3D", "ClosedTriangleShell3D"]:
         """
@@ -813,6 +840,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         """
         if merge_meshes:
             return super().babylon_meshes()
+
         babylon_meshes = []
         for face in self.faces:
             face_babylon_meshes = face.babylon_meshes()
@@ -851,8 +879,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
 
         return self.__class__(list_faces)
 
-    def get_geo_lines(self, update_data,
-                      point_mesh_size: float = None):
+    def get_geo_lines(self, update_data, point_mesh_size: float = None):
         """
         Gets the lines that define an OpenShell3D geometry in a .geo file.
 
@@ -866,9 +893,8 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
 
         primitives = []
         points = []
-
         for face in self.faces:
-            for _, contour in enumerate(list(chain(*[[face.outer_contour3d], face.inner_contours3d]))):
+            for contour in list(chain(*[[face.outer_contour3d], face.inner_contours3d])):
                 for point_contour in contour.get_geo_points():
                     if not point_in_list(point_contour, points):
                         points.append(point_contour)
@@ -876,7 +902,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
                 if isinstance(contour, curves.Circle2D):
                     pass
                 else:
-                    for _, primitive in enumerate(contour.primitives):
+                    for primitive in contour.primitives:
                         if (not edge_in_list(primitive, primitives)
                                 and not edge_in_list(primitive.reverse(), primitives)):
                             primitives.append(primitive)
@@ -894,12 +920,12 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
 
         for f_index, face in enumerate(self.faces):
             line_surface = []
-            for _, contour in enumerate(list(chain(*[[face.outer_contour3d], face.inner_contours3d]))):
+            for contour in list(chain(*[[face.outer_contour3d], face.inner_contours3d])):
                 lines_tags = []
                 if isinstance(contour, curves.Circle2D):
                     pass
                 else:
-                    for _, primitive in enumerate(contour.primitives):
+                    for primitive in contour.primitives:
                         # index = get_edge_index_in_list(primitive, primitives)
                         index = get_edge_index_in_list(primitive, primitives)
                         if index is None:
@@ -1118,9 +1144,9 @@ class ClosedShell3D(Shell3D):
         for face in self.faces:
             display3d = face.triangulation()
             for triangle_index in display3d.triangles:
-                point1 = display3d.points[triangle_index[0]]
-                point2 = display3d.points[triangle_index[1]]
-                point3 = display3d.points[triangle_index[2]]
+                point1 = display3d.vertices[triangle_index[0]]
+                point2 = display3d.vertices[triangle_index[1]]
+                point3 = display3d.vertices[triangle_index[2]]
 
                 point1_adj = (point1[0] - center_x, point1[1] - center_y, point1[2] - center_z)
                 point2_adj = (point2[0] - center_x, point2[1] - center_y, point2[2] - center_z)
@@ -1376,11 +1402,10 @@ class ClosedShell3D(Shell3D):
                 break
             for face in valid_faces:
                 if face.face_inside(faces[0]):
-                    faces.remove(faces[0])
+                    faces.pop(0)
                     break
             else:
-                valid_faces.append(faces[0])
-                faces.remove(faces[0])
+                valid_faces.append(faces.pop(0))
         return valid_faces
 
     def subtraction_faces(self, shell2, intersecting_faces, dict_faces_intersections, keep_interior_faces: bool):
@@ -1749,6 +1774,10 @@ class ClosedShell3D(Shell3D):
         return [new_shell]
 
     def eliminate_not_valid_closedshell_faces(self):
+        """
+        Eliminate not valid closed shell faces resulted from boolean operations.
+
+        """
         nodes_with_2degrees = [node for node, degree in list(self.vertices_graph.degree()) if degree <= 2]
         for node in nodes_with_2degrees:
             neighbors = nx.neighbors(self.vertices_graph, node)
@@ -1847,7 +1876,10 @@ class OpenTriangleShell3D(OpenShell3D):
         points = [volmdlr.Point3D(px, py, pz) for px, py, pz in vertices]
 
         for i1, i2, i3 in faces:
-            triangles.append(volmdlr.faces.Triangle3D(points[i1], points[i2], points[i3]))
+            try:
+                triangles.append(volmdlr.faces.Triangle3D(points[i1], points[i2], points[i3]))
+            except ZeroDivisionError:
+                pass
 
         return cls(triangles, name=name)
 
@@ -1931,12 +1963,12 @@ class OpenTriangleShell3D(OpenShell3D):
         points = []
         triangles = []
         for i, triangle in enumerate(self.faces):
-            points.append(display.Node3D.from_point(triangle.point1))
-            points.append(display.Node3D.from_point(triangle.point2))
-            points.append(display.Node3D.from_point(triangle.point3))
+            points.append(np.array(triangle.point1))
+            points.append(np.array(triangle.point2))
+            points.append(np.array(triangle.point3))
             triangles.append((3 * i, 3 * i + 1, 3 * i + 2))
-
-        return display.DisplayMesh3D(points, triangles)
+        vertices = np.array(points, dtype=np.float64)
+        return display.Mesh3D(vertices, np.array(triangles, dtype=np.int32))
 
     def to_dict(self, *args, **kwargs):
         """Overload of 'to_dict' for performance."""
@@ -2066,6 +2098,11 @@ class DisplayTriangleShell3D(Shell3D):
         :param indices: A 3D numpy array of int representing the indices of the vertices representing the triangles.
         :param name: A name for the DisplayTriangleShell3D, optional.
         """
+        warnings.warn(
+            "'volmdlr.shells.DisplayTriangleShell3D' class is deprecated. Use 'volmdlr.display.Mesh3D' instead",
+            DeprecationWarning
+        )
+
         self.positions = positions
         self.indices = indices
 

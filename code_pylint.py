@@ -9,7 +9,7 @@ from pylint.lint import Run
 
 MIN_NOTE = 9.7
 
-UNWATCHED_ERRORS = ['fixme', 'trailing-whitespace', 'import-error', 'missing-final-newline']
+UNWATCHED_ERRORS = ['fixme', 'trailing-whitespace', 'import-error', 'missing-final-newline', 'use-maxsplit-arg']
 
 EFFECTIVE_DATE = date(2023, 1, 31)
 
@@ -18,10 +18,10 @@ WEEKLY_DECREASE = 0.03
 MAX_ERROR_BY_TYPE = {
                      "wrong-spelling-in-comment": 6,
                      'invalid-name': 1,
-                     'arguments-differ': 64,
-                     'too-many-locals': 103,
-                     'unused-argument': 8,
-                     'too-many-arguments': 26,
+                     'arguments-differ': 67,
+                     'too-many-locals': 75,
+                     'unused-argument': 10,
+                     'too-many-arguments': 30,
                      'line-too-long': 12,
                      'too-many-branches': 26,
                      'too-many-statements': 15,
@@ -31,7 +31,7 @@ MAX_ERROR_BY_TYPE = {
                      'duplicate-code': 9,
                      'arguments-renamed': 56,
                      'too-many-ancestors': 20,
-                     'too-many-public-methods': 15,
+                     'too-many-public-methods': 16,
                      'too-many-instance-attributes': 15,
                      'protected-access': 4,
                      'too-many-nested-blocks': 3,

@@ -6,7 +6,7 @@ Setup install script for volmdlr
 
 import re
 from os.path import dirname, isdir, join
-from subprocess import CalledProcessError, check_output
+from subprocess import CalledProcessError, check_output, STDOUT
 
 import numpy as np
 from setuptools import setup
@@ -90,10 +90,10 @@ def get_version():
     if isdir(join(d, ".git")):
         cmd = "git describe --tags"
         try:
-            version = check_output(cmd.split()).decode().strip()[:]
-
-        except CalledProcessError:
-            raise RuntimeError("Unable to get version number from git tags")
+            version = check_output(cmd.split(), stderr=STDOUT).decode().strip()[:]
+        except CalledProcessError as exception:
+            raise RuntimeError("Unable to get version number from git tags, rc=", exception.returncode,
+                               "output=", exception.output)
 
         return version_from_git_describe(version)
     else:
@@ -142,6 +142,7 @@ setup(
         "rtree",
         "gmsh",
         "pyfqmr",
+        "CGAL",
     ],
     extras_require={"test": ["coverage"],
                     "doc": ["sphinx", "nbsphinx", "pydata_sphinx_theme", "nbformat", "nbconvert",
@@ -154,7 +155,8 @@ setup(
                            "volmdlr/discrete_representation_compiled.py",
                            "volmdlr/nurbs/core.pyx",
                            "volmdlr/nurbs/helpers.pyx",
-                           "volmdlr/nurbs/fitting.py"]),
+                           "volmdlr/nurbs/fitting.py",
+                           "volmdlr/nurbs/operations.py"]),
     include_dirs=[np.get_include()],
     python_requires=">=3.9",
 )
