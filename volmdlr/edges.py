@@ -35,7 +35,6 @@ from volmdlr import get_minimum_distance_points_lines
 import volmdlr.utils.common_operations as vm_common_operations
 import volmdlr.utils.intersections as vm_utils_intersections
 from volmdlr.core import EdgeStyle
-
 # pylint: disable=arguments-differ
 
 
@@ -610,7 +609,7 @@ class Edge(dc.DessiaObject):
             curve = self
         return curve
 
-    def to_step(self, current_id, *args, **kwargs):
+    def to_step(self, current_id: int, *args, **kwargs):
         """
         Converts the object to a STEP representation.
 
@@ -621,11 +620,19 @@ class Edge(dc.DessiaObject):
         """
         content, curve_id = self.curve().to_step(current_id)
 
-        start_content, start_id = self.start.to_step(curve_id, vertex=True)
-        end_content, end_id = self.end.to_step(start_id, vertex=True)
-        content += start_content + end_content
-        current_id = end_id + 1
-        content += f"#{current_id} = EDGE_CURVE('{self.name}',#{start_id},#{end_id},#{curve_id},.T.);\n"
+        trimmed_curve = kwargs.get("trimmed_curve", False)
+        if trimmed_curve:
+            start_content, start_id = self.start.to_step(curve_id, vertex=False)
+            end_content, end_id = self.end.to_step(start_id, vertex=False)
+            current_id = end_id + 1
+            curve_content = (f"#{current_id} = TRIMMED_CURVE('{self.name}',#{curve_id},"
+                        f"(#{start_id}),(#{end_id}),.T.,.CARTESIAN.);\n")
+        else:
+            start_content, start_id = self.start.to_step(curve_id, vertex=True)
+            end_content, end_id = self.end.to_step(start_id, vertex=True)
+            current_id = end_id + 1
+            curve_content = f"#{current_id} = EDGE_CURVE('{self.name}',#{start_id},#{end_id},#{curve_id},.T.);\n"
+        content += start_content + end_content + curve_content
         return content, current_id
 
 
@@ -2318,7 +2325,7 @@ class BSplineCurve2D(BSplineCurve):
             self.abscissa(point)) for point in points]
         offseted_points = [point.translation(normal_vector * offset_length) for point, normal_vector
                            in zip(points, unit_normal_vectors)]
-        offseted_bspline = BSplineCurve2D.from_points_interpolation(offseted_points, self.degree)
+        offseted_bspline = BSplineCurve2D.from_points_interpolation(offseted_points, self.degree, centripetal=True)
         return offseted_bspline
 
     def is_shared_section_possible(self, other_bspline2, tol):
@@ -3063,9 +3070,9 @@ class Arc2D(ArcMixin, Edge):
         :return: circle 2d.
         """
         circle = volmdlr_curves.Circle2D.from_3_points(point1, point2, point3)
-        arc = cls(circle, point1, point3)
+        arc = cls(circle=circle, start=point1, end=point3, name=name)
         if not arc.point_belongs(point2):
-            return cls(circle.reverse(), point1, point3, name=name)
+            return cls(circle=circle.reverse(), start=point1, end=point3, name=name)
         return arc
 
     @property
@@ -3586,6 +3593,19 @@ class FullArc2D(FullArcMixin, Arc2D):
         dict_['start_end'] = self.start.to_dict(use_pointers=use_pointers, memo=memo,
                                                 id_method=id_method, id_memo=id_memo, path=path + '/start_end')
         return dict_
+
+    @classmethod
+    def from_3_points(cls, point1, point2, point3, name: str = ''):
+        """
+        Creates a circle 2d from 3 points.
+
+        :return: circle 2d.
+        """
+        circle = volmdlr_curves.Circle2D.from_3_points(point1, point2, point3)
+        arc = cls(circle=circle, start_end=point1, name=name)
+        if not arc.point_belongs(point2):
+            return cls(circle=circle.reverse(), start_end=point1, name=name)
+        return arc
 
     def copy(self, *args, **kwargs):
         """Creates a copy of a fullarc 2d."""
@@ -4851,9 +4871,9 @@ class LineSegment3D(LineSegment):
             if math.isclose(radius, 0, abs_tol=1e-9):
                 continue
             if i == 0:
-                arc_point1 = volmdlr.O2D + volmdlr.X2D * radius
-            else:
                 arc_point1 = volmdlr.O2D - volmdlr.X2D * radius
+            else:
+                arc_point1 = volmdlr.O2D + volmdlr.X2D * radius
             arc_point2 = arc_point1.rotation(volmdlr.O2D, angle / 2)
             arc_point3 = arc_point1.rotation(volmdlr.O2D, angle)
             arc = Arc2D.from_3_points(arc_point1, arc_point2, arc_point3)
@@ -4949,7 +4969,7 @@ class LineSegment3D(LineSegment):
             u = self.start - p1_proj  # Unit vector from p1_proj to p1
             u = u.unit_vector()
         elif not math.isclose(distance_2, 0., abs_tol=1e-9):
-            u = self.end - p2_proj  # Unit vector from p1_proj to p1
+            u = self.end - p2_proj  # Unit vector from p2_proj to p2
             u = u.unit_vector()
         else:
             return []

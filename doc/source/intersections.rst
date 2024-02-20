@@ -11,7 +11,30 @@ Intersection between curves:
 ****************************
 
 
-# Todo
+To calculate the intersections between any two curves, you can call the `curve_intersections` methods.
+It will work for any edges in curves.py module.
+
+For example, to calculate the intersections between a Ellipse2D and Circle2D you can do as follows:
+
+.. plot::
+    :include-source:
+    :align: center
+
+    import volmdlr
+    from volmdlr import edges, curves
+    from volmdlr.core import EdgeStyle
+
+    circle = curves.Circle2D(frame=volmdlr.Frame2D(origin=volmdlr.Point2D(0.0, 0.0), u=volmdlr.Vector2D(1.0, -2.2204460492503126e-16), v=volmdlr.Vector2D(-2.4980018054066027e-16, 1.0)), radius=1)
+    ellipse2d = curves.Ellipse2D(frame=volmdlr.Frame2D(origin=volmdlr.Point2D(1.6329931618544102, -1.1547005383785152), u=volmdlr.Vector2D(-0.8164965809277259, 0.5773502691896258), v=volmdlr.Vector2D(0.5773502691896258, 0.8164965809277259)),
+                                 major_axis=1.7320508075677725, minor_axis=0.9999999999993615)
+
+    intersections = circle.curve_intersections(ellipse2d)
+
+    ax = ellipse2d.plot()
+    circle.plot(ax, EdgeStyle('r'))
+    for p in intersections:
+        p.plot(ax, 'b')
+
 
 Intersections betweeen edges
 ****************************
@@ -154,7 +177,7 @@ Intersections between two surfaces
     cylindricalsurface = surfaces.CylindricalSurface3D(volmdlr.OXYZ, R)
 
     plane = surfaces.Plane3D(volmdlr.Frame3D(volmdlr.O3D, volmdlr.Vector3D(0.0, 0.7071067811865475, -0.7071067811865476), volmdlr.Vector3D(1.0, 0.0, 0.0), volmdlr.Vector3D(0.0, -0.7071067811865476, -0.7071067811865475)))
-    intersections = cylindricalsurface.plane_intersection(plane)
+    intersections = cylindricalsurface.plane_intersections(plane)
     ax = cylindricalsurface.plot(edge_style=EdgeStyle('k'))
     plane.plot(ax, edge_style=EdgeStyle('b'))
     for intersection in intersections:

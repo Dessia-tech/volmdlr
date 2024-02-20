@@ -1195,8 +1195,8 @@ class Compound(dc.PhysicalObject):
             if all(primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D') or
                    hasattr(primitive, "shell_faces") for primitive in self.primitives):
                 self._type = "manifold_solid_brep"
-            elif all(isinstance(primitive, (volmdlr.wires.Wire3D, volmdlr.edges.Edge, volmdlr.Point3D)) or
-                     hasattr(primitive, "shell_faces") for primitive in self.primitives):
+            elif all(isinstance(primitive, (volmdlr.wires.Wire3D, volmdlr.edges.Edge, volmdlr.Point3D))
+                     for primitive in self.primitives):
                 self._type = "geometric_curve_set"
             else:
                 self._type = "shell_based_surface_model"
@@ -1261,7 +1261,7 @@ class Compound(dc.PhysicalObject):
         """
         step_content = ''
         primitives_content = ''
-        manifold_ids = []
+        shape_ids = []
         product_content, current_id = product_writer(current_id, self.name)
         product_definition_id = current_id - 2
         step_content += product_content
@@ -1270,20 +1270,28 @@ class Compound(dc.PhysicalObject):
         current_id = frame_id
 
         for primitive in self.primitives:
-            if primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D'):
-                primitive_content, current_id = primitive.to_step(current_id)
-                primitives_content += primitive_content
-                manifold_ids.append(current_id)
+            primitive_content, current_id = primitive.to_step(current_id)
+            primitives_content += primitive_content
+            shape_ids.append(current_id)
 
         geometric_context_content, geometric_representation_context_id = geometric_context_writer(current_id)
-        step_content += f"#{brep_id} = MANIFOLD_SURFACE_SHAPE_REPRESENTATION(''," \
-                        f"({step_ids_to_str(manifold_ids)})," \
-                        f"#{geometric_representation_context_id});\n"
+        current_id = geometric_representation_context_id
+        if self.compound_type == "manifold_solid_brep":
+            step_content += f"#{brep_id} = MANIFOLD_SURFACE_SHAPE_REPRESENTATION(''," \
+                            f"({step_ids_to_str(shape_ids)})," \
+                            f"#{geometric_representation_context_id});\n"
+        elif self.compound_type == "geometric_curve_set":
+            current_id += 1
+            step_content += f"#{brep_id} = GEOMETRICALLY_BOUNDED_SURFACE_SHAPE_REPRESENTATION(''," \
+                            f"(#{current_id})," \
+                            f"#{geometric_representation_context_id});\n"
+
+            step_content += f"#{current_id} = GEOMETRIC_SET('',({step_ids_to_str(shape_ids)}));\n"
         step_content += frame_content
         step_content += primitives_content
         step_content += geometric_context_content
 
-        return step_content, geometric_representation_context_id, [brep_id, product_definition_id]
+        return step_content, current_id, [brep_id, product_definition_id]
 
 
 class VolumeModel(dc.PhysicalObject):
@@ -1399,17 +1407,6 @@ class VolumeModel(dc.PhysicalObject):
         """
         new_primitives = [primitive.copy(deep=deep, memo=memo) for primitive in self.primitives]
         return VolumeModel(new_primitives, self.name)
-
-    def plot2d(self, ax=None, color=None):
-        fig = plt.figure()
-        if ax is None:
-            ax = fig.add_subplot(111, projection='3d')
-
-        for i, shell in enumerate(self.shells):
-            bbox = shell.bbox()
-            bbox.plot(ax, color[i])
-
-        return ax
 
     def plot(self, equal_aspect=True):
         """
@@ -1532,13 +1529,44 @@ class VolumeModel(dc.PhysicalObject):
             file.write(script)
         return filename
 
-    def to_mesh3d(self):
-        """Converts to volume model to a Mesh3D object."""
-        mesh = self.primitives[0].triangulation()
-        for primitive in self.primitives[1:]:
-            mesh = mesh.merge(primitive.triangulation(), merge_vertices=True, merge_triangles=True)
+    def to_mesh_list(self):
+        """
+        Converts the volume model to a list Mesh3D object.
 
-        return mesh
+        :return: A list of Mesh3D objects representing the VolumeModel shells.
+        """
+        meshes = []
+
+        for shell in self.get_shells():
+            mesh = shell.triangulation()
+
+            if len(mesh.triangles) > 0:
+                meshes.append(mesh)
+                meshes[-1].name = shell.name
+
+        return meshes
+
+    def to_mesh(self, merge_vertices: bool = True, merge_triangles: bool = True):
+        """
+        Converts the volume model to a Mesh3D object.
+
+        :param merge_vertices: Flag to indicate whether to merge vertices of the shells meshes.
+        :param merge_triangles: Flag to indicate whether to merge triangles of the shells meshes.
+
+        :return: A Mesh3D of the VolumeModel
+        """
+        meshes = self.to_mesh_list()
+
+        if not meshes:
+            raise ValueError("VolumeModel has no primitive that can be converted to mesh.")
+
+        merged_mesh = meshes[0]
+        for mesh in meshes[1:]:
+            merged_mesh = merged_mesh.merge(mesh, merge_vertices=merge_vertices, merge_triangles=merge_triangles)
+
+        merged_mesh.name = self.name
+
+        return merged_mesh
 
     def to_stl_model(self):
         """Converts the model into a stl object."""
@@ -1547,7 +1575,7 @@ class VolumeModel(dc.PhysicalObject):
             DeprecationWarning
         )
 
-        mesh = self.to_mesh3d()
+        mesh = self.to_mesh()
 
         # from volmdlr import stl
         stl = volmdlr.stl.Stl.from_display_mesh(mesh)
@@ -1555,11 +1583,11 @@ class VolumeModel(dc.PhysicalObject):
 
     def to_stl(self, filepath: str):
         """Export a stl file of the model."""
-        self.to_mesh3d().save_to_stl_file(filepath)
+        self.to_mesh().save_to_stl_file(filepath)
 
     def to_stl_stream(self, stream: dcf.BinaryFile):
         """Converts the model into a stl stream file."""
-        self.to_mesh3d().save_to_stl_stream(stream)
+        self.to_mesh().save_to_stl_stream(stream)
         return stream
 
     def to_step(self, filepath: str):
@@ -1583,8 +1611,10 @@ class VolumeModel(dc.PhysicalObject):
         for primitive in self.primitives:
             if primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D') or hasattr(primitive, "shell_faces"):
                 primitive_content, primitive_id, _ = primitive.to_step_product(current_id)
-            else:
+            elif primitive.__class__.__name__ in ('Assembly', 'Compound'):
                 primitive_content, primitive_id, _ = primitive.to_step(current_id)
+            else:
+                continue
 
             step_content += primitive_content
             current_id = primitive_id
@@ -2106,6 +2136,9 @@ class VolumeModel(dc.PhysicalObject):
 
     @staticmethod
     def get_elements_lines(gmsh_model):
+        """
+        Helper function to export the volume model into gmsh format.
+        """
         lines_elements = []
         lines_elements.append('$Elements')
 
@@ -2172,6 +2205,9 @@ class MovingVolumeModel(VolumeModel):
         return True
 
     def step_volume_model(self, istep: int):
+        """
+        Moves the volume model with a list of local frames.
+        """
         primitives = []
         for primitive, frame in zip(self.primitives, self.step_frames[istep]):
             primitives.append(
