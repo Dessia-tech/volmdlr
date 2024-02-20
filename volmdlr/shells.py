@@ -1966,17 +1966,8 @@ class OpenTriangleShell3D(OpenShell3D):
         return dict_
 
     @classmethod
-    def dict_to_object(
-        cls,
-        dict_: JsonSerializable,
-        force_generic: bool = False,
-        global_dict=None,
-        pointers_memo: Dict[str, Any] = None,
-        path: str = "#",
-        name: str = "",
-    ) -> "OpenTriangleShell3D":
+    def dict_to_object(cls, dict_: JsonSerializable, **kwargs) -> "OpenTriangleShell3D":
         """Overload of 'dict_to_object' for performance."""
-
         vertices = dict_["vertices"]
         faces = dict_["faces"]
         name = dict_["name"]
@@ -2141,17 +2132,8 @@ class DisplayTriangleShell3D(Shell3D):
         return dict_
 
     @classmethod
-    def dict_to_object(
-        cls,
-        dict_: JsonSerializable,
-        force_generic: bool = False,
-        global_dict=None,
-        pointers_memo: Dict[str, Any] = None,
-        path: str = "#",
-        name: str = "",
-    ) -> "DisplayTriangleShell3D":
+    def dict_to_object(cls, dict_: JsonSerializable, **kwargs) -> 'DisplayTriangleShell3D':
         """Overload of 'dict_to_object' for performance."""
-
         positions = np.array(dict_["positions"])
         indices = np.array(dict_["indices"])
         name = dict_["name"]
@@ -2160,7 +2142,6 @@ class DisplayTriangleShell3D(Shell3D):
 
         display_triangle_shell.alpha = dict_["alpha"]
         display_triangle_shell.color = dict_["color"]
-
         return display_triangle_shell
 
     def concatenate(self, other: "DisplayTriangleShell3D") -> "DisplayTriangleShell3D":
