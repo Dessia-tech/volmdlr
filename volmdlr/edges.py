@@ -3105,10 +3105,11 @@ class Arc2D(ArcMixin, Edge):
         angle1 = self._arc_point_angle(self.start)
         angle2 = self._arc_point_angle(self.end)
         if self.is_trigo:
-            if angle2 == 0.0:
-                angle2 = volmdlr.TWO_PI
+            if angle1 == math.pi:
+                angle1 = -math.pi
         else:
-            angle1, angle2 = angle2, angle1
+            if angle2 == math.pi:
+                angle2 = -math.pi
         return angle1, angle2
 
     def _arc_point_angle(self, point):
@@ -3404,6 +3405,8 @@ class Arc2D(ArcMixin, Edge):
 
         theta1 = self.angle_start * 180 / math.pi
         theta2 = self.angle_end * 180 / math.pi
+        if not self.is_trigo:
+            theta1, theta2 = theta2, theta1
 
         ax.add_patch(matplotlib.patches.Arc((self.circle.center.x, self.circle.center.y), 2 * self.circle.radius,
                                             2 * self.circle.radius, angle=0,
