@@ -5,7 +5,7 @@ import warnings
 from collections import deque
 from functools import cached_property, lru_cache
 from itertools import chain
-from typing import List, Union, Dict, Any
+from typing import List, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
