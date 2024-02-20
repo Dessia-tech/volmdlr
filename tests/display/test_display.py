@@ -159,7 +159,7 @@ class TestDisplaySTL(unittest.TestCase):
         self.double_space_path = os.path.join(FOLDER, "..", "..", "scripts", "stl", "double_space.stl")
         self.simple_path = os.path.join(FOLDER, "..", "..", "scripts", "stl", "simple.stl")
 
-        self.expected_keys = ["positions", "indices", "alpha", "name", "color"]
+        self.expected_keys = ["positions", "indices", "alpha", "name", "color", "reference_path"]
 
     def test_display_cube_ascii(self):
         mesh = Mesh3D.from_stl_file(self.cube_ascii_path)
