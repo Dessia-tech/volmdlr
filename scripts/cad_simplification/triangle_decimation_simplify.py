@@ -12,18 +12,18 @@ volume_model = Step.from_file("../step/engine.step").to_volume_model()
 # Simplify
 start = time.perf_counter()
 simplifier = TriangleDecimationSimplify(volume_model=volume_model)
-simplified_volume_model = simplifier.simplify(target_ratio=0.2, preserve_border=True)
+simplified_volume_model = simplifier.simplify(target_ratio=0.6, preserve_border=True, preserve_shells=False)
 
 print(f"Simplification took {time.perf_counter() - start:.6f} seconds\n")
 
 # Count faces triangles:
 n_faces = sum(len(shell.faces) for shell in volume_model.get_shells())
-n_triangles = sum(len(shell.triangulation().faces) for shell in volume_model.get_shells())
+n_triangles = sum(len(shell.triangulation().triangles) for shell in volume_model.get_shells())
 print(f"Given model has {n_faces} faces and {n_triangles} triangles when triangulated for display.")
 
-n_faces = sum(len(shell.faces) for shell in simplified_volume_model.get_shells())
-n_triangles = sum(len(shell.triangulation().faces) for shell in simplified_volume_model.get_shells())
-print(f"Simplified model has {n_faces} faces and {n_triangles} triangles when triangulated for display.")
+n_triangles = sum(len(shell.triangles) for shell in simplified_volume_model.get_shells())
+print(f"Simplified model mesh has {n_triangles} triangles.")
+
 
 # Display
 for simplified_shell in simplified_volume_model.get_shells():
