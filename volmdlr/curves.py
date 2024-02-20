@@ -1614,6 +1614,8 @@ class Circle2D(CircleMixin, ClosedCurve):
         c = line2d.get_y_intersection()
         if m == math.inf and c is None:
             x_line = line2d.point1.x
+            if abs(self.radius**2 - x_line**2) < 1e-8:
+                return [volmdlr.Point2D(x_line, 0.0)]
             y1 = - math.sqrt(self.radius**2 - x_line**2)
             y2 = math.sqrt(self.radius**2 - x_line**2)
             return [volmdlr.Point2D(x_line, y1), volmdlr.Point2D(x_line, y2)]

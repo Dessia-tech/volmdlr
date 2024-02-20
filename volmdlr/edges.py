@@ -598,6 +598,26 @@ class Edge(dc.DessiaObject):
                 new_arcs.append(arc)
         return new_arcs
 
+    def curve_intersections(self, other_curve, abs_tol: float = 1e-6):
+        """
+        Gets the intersections between two curves.
+
+        :param other_curve: other curve.
+        :param abs_tol: tolerance.
+        :return: list of intersection points.
+        """
+        #TODO:this method is to be delete. corresponding method in curves.py should be renamed to just `intersections`.
+        method_name = f'{other_curve.__class__.__name__.lower()[:-2]}_intersections'
+        if hasattr(self, method_name):
+            intersections = getattr(self, method_name)(other_curve, abs_tol)
+            return intersections
+        method_name = f'{self.__class__.__name__.lower()[:-2]}_intersections'
+        if hasattr(other_curve, method_name):
+            intersections = getattr(other_curve, method_name)(self, abs_tol)
+            return intersections
+        intersections = vm_utils_intersections.get_bsplinecurve_intersections(other_curve, self, abs_tol)
+        return intersections
+
 
 class LineSegment(Edge):
     """
@@ -1388,7 +1408,7 @@ class BSplineCurve(Edge):
         initial_condition_list = [u_min + index * (u_max - u_min) / (self.sample_size - 1) for index in indexes[:3]]
         for u0 in initial_condition_list:
             res = minimize(objective_function, np.array(u0), bounds=[(u_min, u_max)], jac=True)
-            if res.fun < 1e-6 or (res.success and abs(res.fun - distance) <= 1e-8):
+            if res.fun < 1e-6 or (res.success and abs(res.fun - distance) <= 1e-12):
                 return float(res.x[0] * length)
 
         for patch, param in self.decompose(True):
@@ -3837,6 +3857,7 @@ class ArcEllipse2D(ArcEllipseMixin, Edge):
                 aproximation_point = point1
                 break
             aproximation_abscissa += dist1
+            aproximation_point = point1
         initial_point = self.ellipse.frame.global_to_local_coordinates(aproximation_point)
         u1, u2 = initial_point.x / self.ellipse.major_axis, initial_point.y / self.ellipse.minor_axis
         initial_angle = volmdlr.geometry.sin_cos_angle(u1, u2)

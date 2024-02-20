@@ -133,16 +133,17 @@ class Surface2D(PhysicalObject):
             center -= float(contour.area()) * contour.center_of_mass()
         return center / self.area()
 
-    def point_belongs(self, point2d: volmdlr.Point2D, include_edge_points: bool = True):
+    def point_belongs(self, point2d: volmdlr.Point2D, include_edge_points: bool = True, abs_tol: float = 1e-6):
         """
         Check whether a point belongs to the 2D surface.
 
         :param point2d: The point to check.
         :type point2d: :class:`volmdlr.Point2D`
+        :param abs_tol: tolerance.
         :return: True if the point belongs to the surface, False otherwise.
         :rtype: bool
         """
-        if not self.outer_contour.point_inside(point2d, include_edge_points=include_edge_points):
+        if not self.outer_contour.point_inside(point2d, include_edge_points=include_edge_points, tol=abs_tol):
             return False
 
         for inner_contour in self.inner_contours:
@@ -953,7 +954,7 @@ class Surface3D(DessiaObject):
         primitives2d, primitives_mapping = self.primitives3d_to_2d(contour3d.primitives)
 
         wire2d = wires.Wire2D(primitives2d)
-        is_wire = False
+        is_wire = False if len(primitives2d) > 1 else True
         if self.x_periodicity and not self.is_singularity_point(self.point2d_to_3d(wire2d.primitives[0].start)) and \
                 not self.is_singularity_point(self.point2d_to_3d(wire2d.primitives[-1].end)):
             delta_x = abs(wire2d.primitives[0].start.x - wire2d.primitives[-1].end.x)
@@ -1204,6 +1205,8 @@ class Surface3D(DessiaObject):
             return []
         intersections = []
         for curve_plane_intersection in curve_plane_intersections:
+            if isinstance(curve_plane_intersection, edges.FullArc3D):
+                print(True)
             inters = curve_plane_intersection.curve_intersections(curve)
             for intersection in inters:
                 if not intersection.in_list(intersections):
@@ -1290,6 +1293,19 @@ class Surface3D(DessiaObject):
         for intersection in ellipse_intersections:
             if arcellipse.point_belongs(intersection):
                 intersections.append(intersection)
+        return intersections
+
+    def bsplinecurve_intersections(self, bsplinecurve: edges.BSplineCurve3D):
+        """
+        Calculates intersections between a surface 3D and a Bspline Curve 3D.
+
+        :param bsplinecurve: Bspline Curve 3D.
+        :return:
+        """
+        occt_surface = getattr(to_occt, 'volmdlr_'+self.__class__.__name__.lower()[:-2]+'_to_occt')(self)
+        occt_bspline = to_occt.volmdlr_bsplinecurve3d_to_occt(bsplinecurve)
+        api_inters = GeomAPI_IntCS(occt_bspline, occt_surface)
+        intersections = [from_occt.point3d_from_occt(api_inters.Point(i + 1)) for i in range(api_inters.NbPoints())]
         return intersections
 
     def brep_connectivity_check(self, brep: wires.Contour2D, tol: float = 1e-6) -> bool:
@@ -2694,6 +2710,9 @@ class CylindricalSurface3D(PeriodicalSurface):
         :return: list of intersecting curves
         """
         distance_plane_cylinder_axis = plane3d.point_distance(self.frame.origin)
+        if distance_plane_cylinder_axis == self.radius:
+            point = plane3d.point_projection(self.frame.origin)
+            return [curves.Line3D.from_point_and_vector(point, self.frame.w)]
         if distance_plane_cylinder_axis > self.radius:
             return []
         if math.isclose(self.frame.w.dot(plane3d.frame.u), 0, abs_tol=1e-6):
@@ -2767,48 +2786,49 @@ class CylindricalSurface3D(PeriodicalSurface):
         :param conical_surface: intersecting plane.
         :return: list of intersecting curves.
         """
-        def _list_generatrices_intersections(surface, other_surface):
-            linesegments = other_surface.get_generatrices(50, 2)
-            all_generatrices_intersecting = True
-            lists_intersections = [[], []]
-            for generatrix in linesegments:
-                linseg_intersections = surface.line_intersections(generatrix.line)
-                if not linseg_intersections:
-                    all_generatrices_intersecting = False
-                for index, point in enumerate(linseg_intersections):
-                    if other_surface.point_distance(point) < 1e-6 and \
-                            not point.in_list(lists_intersections[index]):
-                        lists_intersections[index].append(point)
-            return lists_intersections, all_generatrices_intersecting
-
-        cone_generatrices_point_intersections, all_cone_generatrices_intersecting_cylinder = \
-            _list_generatrices_intersections(self, conical_surface)
-        cylinder_generatrices_point_intersections, all_cylinder_generatrices_intersecting_cone = \
-            _list_generatrices_intersections(conical_surface, self)
-        if all_cylinder_generatrices_intersecting_cone:
-            intersections_points = cylinder_generatrices_point_intersections
-        elif all_cone_generatrices_intersecting_cylinder:
-            intersections_points = cone_generatrices_point_intersections
-            if not cone_generatrices_point_intersections[1]:
-                intersections_points = [[]]
-                for point in (
-                        cylinder_generatrices_point_intersections[0] + cylinder_generatrices_point_intersections[1] +
-                        cone_generatrices_point_intersections[0] + cone_generatrices_point_intersections[1]):
-                    if not point.in_list(intersections_points[0]):
-                        intersections_points[0].append(point)
-        elif not all_cone_generatrices_intersecting_cylinder:
-            intersections_points = [[]]
-            for point in (cylinder_generatrices_point_intersections[0] + cylinder_generatrices_point_intersections[1] +
-                          cone_generatrices_point_intersections[0] + cone_generatrices_point_intersections[1]):
-                if not point.in_list(intersections_points[0]):
-                    intersections_points[0].append(point)
-        list_curves = []
-        for list_points in intersections_points:
-            order_ed_points = vm_common_operations.order_points_list_for_nearest_neighbor(list_points)
-            bspline = edges.BSplineCurve3D.from_points_interpolation(order_ed_points + [order_ed_points[0]], 4,
-                                                                     centripetal=False)
-            list_curves.append(bspline)
-        return list_curves
+        return self.generic_surface_intersections_with_occt(conical_surface)
+        # def _list_generatrices_intersections(surface, other_surface):
+        #     linesegments = other_surface.get_generatrices(50, 2)
+        #     all_generatrices_intersecting = True
+        #     lists_intersections = [[], []]
+        #     for generatrix in linesegments:
+        #         linseg_intersections = surface.line_intersections(generatrix.line)
+        #         if not linseg_intersections:
+        #             all_generatrices_intersecting = False
+        #         for index, point in enumerate(linseg_intersections):
+        #             if other_surface.point_distance(point) < 1e-6 and \
+        #                     not point.in_list(lists_intersections[index]):
+        #                 lists_intersections[index].append(point)
+        #     return lists_intersections, all_generatrices_intersecting
+        #
+        # cone_generatrices_point_intersections, all_cone_generatrices_intersecting_cylinder = \
+        #     _list_generatrices_intersections(self, conical_surface)
+        # cylinder_generatrices_point_intersections, all_cylinder_generatrices_intersecting_cone = \
+        #     _list_generatrices_intersections(conical_surface, self)
+        # if all_cylinder_generatrices_intersecting_cone:
+        #     intersections_points = cylinder_generatrices_point_intersections
+        # elif all_cone_generatrices_intersecting_cylinder:
+        #     intersections_points = cone_generatrices_point_intersections
+        #     if not cone_generatrices_point_intersections[1]:
+        #         intersections_points = [[]]
+        #         for point in (
+        #                 cylinder_generatrices_point_intersections[0] + cylinder_generatrices_point_intersections[1] +
+        #                 cone_generatrices_point_intersections[0] + cone_generatrices_point_intersections[1]):
+        #             if not point.in_list(intersections_points[0]):
+        #                 intersections_points[0].append(point)
+        # elif not all_cone_generatrices_intersecting_cylinder:
+        #     intersections_points = [[]]
+        #     for point in (cylinder_generatrices_point_intersections[0] + cylinder_generatrices_point_intersections[1] +
+        #                   cone_generatrices_point_intersections[0] + cone_generatrices_point_intersections[1]):
+        #         if not point.in_list(intersections_points[0]):
+        #             intersections_points[0].append(point)
+        # list_curves = []
+        # for list_points in intersections_points:
+        #     order_ed_points = vm_common_operations.order_points_list_for_nearest_neighbor(list_points)
+        #     bspline = edges.BSplineCurve3D.from_points_interpolation(order_ed_points + [order_ed_points[0]], 4,
+        #                                                              centripetal=False)
+        #     list_curves.append(bspline)
+        # return list_curves
 
     def is_coincident(self, surface3d, abs_tol: float = 1e-6):
         """
@@ -3763,13 +3783,14 @@ class ToroidalSurface3D(PeriodicalSurface):
         :param plane3d: intersecting plane.
         :return: list of intersecting curves.
         """
-        projected_origin = plane3d.point_projection(self.frame.origin)
-        translated_to_local_plane3d = plane3d.translation((projected_origin - plane3d.frame.origin).to_vector())
-        if math.isclose(abs(translated_to_local_plane3d.frame.w.dot(self.frame.w)), 0, abs_tol=1e-6):
-            return self.parallel_plane_intersection(translated_to_local_plane3d)
-        if math.isclose(abs(translated_to_local_plane3d.frame.w.dot(self.frame.w)), 1, abs_tol=1e-6):
-            return self.perpendicular_plane_intersection(translated_to_local_plane3d)
-        return self.concurrent_plane_intersection(translated_to_local_plane3d)
+        return self.generic_surface_intersections_with_occt(plane3d)
+        # projected_origin = plane3d.point_projection(self.frame.origin)
+        # translated_to_local_plane3d = plane3d.translation((projected_origin - plane3d.frame.origin).to_vector())
+        # if math.isclose(abs(translated_to_local_plane3d.frame.w.dot(self.frame.w)), 0, abs_tol=1e-6):
+        #     return self.parallel_plane_intersection(translated_to_local_plane3d)
+        # if math.isclose(abs(translated_to_local_plane3d.frame.w.dot(self.frame.w)), 1, abs_tol=1e-6):
+        #     return self.perpendicular_plane_intersection(translated_to_local_plane3d)
+        # return self.concurrent_plane_intersection(translated_to_local_plane3d)
 
     def _cylinder_intersection_points(self, cylindrical_surface: CylindricalSurface3D):
         """
@@ -4716,11 +4737,12 @@ class ConicalSurface3D(PeriodicalSurface):
         :param plane3d: other plane, to verify intersections.
         :return:
         """
-        if math.isclose(abs(plane3d.frame.w.dot(self.frame.w)), 0, abs_tol=1e-6):
-            return self.parallel_plane_intersection(plane3d)
-        if math.isclose(abs(plane3d.frame.w.dot(self.frame.w)), 1, abs_tol=1e-6):
-            return self.perpendicular_plane_intersection(plane3d)
-        return self.concurrent_plane_intersection(plane3d)
+        return self.generic_surface_intersections_with_occt(plane3d)
+        # if math.isclose(abs(plane3d.frame.w.dot(self.frame.w)), 0, abs_tol=1e-6):
+        #     return self.parallel_plane_intersection(plane3d)
+        # if math.isclose(abs(plane3d.frame.w.dot(self.frame.w)), 1, abs_tol=1e-6):
+        #     return self.perpendicular_plane_intersection(plane3d)
+        # return self.concurrent_plane_intersection(plane3d)
 
     def is_singularity_point(self, point, *args, **kwargs):
         """Verifies if point is on the surface singularity."""
@@ -9559,7 +9581,11 @@ class BSplineSurface3D(Surface3D):
         occt_cylindricalsurface = to_occt.volmdlr_cylindricalsurface_to_occt(cylindrical_surface)
         api_intss = GeomAPI_IntSS(occt_bsplinesurface, occt_cylindricalsurface, Precision.Confusion_s())
         intersections = [api_intss.Line(i + 1) for i in range(api_intss.NbLines())]
-        return [from_occt.bsplinecurve3d_from_occt(intersection) for intersection in intersections]
+        surface_intersections = []
+        for intersection in intersections:
+            function = getattr(from_occt, intersection.__class__.__name__.lower()[5:] + '3d_from_occt')
+            surface_intersections.append(function(intersection))
+        return surface_intersections
 
     def conicalsurface_intersections(self, conical_surface):
         return self.bsplinesurface_intersections_helper(conical_surface)

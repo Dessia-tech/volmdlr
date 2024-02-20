@@ -1251,19 +1251,22 @@ class ClosedShell3D(Shell3D):
         and as the values the resulting primitive from the two intersecting faces.
         It is done, so it is not needed to calculate the same intersecting primitive twice.
         """
-        # debug_face = DessiaObject.from_json('/Users/wirajandasilva/Downloads/test_bspline_inters_boolops_bug.json')
+        debug_face = DessiaObject.from_json('/Users/wirajandasilva/Downloads/test_buggy_toroidal_face_inters190224.json')
         face_combinations1 = {face: [] for face in self.faces}
         face_combinations2 = {face: [] for face in shell2.faces}
-        for face1 in self.faces:
-            # if face1 == debug_face:
+        for i, face1 in enumerate(self.faces):
+            # if isinstance(face1, volmdlr.faces.ToroidalFace3D):
             #     print(True)
-
-            for face2 in shell2.faces:
+            if face1 == debug_face:
+                print(True)
+            for j, face2 in enumerate(shell2.faces):
                 if face1.surface3d.is_coincident(face2.surface3d, abs_tol=tol):
                     contours1, contours2 = face1.get_coincident_face_intersections(face2)
                     face_combinations1[face1].extend(contours1)
                     face_combinations2[face2].extend(contours2)
-
+                if i == 79 and j == 31:
+                    print(True)
+                print('(i, j): ', (i, j))
                 face_intersections = face1.face_intersections(face2, tol)
                 face_combinations1[face1].extend(face_intersections)
                 face_combinations2[face2].extend(face_intersections)
@@ -1506,8 +1509,9 @@ class ClosedShell3D(Shell3D):
         for point in points:
             point3d = face.surface3d.point2d_to_3d(point)
             if face.point_belongs(point3d):
-                normal1 = point3d - 0.00001 * face.surface3d.frame.w
-                normal2 = point3d + 0.00001 * face.surface3d.frame.w
+                normal_at_point = face.get_normal_at_point(point3d)
+                normal1 = point3d - 0.00001 * normal_at_point
+                normal2 = point3d + 0.00001 * normal_at_point
                 if (self.point_inside(normal1) and
                     shell2.point_inside(normal2)) or \
                         (shell2.point_inside(normal1) and
@@ -1531,6 +1535,8 @@ class ClosedShell3D(Shell3D):
         if new_face not in valid_faces:
             inside_shell2 = shell2.point_inside(new_face.random_point_inside())
             face_on_shell2 = shell2.face_on_shell(new_face)
+            # if not inside_shell2 and not face_on_shell2:
+            #     return False
             if not inside_shell2 or face_on_shell2:
                 if list_coincident_faces and any(new_face.surface3d.is_coincident(face.surface3d)
                                                  for faces in list_coincident_faces for face in faces):

@@ -492,6 +492,8 @@ class WireMixin:
         :param sorted_points: sorted list of points.
         :return: list of Contour sections.
         """
+        if not sorted_points:
+            return []
         self_start_equal_to_end = True
         if not self.primitives[0].start.is_close(self.primitives[-1].end):
             self_start_equal_to_end = False
@@ -2085,8 +2087,8 @@ class Contour2D(ContourMixin, Wire2D):
         """
         # TODO: This is incomplete!!!
         x_min, x_max, y_min, y_max = self.bounding_rectangle
-        if isinstance(point, np.ndarray):
-            print(True)
+        # if isinstance(point, np.ndarray):
+        #     print(True)
         if point.x < x_min - tol or point.x > x_max + tol or point.y < y_min - tol or point.y > y_max + tol:
             return False
         if include_edge_points:
@@ -2095,7 +2097,7 @@ class Contour2D(ContourMixin, Wire2D):
                     return True
         if not self._polygon_100_points:
             self._polygon_100_points = self.to_polygon(100)
-        if point.is_close(self.center_of_mass()) and self._polygon_100_points.is_convex():
+        if point.is_close(self.centroid()) and self._polygon_100_points.is_convex():
             return True
         if self._polygon_100_points.point_inside(point):
             return True
@@ -2140,13 +2142,20 @@ class Contour2D(ContourMixin, Wire2D):
                     self._area = float(polygon.triangulation().area())
         return self._area
 
+    def centroid(self):
+        if not self._polygon_100_points:
+            self._polygon_100_points = self.to_polygon(100)
+        return self._polygon_100_points.barycenter()
+
     def center_of_mass(self):
         """
         Calculates the center of mass of the Contour2D.
 
         :return: Contour's center of mass.
         """
-        center = self.edge_polygon.area() * self.edge_polygon.center_of_mass()
+        center = volmdlr.O2D
+        if self.edge_polygon.area() != 0.0:
+            center = self.edge_polygon.area() * self.edge_polygon.center_of_mass()
         if self.edge_polygon.is_trigo:
             trigo = 1
         else:
@@ -2487,7 +2496,12 @@ class Contour2D(ContourMixin, Wire2D):
         """Divide contour with other contours."""
         new_base_contours = [self]
         finished = False
-        list_cutting_contours = contours[:]
+
+        def helper_f(c):
+            pt1, pt2 = [c.primitives[0].start, c.primitives[-1].end]
+            return self.point_belongs(pt1, abs_tol) and self.point_belongs(pt2, abs_tol)
+
+        list_cutting_contours = sorted(contours, key=helper_f, reverse=True)
         list_valid_contours = []
         while not finished:
             if not new_base_contours:
@@ -2504,7 +2518,7 @@ class Contour2D(ContourMixin, Wire2D):
                         sorted_points = cutting_contour.sort_points_along_wire(contour_crossings)
                         split_wires = cutting_contour.split_with_sorted_points(sorted_points)
                         list_cutting_contours.pop(j)
-                        list_cutting_contours.extend(split_wires)
+                        list_cutting_contours = split_wires + list_cutting_contours
                         list_cutting_contours_modified = True
                         break
                     point1, point2 = [cutting_contour.primitives[0].start,
@@ -2518,7 +2532,7 @@ class Contour2D(ContourMixin, Wire2D):
                         contour1, contour2 = base_contour.get_divided_contours(
                             cutting_points[0], cutting_points[1], cutting_contour, abs_tol)
                         new_base_contours.pop(i)
-                        new_base_contours.extend([contour1, contour2])
+                        new_base_contours = [contour1, contour2] + new_base_contours
                         break
                 else:
                     list_valid_contours.append(base_contour)
