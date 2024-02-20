@@ -2089,7 +2089,8 @@ class DisplayTriangleShell3D(Shell3D):
         self.positions = positions
         self.indices = indices
 
-        Shell3D.__init__(self, faces=[], reference_path=reference_path, name=name)  # avoid saving the faces for memory and performance
+        # Avoid saving the faces for memory and performance
+        Shell3D.__init__(self, faces=[], reference_path=reference_path, name=name)
 
     @classmethod
     def from_triangle_shell(
