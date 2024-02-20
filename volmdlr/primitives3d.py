@@ -1022,7 +1022,8 @@ class Cylinder(shells.ClosedShell3D):
         v_vector = axis.cross(u_vector)
         frame = volmdlr.Frame3D(center_point, u_vector, v_vector, axis)
 
-        return cls(frame=frame, radius=radius, length=length, color=color, alpha=alpha, name=name)
+        return cls(frame=frame, radius=radius, length=length, color=color, alpha=alpha,
+                   reference_path=reference_path, name=name)
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float) -> 'Cylinder':
         """
