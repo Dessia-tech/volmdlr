@@ -609,7 +609,7 @@ class Edge(dc.DessiaObject):
             curve = self
         return curve
 
-    def to_step(self, current_id, *args, **kwargs):
+    def to_step(self, current_id: int, *args, **kwargs):
         """
         Converts the object to a STEP representation.
 
@@ -620,11 +620,19 @@ class Edge(dc.DessiaObject):
         """
         content, curve_id = self.curve().to_step(current_id)
 
-        start_content, start_id = self.start.to_step(curve_id, vertex=True)
-        end_content, end_id = self.end.to_step(start_id, vertex=True)
-        content += start_content + end_content
-        current_id = end_id + 1
-        content += f"#{current_id} = EDGE_CURVE('{self.name}',#{start_id},#{end_id},#{curve_id},.T.);\n"
+        trimmed_curve = kwargs.get("trimmed_curve", False)
+        if trimmed_curve:
+            start_content, start_id = self.start.to_step(curve_id, vertex=False)
+            end_content, end_id = self.end.to_step(start_id, vertex=False)
+            current_id = end_id + 1
+            curve_content = (f"#{current_id} = TRIMMED_CURVE('{self.name}',#{curve_id},"
+                        f"(#{start_id}),(#{end_id}),.T.,.CARTESIAN.);\n")
+        else:
+            start_content, start_id = self.start.to_step(curve_id, vertex=True)
+            end_content, end_id = self.end.to_step(start_id, vertex=True)
+            current_id = end_id + 1
+            curve_content = f"#{current_id} = EDGE_CURVE('{self.name}',#{start_id},#{end_id},#{curve_id},.T.);\n"
+        content += start_content + end_content + curve_content
         return content, current_id
 
 
