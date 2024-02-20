@@ -1,0 +1,99 @@
+{
+  "object_class": "volmdlr.surfaces.BSplineSurface3D",
+  "name": "",
+  "degree_u": 5,
+  "degree_v": 1,
+  "control_points": [
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 1.6488992053,
+      "y": 0.6841950695960001,
+      "z": 0.0986239625193
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 1.64889760036,
+      "y": 0.682497474165,
+      "z": 0.09855551643180001
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 1.65089936637,
+      "y": 0.6841931816710001,
+      "z": 0.0986238863993
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 1.6508984335499999,
+      "y": 0.6824951751830001,
+      "z": 0.0985656195664
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 1.65289951492,
+      "y": 0.684192280907,
+      "z": 0.09862387842850001
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 1.6528994106800001,
+      "y": 0.6824937748150001,
+      "z": 0.0985798869641
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 1.65489964796,
+      "y": 0.684192680836,
+      "z": 0.0986239446226
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 1.65490054874,
+      "y": 0.682493692532,
+      "z": 0.09859867454770001
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 1.6568997601000002,
+      "y": 0.6841947323450001,
+      "z": 0.0986240289917
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 1.65690183821,
+      "y": 0.6824955257540001,
+      "z": 0.0986222002075
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 1.6588998443999998,
+      "y": 0.684198768442,
+      "z": 0.0986239052637
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 1.65890327408,
+      "y": 0.68249999993,
+      "z": 0.0986502010561
+    }
+  ],
+  "nb_u": 6,
+  "nb_v": 2,
+  "u_multiplicities": [
+    6,
+    6
+  ],
+  "v_multiplicities": [
+    2,
+    2
+  ],
+  "u_knots": [
+    0.0,
+    1.0
+  ],
+  "v_knots": [
+    0.0,
+    1.0
+  ],
+  "weights": null
+}

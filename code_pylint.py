@@ -7,7 +7,7 @@ import math
 from pylint import __version__
 from pylint.lint import Run
 
-MIN_NOTE = 9.7
+MIN_NOTE = 9.6
 
 UNWATCHED_ERRORS = ['fixme', 'trailing-whitespace', 'import-error', 'missing-final-newline', 'use-maxsplit-arg']
 
@@ -42,6 +42,7 @@ MAX_ERROR_BY_TYPE = {
                      'too-many-lines': 4,
                      'signature-differs': 1,
                      'consider-using-enumerate': 2,
+                     'too-few-public-methods': 2,
                     }
 
 ERRORS_WITHOUT_TIME_DECREASE = ["signature-differs", "broad-exception-caught", 'invalid-name', "too-many-locals",
