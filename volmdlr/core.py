@@ -1197,8 +1197,8 @@ class Compound(dc.PhysicalObject):
             if all(primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D') or
                    hasattr(primitive, "shell_faces") for primitive in self.primitives):
                 self._type = "manifold_solid_brep"
-            elif all(isinstance(primitive, (volmdlr.wires.Wire3D, volmdlr.edges.Edge, volmdlr.Point3D)) or
-                     hasattr(primitive, "shell_faces") for primitive in self.primitives):
+            elif all(isinstance(primitive, (volmdlr.wires.Wire3D, volmdlr.edges.Edge, volmdlr.Point3D))
+                     for primitive in self.primitives):
                 self._type = "geometric_curve_set"
             else:
                 self._type = "shell_based_surface_model"
@@ -1263,7 +1263,7 @@ class Compound(dc.PhysicalObject):
         """
         step_content = ''
         primitives_content = ''
-        manifold_ids = []
+        shape_ids = []
         product_content, current_id = product_writer(current_id, self.name)
         product_definition_id = current_id - 2
         step_content += product_content
@@ -1272,20 +1272,28 @@ class Compound(dc.PhysicalObject):
         current_id = frame_id
 
         for primitive in self.primitives:
-            if primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D'):
-                primitive_content, current_id = primitive.to_step(current_id)
-                primitives_content += primitive_content
-                manifold_ids.append(current_id)
+            primitive_content, current_id = primitive.to_step(current_id)
+            primitives_content += primitive_content
+            shape_ids.append(current_id)
 
         geometric_context_content, geometric_representation_context_id = geometric_context_writer(current_id)
-        step_content += f"#{brep_id} = MANIFOLD_SURFACE_SHAPE_REPRESENTATION(''," \
-                        f"({step_ids_to_str(manifold_ids)})," \
-                        f"#{geometric_representation_context_id});\n"
+        current_id = geometric_representation_context_id
+        if self.compound_type == "manifold_solid_brep":
+            step_content += f"#{brep_id} = MANIFOLD_SURFACE_SHAPE_REPRESENTATION(''," \
+                            f"({step_ids_to_str(shape_ids)})," \
+                            f"#{geometric_representation_context_id});\n"
+        elif self.compound_type == "geometric_curve_set":
+            current_id += 1
+            step_content += f"#{brep_id} = GEOMETRICALLY_BOUNDED_SURFACE_SHAPE_REPRESENTATION(''," \
+                            f"(#{current_id})," \
+                            f"#{geometric_representation_context_id});\n"
+
+            step_content += f"#{current_id} = GEOMETRIC_SET('',({step_ids_to_str(shape_ids)}));\n"
         step_content += frame_content
         step_content += primitives_content
         step_content += geometric_context_content
 
-        return step_content, geometric_representation_context_id, [brep_id, product_definition_id]
+        return step_content, current_id, [brep_id, product_definition_id]
 
 
 class VolumeModel(dc.PhysicalObject):
@@ -1605,8 +1613,10 @@ class VolumeModel(dc.PhysicalObject):
         for primitive in self.primitives:
             if primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D') or hasattr(primitive, "shell_faces"):
                 primitive_content, primitive_id, _ = primitive.to_step_product(current_id)
-            else:
+            elif primitive.__class__.__name__ in ('Assembly', 'Compound'):
                 primitive_content, primitive_id, _ = primitive.to_step(current_id)
+            else:
+                continue
 
             step_content += primitive_content
             current_id = primitive_id

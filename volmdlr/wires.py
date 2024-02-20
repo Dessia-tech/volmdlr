@@ -1448,6 +1448,38 @@ class Wire3D(WireMixin, PhysicalObject):
         primitives2d = self.get_primitives_2d(plane_origin, x, y)
         return Wire2D(primitives=primitives2d)
 
+    def to_step(self, current_id, *args, **kwargs):
+        """
+        Converts the object to a STEP representation.
+
+        :param current_id: The ID of the last written primitive.
+        :type current_id: int
+        :return: The STEP representation of the object and the last ID.
+        :rtype: tuple[str, list[int]]
+        """
+        content = ''
+        composite_curve_segment_ids = []
+        for primitive in self.primitives:
+            primitive_content, primitive_id = primitive.to_step(current_id, trimmed_curve=True)
+
+            content += primitive_content
+            current_id = primitive_id + 1
+
+            # COMPOSITE_CURVE_SEGMENT(trasition_code, same_sense, parent_curve)
+            # arguments[0] = trasition_code (unused)
+            # The transition_code type conveys the continuity properties of a composite curve or surface.
+            # The continuity referred to is geometric, not parametric continuity.
+            # arguments[1] = same_sense : BOOLEAN;
+            # arguments[2] = parent_curve : curve;
+            content += f"#{current_id} = COMPOSITE_CURVE_SEGMENT(.CONTINUOUS.,.T.,#{primitive_id});\n"
+            composite_curve_segment_ids.append(current_id)
+
+        current_id += 1
+        content += (f"#{current_id} = COMPOSITE_CURVE('{self.name}',"
+                    f"({volmdlr.core.step_ids_to_str(composite_curve_segment_ids)}),.U.);\n")
+
+        return content, current_id
+
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
         """

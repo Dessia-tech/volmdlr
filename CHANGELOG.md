@@ -37,6 +37,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### step.py
 - Fix Step.create_connections with wireframe models
 
+#### core.py
+- Fix Compound step export for wireframe models.
+
 #### edges.py
 - edge: intersections -> new parameter force_sort, to force sorting intersection points along curve.
 
