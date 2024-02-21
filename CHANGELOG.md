@@ -23,6 +23,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### surfaces.py
 - u_iso/v_iso: Returns the u_iso/v_iso curve of the surface.
 
+#### global
+- Add reference_path to a handful of classes
+
 ### Fixed
 #### edges.py
 - BSplineCurve3D: move_frame_along

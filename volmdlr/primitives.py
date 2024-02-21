@@ -11,8 +11,8 @@ from typing import Dict, List
 from numpy import zeros
 from scipy.optimize import linprog
 
-# import dessia_common as dc
 import volmdlr.edges
+from volmdlr import PATH_ROOT
 
 
 class RoundedLineSegments:
@@ -26,7 +26,7 @@ class RoundedLineSegments:
     arc_class = volmdlr.edges.ArcMixin
 
     def __init__(self, points: List[volmdlr.Point3D], radius: Dict[str, float],
-                 closed: bool = False, adapt_radius: bool = False, name: str = ''):
+                 closed: bool = False, adapt_radius: bool = False, reference_path: str = PATH_ROOT, name: str = ''):
 
         self.points = points
         self.radius = {int(k): v for k, v in radius.items()}
@@ -34,6 +34,7 @@ class RoundedLineSegments:
         self.adapt_radius = adapt_radius
         self.name = name
         self.npoints = len(points)
+        self.reference_path = reference_path
 
     def get_points(self, point_index):
         """

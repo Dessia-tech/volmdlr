@@ -134,7 +134,7 @@ setup(
         "geomdl",
         "networkx",
         "triangle",
-        "plot_data>=0.10.9",
+        "plot_data>=0.23.0",
         "kaitaistruct",
         "binaryornot",
         "sympy",

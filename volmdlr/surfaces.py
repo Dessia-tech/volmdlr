@@ -5,7 +5,7 @@ import warnings
 from collections import deque
 from functools import cached_property, lru_cache
 from itertools import chain
-from typing import List, Union, Dict, Any
+from typing import List, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -3123,8 +3123,7 @@ class ToroidalSurface3D(UVPeriodicalSurface):
         return circles
 
     @classmethod
-    def dict_to_object(cls, dict_: JsonSerializable, force_generic: bool = False, global_dict=None,
-                       pointers_memo: Dict[str, Any] = None, path: str = '#') -> 'SerializableObject':
+    def dict_to_object(cls, dict_: JsonSerializable, **kwargs) -> 'ToroidalSurface3D':
         """Creates a ToroidalSurface3D from a dictionary."""
         frame = volmdlr.Frame3D.dict_to_object(dict_['frame'])
         name = dict_['name']
