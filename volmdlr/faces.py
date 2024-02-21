@@ -956,7 +956,7 @@ class Face3D(volmdlr.core.Primitive3D):
         for primitive in surface_intersections:
             points_on_primitive = []
             for point in intersections_points:
-                if primitive.point_belongs(point, self.face_tolerance):
+                if primitive.point_belongs(point, 1e-6):
                     points_on_primitive.append(point)
             if not points_on_primitive:
                 continue

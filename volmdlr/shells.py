@@ -1251,7 +1251,7 @@ class ClosedShell3D(Shell3D):
         and as the values the resulting primitive from the two intersecting faces.
         It is done, so it is not needed to calculate the same intersecting primitive twice.
         """
-        debug_face = DessiaObject.from_json('/Users/wirajandasilva/Downloads/test_buggy_toroidal_face_inters190224.json')
+        debug_face = DessiaObject.from_json('/Users/wirajandasilva/Downloads/test_buggy_face_200224.json')
         face_combinations1 = {face: [] for face in self.faces}
         face_combinations2 = {face: [] for face in shell2.faces}
         for i, face1 in enumerate(self.faces):
@@ -1264,7 +1264,8 @@ class ClosedShell3D(Shell3D):
                     contours1, contours2 = face1.get_coincident_face_intersections(face2)
                     face_combinations1[face1].extend(contours1)
                     face_combinations2[face2].extend(contours2)
-                if i == 79 and j == 31:
+                # if i == 79 and j == 31:
+                if i == 116 and j == 8:
                     print(True)
                 print('(i, j): ', (i, j))
                 face_intersections = face1.face_intersections(face2, tol)

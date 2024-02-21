@@ -1139,14 +1139,13 @@ class Surface3D(DessiaObject):
         :param other_surface: other surface to get intersections with.
         :return: a list containing all intersections between the two surfaces 3d.
         """
-        method_name = f'{other_surface.__class__.__name__.lower()[:-2]}_intersections'
-        if hasattr(self, method_name):
-            return getattr(self, method_name)(other_surface)
-        method_name = f'{self.__class__.__name__.lower()[:-2]}_intersections'
-        if hasattr(other_surface, method_name):
-            return getattr(other_surface, method_name)(self)
-        raise NotImplementedError (f'No method available for calculating intersections between {self.__class__} and '
-               f'{other_surface.__class__}')
+        # method_name = f'{other_surface.__class__.__name__.lower()[:-2]}_intersections'
+        # if hasattr(self, method_name):
+        #     return getattr(self, method_name)(other_surface)
+        # method_name = f'{self.__class__.__name__.lower()[:-2]}_intersections'
+        # if hasattr(other_surface, method_name):
+        #     return getattr(other_surface, method_name)(self)
+        return self.generic_surface_intersections_with_occt(other_surface)
 
     def line_intersections(self, line: curves.Line3D):
         """Gets intersections between a line and a Surface 3D."""
@@ -1551,64 +1550,11 @@ class Plane3D(Surface3D):
         """
         return vm_common_operations.get_plane_equation_coefficients(self.frame)
 
-    def plane_intersections_ocp(self, plane3d):
-        from OCP.Geom import Geom_Plane, Geom_Line
-        from OCP.gp import gp_Pnt, gp_Ax3, gp_Dir
-        from OCP.TColStd import TColStd_Array1OfReal, TColStd_Array1OfInteger
-        from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeEdge
-        from OCP.Precision import Precision
-        from OCP.GeomAPI import GeomAPI_IntSS
-        def point_from_occt(occt_point):
-            return volmdlr.Point3D(occt_point.X(), occt_point.Y(), occt_point.Z())
-
-        def vector_from_occt(occt_vector):
-            return volmdlr.Vector3D(occt_vector.X(), occt_vector.Y(), occt_vector.Z())
-
-        def volmdlr_vector_to_occt(volmdlr_vector):
-            return gp_Dir(*volmdlr_vector)
-
-        def volmdlr_point_to_occt(volmdlr_point):
-            return gp_Pnt(*volmdlr_point)
-
-        def frame_from_occt_ax3(ax2):
-            origin = point_from_occt(ax2.Location())
-            u = vector_from_occt(ax2.XDirection())
-            v = vector_from_occt(ax2.YDirection())
-            return volmdlr.Frame3D(origin, u, v, u.cross(v))
-
-        def planesurface_from_occt(occt_surface):
-            frame = frame_from_occt_ax3(occt_surface.Position())
-            return Plane3D(frame)
-
-        def volmdlr_frame_to_occt(volmdlr_frame):
-            p = volmdlr_point_to_occt(volmdlr_frame.origin)
-            z = volmdlr_vector_to_occt(volmdlr_frame.w)
-            x = volmdlr_vector_to_occt(volmdlr_frame.u)
-            return gp_Ax3(p, z, x)
-
-        def occt_plane_from_volmdlr_plane(volmdlr_plane):
-            occt_frame = volmdlr_frame_to_occt(volmdlr_plane.frame)
-            return Geom_Plane(occt_frame)
-
-        def line_from_occt(occt_line):
-            position = occt_line.Position()
-            return curves.Line3D.from_point_and_vector(point_from_occt(position.Location()),
-                                                       vector_from_occt(position.Direction()))
-
-        occt_plane1 = occt_plane_from_volmdlr_plane(self)
-        occt_plane2 = occt_plane_from_volmdlr_plane(plane3d)
-
-        api_intss = GeomAPI_IntSS(occt_plane1, occt_plane2, Precision.Confusion_s())
-        intersections = [api_intss.Line(i + 1) for i in range(api_intss.NbLines())]
-
-        return [line_from_occt(intersection) for intersection in intersections]
-
     def plane_intersections(self, plane3d):
         """
         Computes intersection points between two Planes 3D.
 
         """
-        # return self.plane_intersections_ocp(plane3d)
         plane_intersections = vm_utils_intersections.get_two_planes_intersections(self.frame, plane3d.frame)
         if plane_intersections:
             return [curves.Line3D(plane_intersections[0], plane_intersections[1])]
@@ -2975,19 +2921,8 @@ class CylindricalSurface3D(PeriodicalSurface):
         :param cylindricalsurface: other cylindrical surface.
         :return: a list containing the resulting intersections, if there are any.
         """
-        occt_self_surface = getattr(to_occt, 'volmdlr_' + self.__class__.__name__.lower()[:-2] + '_to_occt')(
-            self)
-        # occt_surface1 = occt_self_surface(self)
-        occt_other_surface = getattr(
-            to_occt,'volmdlr_'+cylindricalsurface.__class__.__name__.lower()[:-2]+'_to_occt')(cylindricalsurface)
-        api_intss = GeomAPI_IntSS(occt_self_surface, occt_other_surface, Precision.Confusion_s())
-        intersections = [api_intss.Line(i + 1) for i in range(api_intss.NbLines())]
-        surface_intersections = []
-        for intersection in intersections:
-            function = getattr(from_occt, intersection.__class__.__name__.lower()[5:] + '3d_from_occt')
-            surface_intersections.append(function(intersection))
-        return surface_intersections
-
+        return self.generic_surface_intersections_with_occt(cylindricalsurface)
+        # todo DO NOT DELETE THIS COMENTED BLOCK OF CODE YET. STILL TESTIG OCCT. 07/02/2024
         # curves_ = []
         # if self.frame.w.is_colinear_to(cylindricalsurface.frame.w):
         #     circle1 = curves.Circle3D(self.frame, self.radius).to_2d(self.frame.origin, self.frame.u, self.frame.v)
@@ -4088,16 +4023,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         :return: List os curves intersecting Torus.
         """
         #testing occt
-        occt_toroidalsurface = to_occt.volmdlr_toroidalsurface_to_occt(self)
-        occt_other_surface = getattr(to_occt, 'volmdlr_' + toroidal_surface.__class__.__name__.lower()[:-2] + '_to_occt')(
-            toroidal_surface)
-        api_intss = GeomAPI_IntSS(occt_toroidalsurface, occt_other_surface, Precision.Confusion_s())
-        intersections = [api_intss.Line(i + 1) for i in range(api_intss.NbLines())]
-        surface_intersections = []
-        for intersection in intersections:
-            function = getattr(from_occt, intersection.__class__.__name__.lower()[5:]+'3d_from_occt')
-            surface_intersections.append(function(intersection))
-        return surface_intersections
+        return self.generic_surface_intersections_with_occt(toroidal_surface)
         # todo DO NOT DELETE THIS COMENTED BLOCK OF CODE YET. STILL TESTIG OCCT. 07/02/2024
         # intersections = []
         #
@@ -9566,39 +9492,7 @@ class BSplineSurface3D(Surface3D):
         #         solution = z.x
         #         intersection_points.append(self.point2d_to_3d(volmdlr.Point2D(*solution)))
         # return intersection_points
-        return self.bsplinesurface_intersections_helper(plane3d)
-
-    def bsplinesurface_intersections_helper(self, surface):
-        occt_bsplinesurface = to_occt.volmdlr_bsplinesurface_to_occt(self)
-        occt_other_surface = getattr(to_occt, 'volmdlr_'+surface.__class__.__name__.lower()[:-2]+'_to_occt')(surface)
-        api_intss = GeomAPI_IntSS(occt_bsplinesurface, occt_other_surface, Precision.Intersection_s())
-        intersections = [api_intss.Line(i + 1) for i in range(api_intss.NbLines())]
-        return [from_occt.bsplinecurve3d_from_occt(intersection) for intersection in intersections]
-
-    def cylindricalsurface_intersections(self, cylindrical_surface):
-
-        occt_bsplinesurface = to_occt.volmdlr_bsplinesurface_to_occt(self)
-        occt_cylindricalsurface = to_occt.volmdlr_cylindricalsurface_to_occt(cylindrical_surface)
-        api_intss = GeomAPI_IntSS(occt_bsplinesurface, occt_cylindricalsurface, Precision.Confusion_s())
-        intersections = [api_intss.Line(i + 1) for i in range(api_intss.NbLines())]
-        surface_intersections = []
-        for intersection in intersections:
-            function = getattr(from_occt, intersection.__class__.__name__.lower()[5:] + '3d_from_occt')
-            surface_intersections.append(function(intersection))
-        return surface_intersections
-
-    def conicalsurface_intersections(self, conical_surface):
-        return self.bsplinesurface_intersections_helper(conical_surface)
-
-    def sphericalsurface_intersections(self, psherical_surface):
-        return self.bsplinesurface_intersections_helper(psherical_surface)
-
-    def toroidalsurface_intersections(self, toroidal_surface):
-        return self.bsplinesurface_intersections_helper(toroidal_surface)
-
-    def bsplinesurface_intersections(self, bspline_surface):
-        return self.bsplinesurface_intersections_helper(bspline_surface)
-
+        return self.generic_surface_intersections_with_occt(plane3d)
 
     def error_with_point3d(self, point3d):
         """
