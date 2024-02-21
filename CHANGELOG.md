@@ -44,7 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - edge: intersections -> new parameter force_sort, to force sorting intersection points along curve.
 
 #### surfaces.py
--
+- BSplineSurface3D: improves _fix_start_end_singularity_point_at_parametric_domain
 
 #### wires.py
 
