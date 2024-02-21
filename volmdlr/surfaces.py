@@ -1202,7 +1202,7 @@ class Surface3D(DessiaObject):
             return []
         intersections = []
         for curve_plane_intersection in curve_plane_intersections:
-            inters = curve_plane_intersection.curve_intersections(curve)
+            inters = curve_plane_intersection.intersections(curve)
             for intersection in inters:
 
                 if not intersection.in_list(intersections):

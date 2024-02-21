@@ -29,7 +29,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 ### curves.py
 - Circle2D: line_intersections
-
 #### edges.py
 - edge: intersections -> new parameter force_sort, to force sorting intersection points along curve.
 - BSplineCurve3D: move_frame_along
@@ -68,6 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - edges/curves.py cut_between_two_points -> trim
 - defines ordering of curve methods
 - npy -> np
+- curves.py: curve_intersections -> intersections
 
 #### CI
 - Avoid calling babylonjs method in CI to reduce CI time
