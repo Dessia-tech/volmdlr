@@ -27,7 +27,7 @@ class TestBSplineCurve3D(unittest.TestCase):
             volmdlr.Point3D(0.0, 0.0, 1.0),
             volmdlr.Point3D(-0.30901699437494734, -0.30901699437494734, 0.9510565162951533),
             volmdlr.Point3D(-0.8090169943749473, -0.8090169943749473, 0.587785252292473),
-            volmdlr.Point3D(-1.0, -1.0, 0.0)], 2)
+            volmdlr.Point3D(-1.0, -1.0, 0.0)], 2, centripetal=True)
         bbox = bspline.bounding_box
         self.assertAlmostEqual(bbox.volume(), 4.029861202734341, 3)
 
@@ -63,6 +63,8 @@ class TestBSplineCurve3D(unittest.TestCase):
             trim = bspline.trim(pt1, pt2)
             self.assertTrue(trim.start.is_close(pt1))
             self.assertTrue(trim.end.is_close(pt2))
+        trim = bspline.trim(bspline.start, bspline.end)
+        self.assertEqual(bspline, trim)
 
         bspline = vme.BSplineCurve3D.from_json(os.path.join(folder, "bsplinecurve3d_split_test.json"))
         point1 = volmdlr.Point3D(0.0781678147963, -0.08091364816680001, 0.112275939295)
@@ -127,7 +129,7 @@ class TestBSplineCurve3D(unittest.TestCase):
                   volmdlr.Point3D(7.115095014105684, 0.40888620982702983, 1.1362954032756774),
                   volmdlr.Point3D(-3.0, 1.022248896290622, 0.5746069851843745),
                   volmdlr.Point3D(2.739350840642852, -5.869347626045908, -0.7880999427201254)]
-        bspline = vme.BSplineCurve3D.from_points_interpolation(points, 3)
+        bspline = vme.BSplineCurve3D.from_points_interpolation(points, 3, centripetal=True)
         linesegment = vme.LineSegment3D(volmdlr.Point3D(-3.0, 4.0, 1.0), volmdlr.Point3D(-3, -3, 0))
         intersections = bspline.linesegment_intersections(linesegment)
         self.assertEqual(len(intersections), 1)
@@ -196,6 +198,35 @@ class TestBSplineCurve3D(unittest.TestCase):
         self.assertEqual(len(discretized_points_between_1_2), len(expected_points))
         for result, expected_point in zip(discretized_points_between_1_2, expected_points):
             self.assertTrue(result.is_close(expected_point))
+
+    def test_move_frame_along(self):
+        degree = 5
+        control_points = [
+            volmdlr.Point3D(-1, 0, 0),
+            volmdlr.Point3D(0.3, 0.2, 0.1),
+            volmdlr.Point3D(0.5, -0.1, 0.4),
+            volmdlr.Point3D(0.5, -0.4, 0.0),
+            volmdlr.Point3D(-0.1, -0.2, -0.3),
+            volmdlr.Point3D(-0.3, 0.4, 0.1)]
+        knots = [0.0, 1.0]
+        knot_multiplicities = [6, 6]
+        weights = None  # [1, 2, 1, 2, 1, 2]
+        bspline_curve3d = vme.BSplineCurve3D(degree=degree,
+                                             control_points=control_points,
+                                             knot_multiplicities=knot_multiplicities,
+                                             knots=knots,
+                                             weights=weights,
+                                             name='B Spline Curve 3D 1')
+        frame = volmdlr.Frame3D(
+            origin=volmdlr.Point3D(-1.0, 0.0, 0.0),
+            u=volmdlr.Vector3D(0.16926811079722504, -0.8799271690658463, -0.44393297220065076),
+            v=volmdlr.Vector3D(1.3877787807814457e-17, 0.4504326973383234, -0.8928103858986645),
+            w=volmdlr.Vector3D(0.9855700414821559, 0.15112432732120784, 0.076243891719756))
+        self.assertEqual(bspline_curve3d.move_frame_along(frame),
+                         volmdlr.Frame3D(origin=volmdlr.Point3D(-0.3, 0.4, 0.1),
+                                         u=volmdlr.Vector3D(0.9632101019095523, 0.22376214189648538, 0.14885161548766362),
+                                         v=volmdlr.Vector3D(2.7755575615628914e-17, 0.553867484333956, -0.8326048341185484),
+                                         w=volmdlr.Vector3D(-0.26874951084493176, 0.8019733871217126, 0.5334907560296971)))
 
 
 if __name__ == '__main__':

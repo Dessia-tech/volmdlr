@@ -74,9 +74,10 @@ def step_split_arguments(entity_name_str: str, function_arg: str) -> list[str]:
 
     if function_arg[-1] == ";":
         function_arg = function_arg[:-2]
-    pattern = re.compile(r"\([^()]*\)|'[^']*[^,]*',|[^,]+")
+    pattern = re.compile(r'\(.*?\)|[^,]+')
     # if double_brackets_start_indexes:
     if "((" in function_arg:
+        pattern = re.compile(r"\([^()]*\)|'[^']*[^,]*',|[^,]+")
         double_brackets_start_indexes = [match.start() for match in re.finditer(r'\(\(', function_arg)]
         double_brackets_end_indexes = [match.end() for match in re.finditer(r'\)\)', function_arg)]
         starting_index = 0
@@ -88,7 +89,12 @@ def step_split_arguments(entity_name_str: str, function_arg: str) -> list[str]:
         return arguments
 
     # Use regular expression to extract arguments
-    arguments.extend([arg.strip(",") for arg in pattern.findall(function_arg)])
+    for arg in pattern.findall(function_arg):
+        arg = arg.strip(",")
+        if arg == ")":
+            arguments[-1] += arg
+        else:
+            arguments.append(arg)
 
     return arguments
 
@@ -373,10 +379,14 @@ def trimmed_curve(arguments, object_dict, *args, **kwargs):
     curve = object_dict[arguments[1]]
     if arguments[5] == '.PARAMETER.':
         length_conversion_factor = kwargs.get("length_conversion_factor")
-        abscissa1 = _helper_get_parameter_value(arguments[2]) * length_conversion_factor
-        abscissa2 = _helper_get_parameter_value(arguments[3]) * length_conversion_factor
-        point1 = curve.point_at_abscissa(abscissa1)
-        point2 = curve.point_at_abscissa(abscissa2)
+        if isinstance(arguments[2], list):
+            point1 = object_dict[int(arguments[2][0][1:])]
+            point2 = object_dict[int(arguments[3][0][1:])]
+        else:
+            abscissa1 = _helper_get_parameter_value(arguments[2]) * length_conversion_factor
+            abscissa2 = _helper_get_parameter_value(arguments[3]) * length_conversion_factor
+            point1 = curve.point_at_abscissa(abscissa1)
+            point2 = curve.point_at_abscissa(abscissa2)
     else:
         point1 = object_dict[int(arguments[2][0][1:])]
         point2 = object_dict[int(arguments[3][0][1:])]
@@ -387,7 +397,7 @@ def trimmed_curve(arguments, object_dict, *args, **kwargs):
 
 def _helper_get_parameter_value(string):
     # Define a regular expression pattern to match the numerical value
-    pattern = r'\((-?\d+\.\d+)\)'
+    pattern = r"\((-?\d+\.\d+)\)"
 
     # Use re.search to find the match
     match = re.search(pattern, string)
@@ -993,6 +1003,9 @@ STEP_REPRESENTATION_ENTITIES = {"ADVANCED_BREP_SHAPE_REPRESENTATION", "FACETED_B
                                 "GEOMETRICALLY_BOUNDED_SURFACE_SHAPE_REPRESENTATION",
                                 "EDGE_BASED_WIREFRAME_SHAPE_REPRESENTATION"
                                 }
+
+WIREFRAME_STEP_REPRESENTATION_ENTITIES = {"GEOMETRICALLY_BOUNDED_WIREFRAME_SHAPE_REPRESENTATION",
+                                          "EDGE_BASED_WIREFRAME_SHAPE_REPRESENTATION"}
 
 VOLMDLR_TO_STEP = {}
 for k, v in STEP_TO_VOLMDLR.items():

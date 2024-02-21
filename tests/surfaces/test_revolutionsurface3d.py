@@ -115,6 +115,14 @@ class TestRevolutionSurface3D(unittest.TestCase):
         self.assertAlmostEqual(arc.circle.radius, 0.022500000035448893)
         self.assertAlmostEqual(arc.angle, 0.15581712793343738)
 
+        surface = surfaces.RevolutionSurface3D.from_json(
+            os.path.join(folder, "revolutionsurface_periodical_linesegment2d_to_3d.json"))
+        linesegment = vme.LineSegment2D.from_json(
+            os.path.join(folder, "revolutionsurface_periodical_linesegment2d_to_3d_linesegment2d.json"))
+        arc = surface.linesegment2d_to_3d(linesegment)[0]
+        self.assertAlmostEqual(arc.radius, 0.017000000000019)
+        self.assertTrue(arc.center.is_close(volmdlr.Point3D(0.0, 0.007299999999984744, -8.104628079745562e-19)))
+
     def test_contour3d_to_2d(self):
         surface = surfaces.RevolutionSurface3D.from_json(os.path.join(folder, "revolutionface_surface.json"))
         contour = vmw.Contour3D.from_json(os.path.join(folder, "revolutionface_contour.json"))
@@ -161,6 +169,15 @@ class TestRevolutionSurface3D(unittest.TestCase):
         brep = surface.arc3d_to_2d(arc3d)[0]
         self.assertTrue(brep.start.is_close(volmdlr.Point2D(-math.pi, 0.0038322109949349634)))
         self.assertTrue(brep.end.is_close(volmdlr.Point2D(-math.pi, 0.0)))
+
+    def test_v_iso(self):
+        surface = surfaces.RevolutionSurface3D.from_json(
+            os.path.join(folder, "revolutionsurface_periodical_linesegment2d_to_3d.json"))
+        v = 0.023550776716126855
+        arc = surface.v_iso(v)
+        self.assertAlmostEqual(arc.radius, 0.017000000000019)
+        self.assertTrue(arc.center.is_close(volmdlr.Point3D(0.0, 0.007299999999984744, -8.104628079745562e-19)))
+
 
 
 

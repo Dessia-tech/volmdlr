@@ -356,10 +356,8 @@ def contour2d_healing_self_intersection(contour2d):
             zip(contour2d.primitives, contour2d.primitives[1:] + [contour2d.primitives[0]])):
         if not prim1.end.is_close(prim2.start):
             # check intersection
-            intersections = prim1.intersections(prim2)
+            intersections = prim1.intersections(prim2, force_sort=True)
             if intersections:
-                if len(intersections) > 1:
-                    intersections = prim1.sort_points_along_curve(intersections)
                 split_point = intersections[0]
                 if prim1.is_point_edge_extremity(split_point):
                     new_prim1 = prim1
@@ -421,7 +419,8 @@ def repair_undefined_brep(surface, primitives2d, primitives_mapping, i, previous
     primitives_mapping[primitives2d[i]] = primitives_mapping.pop(old_primitive)
     delta = previous_primitive.end - primitives2d[i].start
     if not math.isclose(delta.norm(), 0, abs_tol=1e-3):
-        primitives2d.insert(i, vme.LineSegment2D(previous_primitive.end, primitives2d[i].start,
-                                                 name="construction"))
-        if i < len(primitives2d):
-            i += 1
+        if surface.is_singularity_point(surface.point2d_to_3d(primitives2d[i - 1].end), tol=1e-5) and \
+             surface.is_singularity_point(surface.point2d_to_3d(primitives2d[i].start), tol=1e-5):
+            surface.repair_singularity(primitives2d, i, primitives2d[i - 1])
+        else:
+            surface.repair_translation(primitives2d, primitives_mapping, i, delta)

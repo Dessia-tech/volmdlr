@@ -32,7 +32,7 @@ indices3 = np.array(
         [0, 3, 1],
     ]
 )
-mesh3 = Mesh3D(positions3, indices3, "Mesh3")
+mesh3 = Mesh3D(positions3, indices3, name="Mesh3")
 
 positions4 = np.array(
     [
@@ -62,7 +62,7 @@ indices4 = np.array(
         [0, 5, 1],
     ]
 )
-mesh4 = Mesh3D(positions4, indices4, "Mesh4")
+mesh4 = Mesh3D(positions4, indices4, name="Mesh4")
 
 
 # Plotting

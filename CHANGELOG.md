@@ -8,28 +8,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v0.17.0 [Future]
 ### New Features
+
+#### curves.py
+- Ellipse3D: to_step
 #### edges.py
--
+- ArcEllipse3D/FullArcEllipse3D: to_step
 
 #### faces.py
 -
 
 #### edges.py
--
+- Fix FullArc2D generation from 3 points
 
 #### surfaces.py
--
+- u_iso/v_iso: Returns the u_iso/v_iso curve of the surface.
 
+#### global
+- Add reference_path to a handful of classes
 
 ### Fixed
 #### edges.py
--
+- BSplineCurve3D: move_frame_along
+- Arc2D: start and end angle, and arc angle.
 
 #### faces.py
--
+- Toroidalface ConicalFace intersections.
+
+#### step.py
+- Fix Step.create_connections with wireframe models
+
+#### core.py
+- Fix Compound step export for wireframe models.
 
 #### edges.py
--
+- edge: intersections -> new parameter force_sort, to force sorting intersection points along curve.
 
 #### surfaces.py
 -
@@ -37,9 +49,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### wires.py
 
 ### Refactor
+
+#### Global
+- Leverage Mesh3D class capabilities in simplification and voxelization
+
 #### surfaces.py
 - ToroidalSuface3D: toroidal_surface_intersections
 - Contour2D - point_belongs
+- edge: intersections -> new parameter force_sort, to force sorting intersection points along curve.
+- ConicalSurface3D: Refactoring of the conical surface definition in accordance with ISO 10303.
+- BSplineSurface3D: improves point_inversion_grid_search convergence.
 
 ### Changed
 - load_from_file -> from_json
@@ -48,8 +67,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - For points ON an object: point_belongs
 - edges/curves.py cut_between_two_points -> trim
 - defines ordering of curve methods
+- npy -> np
+
+#### CI
+- Avoid calling babylonjs method in CI to reduce CI time
+- Avoid `pip install .` in drone as it is redundant with `python setup.py build_ext --inplace`
+- Re-order CI steps to build doc in the end / perform shortest test first
+- Avoid duplication of test between push and PR
+
+
+### Updates
+- Documentation
 
 ### Unittests
+- Toroidalface ConicalFace intersections.
+- Avoid showing babylonjs in unit tests / ci_scripts
 
 
 ## v0.16.0
@@ -101,7 +133,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Arc2D: plot_data
 - LineSegment3D: planar_revolution.
 - BSplineCurve: abscissa: use curve decomposition.
-- BSplineCurve: trim.
+- BSplineCurve: trim on periodic curves.
 
 #### faces.py
 - Face3D: enhance from_contours3d.
@@ -120,6 +152,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Surface3D: repeair_primitives_periodicity. Treat special case on surfaces with singularities.
 - ToroidalSurface3D: plane_intersections.
 - Remove duplicated attributes.
+- BSplineSurface3D: point_inversion_grid_search.
+- BSplineSurface3D: implements a more robust point3d_to_2d method.
 
 #### wires.py
 - Contour2D: cut_by_line.
