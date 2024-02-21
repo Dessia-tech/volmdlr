@@ -2132,7 +2132,7 @@ class PeriodicalSurface(Surface3D):
         points3d = bspline_curve3d.discretization_points(number_points=n)
         points = [self.point3d_to_2d(point) for point in points3d]
         if self.is_singularity_point(bspline_curve3d.start) or self.is_singularity_point(bspline_curve3d.end):
-            points = self.fix_start_end_singularity_point_at_parametric_domain(bspline_curve3d, points, points3d)
+            points = self._fix_start_end_singularity_point_at_parametric_domain(bspline_curve3d, points, points3d)
         theta1, z1 = points[0]
         theta2, z2 = points[-1]
         theta1, theta2 = self._verify_start_end_angles(bspline_curve3d, theta1, theta2)
@@ -2279,7 +2279,7 @@ class PeriodicalSurface(Surface3D):
             edge = edge.translation(delta_next)
         return edge
 
-    def fix_start_end_singularity_point_at_parametric_domain(self, edge3d, points, points3d):
+    def _fix_start_end_singularity_point_at_parametric_domain(self, edge3d, points, points3d):
         """
         Helper function.
 
@@ -5329,7 +5329,7 @@ class SphericalSurface3D(PeriodicalSurface):
         raise NotImplementedError
 
     @staticmethod
-    def fix_start_end_singularity_point_at_parametric_domain(edge, reference_point, point_at_singularity):
+    def _fix_start_end_singularity_point_at_parametric_domain(edge, reference_point, point_at_singularity):
         """Uses tangent line to find real theta angle of the singularity point on parametric domain."""
         _, phi = point_at_singularity
         abscissa_before_singularity = edge.abscissa(reference_point)
@@ -5406,9 +5406,9 @@ class SphericalSurface3D(PeriodicalSurface):
                                                                                      indexes_theta_discontinuity, "x")
 
             edge = get_temp_edge2d(temp_points)
-            point = self.fix_start_end_singularity_point_at_parametric_domain(edge,
-                                                                              reference_point=temp_points[1],
-                                                                              point_at_singularity=points[0])
+            point = self._fix_start_end_singularity_point_at_parametric_domain(edge,
+                                                                               reference_point=temp_points[1],
+                                                                               point_at_singularity=points[0])
             if point:
                 points[0] = point
             else:
@@ -5440,7 +5440,7 @@ class SphericalSurface3D(PeriodicalSurface):
                     temp_points, indexes_theta_discontinuity, "x")
 
             edge = get_temp_edge2d(temp_points)
-            point = self.fix_start_end_singularity_point_at_parametric_domain(
+            point = self._fix_start_end_singularity_point_at_parametric_domain(
                 edge, reference_point=temp_points[-2], point_at_singularity=points[-1])
             if point:
                 points[-1] = point
