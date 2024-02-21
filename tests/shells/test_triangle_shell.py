@@ -12,7 +12,7 @@ from volmdlr.shells import (
 from volmdlr.primitives3d import Block
 from volmdlr import OXYZ
 
-SHOW_BABYLONJS = True
+SHOW_BABYLONJS = False
 
 
 folder = os.path.dirname(os.path.realpath(__file__))
