@@ -726,8 +726,12 @@ class Step(dc.DessiaObject):
 
                     if not list_primitives:
                         none_primitives.add(instantiate_id)
-
-                    volmdlr_object = volmdlr.core.Assembly(list_primitives, assembly_positions, assembly_frame,
+                        instantiate_ids.pop()
+                        continue
+                    list_primitives = [step_reader.map_primitive(primitive, assembly_frame, frame_primitive)
+                                       if frame_primitive != assembly_frame else primitive
+                                       for primitive, frame_primitive in zip(list_primitives, assembly_positions)]
+                    volmdlr_object = volmdlr.core.Assembly(list_primitives, assembly_frame,
                                                            name=name)
                     object_dict[instantiate_id] = volmdlr_object
                     last_error = None

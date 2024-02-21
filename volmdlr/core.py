@@ -1296,6 +1296,103 @@ class Compound(dc.PhysicalObject):
         return step_content, current_id, [brep_id, product_definition_id]
 
 
+class Assembly(Compound):
+    """
+    Represents the structure of an assembly.
+
+    This class is similar to a Compound, capable of containing multiple sub-shapes. The key distinction is the
+    association of a frame with the Assembly. This frame is utilized for exporting into a STEP file.
+
+    :param primitives: A list of volmdlr objects representing sub-shapes.
+    :type primitives: List[:class:`volmdlr.core.Primitive3D`]
+    :param frame: The associated frame for the assembly. It's the frame where all the first level assembly's shapes
+     where defined. Default is volmdlr.OXYZ.
+    :type frame: :class:`volmdlr.core.Frame3D`
+    :param name: The name of the Assembly. Default is an empty string.
+    :type name: str
+    """
+    _standalone_in_db = True
+    _eq_is_data_eq = True
+    _non_serializable_attributes = ['bounding_box', "primitives"]
+    _non_data_eq_attributes = ['name', 'bounding_box']
+    _non_data_hash_attributes = ['name', 'bounding_box']
+
+    def __init__(self, primitives: List[Primitive3D],
+                 frame: volmdlr.Frame3D = volmdlr.OXYZ, name: str = ''):
+        self.frame = frame
+        self._bbox = None
+        Compound.__init__(self, primitives=primitives, name=name)
+
+    def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
+        """
+        Changes frame_mapping and return a new Compound.
+
+        side = 'old' or 'new'
+        """
+        new_primitives = [primitive.frame_mapping(frame, side)
+                          for primitive in self.primitives]
+        new_frame = self.frame.frame_mapping(frame, side)
+        return Assembly(new_primitives, new_frame, self.name)
+
+    def to_step(self, current_id):
+        """
+        Creates step file entities from volmdlr objects.
+        """
+        step_content = ''
+
+        product_content, current_id, assembly_data = self.to_step_product(current_id)
+        step_content += product_content
+        assembly_frames = assembly_data[-1]
+        for i, primitive in enumerate(self.primitives):
+            if primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D') or hasattr(primitive, "shell_faces"):
+                primitive_content, current_id, primitive_data = primitive.to_step_product(current_id)
+                assembly_frame_id = assembly_frames[0]
+                component_frame_id = assembly_frames[i + 1]
+                assembly_content, current_id = assembly_definition_writer(current_id, assembly_data[:-1],
+                                                                          primitive_data, assembly_frame_id,
+                                                                          component_frame_id)
+
+            else:
+                primitive_content, current_id, primitive_data = primitive.to_step(current_id)
+                step_content += primitive_content
+                assembly_frame_id = assembly_frames[0]
+                component_frame_id = assembly_frames[i + 1]
+                assembly_content, current_id = assembly_definition_writer(current_id, assembly_data[:-1],
+                                                                          primitive_data, assembly_frame_id,
+                                                                          component_frame_id)
+            step_content += primitive_content
+            step_content += assembly_content
+
+        return step_content, current_id, assembly_data[:-1]
+
+
+    def to_step_product(self, current_id):
+        """
+        Returns step product entities from volmdlr objects.
+        """
+        step_content = ''
+        product_content, shape_definition_repr_id = product_writer(current_id, self.name)
+        product_definition_id = shape_definition_repr_id - 2
+        step_content += product_content
+        shape_representation_id = shape_definition_repr_id + 1
+        current_id = shape_representation_id
+
+        frame_content, current_id = self.frame.to_step(current_id + 1)
+        frame_ids = [current_id] * (len(self.primitives) + 1)
+
+        geometric_context_content, geometric_representation_context_id = geometric_context_writer(current_id)
+
+        step_content += f"#{shape_representation_id} = SHAPE_REPRESENTATION('',({step_ids_to_str(frame_ids)})," \
+                        f"#{geometric_representation_context_id});\n"
+
+        step_content += frame_content
+
+        step_content += geometric_context_content
+
+        return step_content, geometric_representation_context_id, \
+            [shape_representation_id, product_definition_id, frame_ids]
+
+
 class VolumeModel(dc.PhysicalObject):
     """
     A class containing one or several :class:`volmdlr.core.Primitive3D`.
