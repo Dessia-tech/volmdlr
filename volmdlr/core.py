@@ -2200,6 +2200,7 @@ class MovingVolumeModel(VolumeModel):
             raise ConsistencyError
 
     def is_consistent(self):
+        """ Check if the number of frames for each step corresponds to the number of primitives of the model. """
         n_primitives = len(self.primitives)
         for frames in self.step_frames:
             if len(frames) != n_primitives:
