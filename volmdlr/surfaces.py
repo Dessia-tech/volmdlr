@@ -6927,8 +6927,10 @@ class RevolutionSurface3D(UPeriodicalSurface):
         :rtype: :class:`curves.Circle3D`
         """
         point_at_v = self.point2d_to_3d(volmdlr.Point2D(0.0, v))
-        frame = self.frame.translation(self.frame.w * v)
         axis_line = curves.Line3D.from_point_and_vector(self.axis_point, self.axis)
+        frame_origin = axis_line.point_projection(point_at_v)[0]
+        frame = self.frame.copy()
+        frame.origin = frame_origin
         radius = axis_line.point_distance(point_at_v)
         return curves.Circle3D(frame, radius)
 

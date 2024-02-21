@@ -1,0 +1,14 @@
+{
+  "object_class": "volmdlr.edges.LineSegment2D",
+  "name": "parametric.fullarc",
+  "start": {
+    "object_class": "volmdlr.Point2D",
+    "x": 0.0,
+    "y": 0.023550776716126855
+  },
+  "end": {
+    "object_class": "volmdlr.Point2D",
+    "x": 6.283185307179586,
+    "y": 0.023550776716126855
+  }
+}
