@@ -1983,9 +1983,8 @@ class UPeriodicalSurface(Surface3D):
                 new_outer_contour = wires.Contour2D(primitives=new_outer_contour_primitives)
                 if not new_outer_contour.is_ordered():
                     try:
-                        new_outer_contour = new_outer_contour.order_contour(tol=min(1e-2,
-                                                                                    0.1 * closing_linesegment1.length(),
-                                                                                    0.1 * closing_linesegment2.length()))
+                        new_outer_contour = new_outer_contour.order_contour(
+                            tol=min(1e-2, 0.1 * closing_linesegment1.length(), 0.1 * closing_linesegment2.length()))
                     except NotImplementedError:
                         pass
             else:
@@ -3542,7 +3541,8 @@ class ToroidalSurface3D(UVPeriodicalSurface):
         vector = line.unit_direction_vector()
         coeff_a = vector.x ** 2 + vector.y ** 2 + vector.z ** 2
         coeff_b = 2 * (line.point1.x * vector.x + line.point1.y * vector.y + line.point1.z * vector.z)
-        coeff_c = line.point1.x ** 2 + line.point1.y ** 2 + line.point1.z ** 2 + self.major_radius ** 2 - self.minor_radius ** 2
+        coeff_c = (line.point1.x ** 2 + line.point1.y ** 2 + line.point1.z ** 2
+                   + self.major_radius ** 2 - self.minor_radius ** 2)
         coeff_d = vector.x ** 2 + vector.y ** 2
         coeff_e = 2 * (line.point1.x * vector.x + line.point1.y * vector.y)
         coeff_f = line.point1.x ** 2 + line.point1.y ** 2
