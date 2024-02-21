@@ -1,0 +1,47 @@
+{
+  "object_class": "volmdlr.core.VolumeModel",
+  "name": "",
+  "primitives": [
+    {
+      "object_class": "volmdlr.curves.Circle2D",
+      "name": "",
+      "radius": 0.1305565935353425,
+      "frame": {
+        "object_class": "volmdlr.Frame2D",
+        "name": "",
+        "origin": {
+          "object_class": "volmdlr.Point2D",
+          "x": 0.0,
+          "y": 0.0
+        },
+        "u": {
+          "object_class": "volmdlr.Vector2D",
+          "x": 1.0,
+          "y": 0.0,
+          "name": ""
+        },
+        "v": {
+          "object_class": "volmdlr.Vector2D",
+          "x": 0.0,
+          "y": 1.0,
+          "name": ""
+        }
+      }
+    },
+    {
+      "object_class": "volmdlr.curves.Line2D",
+      "name": "",
+      "point1": {
+        "object_class": "volmdlr.Point2D",
+        "x": 0.031959341501134664,
+        "y": -0.01426122455161768
+      },
+      "point2": {
+        "object_class": "volmdlr.Point2D",
+        "x": 0.03195934150113461,
+        "y": 0.014261224551617544
+      }
+    }
+  ],
+  "_references": {}
+}

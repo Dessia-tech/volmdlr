@@ -27,7 +27,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add reference_path to a handful of classes
 
 ### Fixed
+### curves.py
+- Circle2D: line_intersections
+
 #### edges.py
+- edge: intersections -> new parameter force_sort, to force sorting intersection points along curve.
 - BSplineCurve3D: move_frame_along
 - Arc2D: start and end angle, and arc angle.
 
@@ -40,8 +44,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### core.py
 - Fix Compound step export for wireframe models.
 
-#### edges.py
-- edge: intersections -> new parameter force_sort, to force sorting intersection points along curve.
 
 #### surfaces.py
 -
