@@ -5,8 +5,8 @@ import volmdlr
 from volmdlr.edges import Arc2D
 from volmdlr import curves
 
-
 folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'arc_objects')
+
 
 class TestArc2D(unittest.TestCase):
     circle2d = curves.Circle2D(volmdlr.OXY, 1)
@@ -53,6 +53,42 @@ class TestArc2D(unittest.TestCase):
                            0.5302068747285559, 1.0857443288972086]
         for i, point in enumerate(arc.discretization_points(number_points=10)):
             self.assertAlmostEqual(arc._arc_point_angle(point), expected_angles[i])
+
+        arc1 = Arc2D(self.circle2d, volmdlr.Point2D(1, 0), volmdlr.Point2D(0, 1))
+        arc2 = Arc2D(self.circle2d, volmdlr.Point2D(0, 1), volmdlr.Point2D(-1, 0))
+        arc3 = Arc2D(self.circle2d, volmdlr.Point2D(-1, 0), volmdlr.Point2D(0, -1))
+        arc4 = Arc2D(self.circle2d, volmdlr.Point2D(0, -1), volmdlr.Point2D(1, 0))
+        circle_reversed = self.circle2d.reverse()
+        arc5 = Arc2D(circle_reversed, volmdlr.Point2D(1, 0), volmdlr.Point2D(0, -1))
+        arc6 = Arc2D(circle_reversed, volmdlr.Point2D(0, -1), volmdlr.Point2D(-1, 0))
+        arc7 = Arc2D(circle_reversed, volmdlr.Point2D(-1, 0), volmdlr.Point2D(0, 1))
+        arc8 = Arc2D(circle_reversed, volmdlr.Point2D(0, 1), volmdlr.Point2D(1, 0))
+
+        expected_angles = [(0.0, 0.5 * math.pi), (0.5 * math.pi, math.pi), (-math.pi, -0.5 * math.pi),
+                           (-0.5 * math.pi, 0.0),
+                           (0.0, -0.5 * math.pi), (-0.5 * math.pi, -math.pi), (math.pi, 0.5 * math.pi),
+                           (0.5 * math.pi, 0.0)
+                           ]
+        for arc, angles in zip([arc1, arc2, arc3, arc4, arc5, arc6, arc7, arc8], expected_angles):
+            self.assertAlmostEqual(arc.angle_start, angles[0])
+            self.assertAlmostEqual(arc.angle_end, angles[1])
+            self.assertAlmostEqual(arc.angle, 0.5 * math.pi)
+
+    def test_angle(self):
+        arc1 = Arc2D(self.circle2d, volmdlr.Point2D(-1/math.sqrt(2), 1/math.sqrt(2)),
+                     volmdlr.Point2D(-1/math.sqrt(2), -1/math.sqrt(2)))
+
+        circle_reversed = self.circle2d.reverse()
+        arc2 = Arc2D(circle_reversed, volmdlr.Point2D(-1/math.sqrt(2), -1/math.sqrt(2)),
+                     volmdlr.Point2D(-1/math.sqrt(2), 1/math.sqrt(2)))
+
+
+        expected_angles = [(0.75 * math.pi, -0.75 * math.pi), (-0.75 * math.pi, 0.75 * math.pi)
+                           ]
+        for arc, angles in zip([arc1, arc2], expected_angles):
+            self.assertAlmostEqual(arc.angle_start, angles[0])
+            self.assertAlmostEqual(arc.angle_end, angles[1])
+            self.assertAlmostEqual(arc.angle, 0.5 * math.pi)
 
     def test_split(self):
         arc_split1 = self.arc2d.split(self.arc2d.start)

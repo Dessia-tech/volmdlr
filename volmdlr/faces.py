@@ -2627,7 +2627,7 @@ class CylindricalFace3D(PeriodicalFaceMixin, Face3D):
         point2 = volmdlr.Point2D(theta2, param_z1)
         point3 = volmdlr.Point2D(theta2, param_z2)
         point4 = volmdlr.Point2D(theta1, param_z2)
-        outer_contour = volmdlr.wires.ClosedPolygon2D([point1, point2, point3, point4])
+        outer_contour = volmdlr.wires.Contour2D.from_points([point1, point2, point3, point4])
         surface2d = surfaces.Surface2D(outer_contour, [])
         return cls(cylindrical_surface, surface2d, name)
 
@@ -2775,7 +2775,7 @@ class ToroidalFace3D(PeriodicalFaceMixin, Face3D):
         point2 = volmdlr.Point2D(theta2, phi1)
         point3 = volmdlr.Point2D(theta2, phi2)
         point4 = volmdlr.Point2D(theta1, phi2)
-        outer_contour = volmdlr.wires.ClosedPolygon2D([point1, point2, point3, point4])
+        outer_contour = volmdlr.wires.Contour2D.from_points([point1, point2, point3, point4])
         return cls(toroidal_surface3d, surfaces.Surface2D(outer_contour, []), name)
 
     def neutral_fiber(self):
@@ -2859,7 +2859,7 @@ class ConicalFace3D(PeriodicalFaceMixin, Face3D):
         point2 = volmdlr.Point2D(theta2, z1)
         point3 = volmdlr.Point2D(theta2, z2)
         point4 = volmdlr.Point2D(theta1, z2)
-        outer_contour = volmdlr.wires.ClosedPolygon2D([point1, point2, point3, point4])
+        outer_contour = volmdlr.wires.Contour2D.from_points([point1, point2, point3, point4])
         return cls(conical_surface3d, surfaces.Surface2D(outer_contour, []), name)
 
     @classmethod
@@ -3033,7 +3033,7 @@ class SphericalFace3D(PeriodicalFaceMixin, Face3D):
         point2 = volmdlr.Point2D(theta2, phi1)
         point3 = volmdlr.Point2D(theta2, phi2)
         point4 = volmdlr.Point2D(theta1, phi2)
-        outer_contour = volmdlr.wires.ClosedPolygon2D([point1, point2, point3, point4])
+        outer_contour = volmdlr.wires.Contour2D.from_points([point1, point2, point3, point4])
         return cls(spherical_surface, surfaces.Surface2D(outer_contour, []), name=name)
 
     @classmethod
@@ -3141,7 +3141,7 @@ class RuledFace3D(Face3D):
         point2 = volmdlr.Point2D(x2, y1)
         point3 = volmdlr.Point2D(x2, y2)
         point4 = volmdlr.Point2D(x1, y2)
-        outer_contour = volmdlr.wires.ClosedPolygon2D([point1, point2, point3, point4])
+        outer_contour = volmdlr.wires.Contour2D.from_points([point1, point2, point3, point4])
         surface2d = surfaces.Surface2D(outer_contour, [])
         return cls(ruled_surface3d, surface2d, name)
 
@@ -3190,7 +3190,7 @@ class ExtrusionFace3D(Face3D):
         p2 = volmdlr.Point2D(x2, y1)
         p3 = volmdlr.Point2D(x2, y2)
         p4 = volmdlr.Point2D(x1, y2)
-        outer_contour = volmdlr.wires.ClosedPolygon2D([p1, p2, p3, p4])
+        outer_contour = volmdlr.wires.Contour2D.from_points([p1, p2, p3, p4])
         surface2d = surfaces.Surface2D(outer_contour, [])
         return cls(extrusion_surface3d, surface2d, name)
 
@@ -3283,7 +3283,7 @@ class RevolutionFace3D(Face3D):
         point2 = volmdlr.Point2D(x2, y1)
         point3 = volmdlr.Point2D(x2, y2)
         point4 = volmdlr.Point2D(x1, y2)
-        outer_contour = volmdlr.wires.ClosedPolygon2D([point1, point2, point3, point4])
+        outer_contour = volmdlr.wires.Contour2D.from_points([point1, point2, point3, point4])
         surface2d = surfaces.Surface2D(outer_contour, [])
         return cls(revolution_surface3d, surface2d, name)
 
@@ -3738,7 +3738,7 @@ class BSplineFace3D(Face3D):
         point2 = volmdlr.Point2D(u2, v1)
         point3 = volmdlr.Point2D(u2, v2)
         point4 = volmdlr.Point2D(u1, v2)
-        outer_contour = volmdlr.wires.ClosedPolygon2D([point1, point2, point3, point4])
+        outer_contour = volmdlr.wires.Contour2D.from_points([point1, point2, point3, point4])
         surface = surfaces.Surface2D(outer_contour, [])
         return BSplineFace3D(bspline_surface3d, surface, name)
 
