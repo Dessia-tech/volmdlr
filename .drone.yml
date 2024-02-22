@@ -4,6 +4,7 @@ type: docker
 name: default
 
 
+
 steps:
 - name: merge master on testing
   image: alpine/git
@@ -190,13 +191,7 @@ steps:
     username: drone
     password:
       from_secret: ssh_drone_password
-  volumes:
-    - name: pip_cache
-      host:
-        path: /tmp/cache/drone/pip
-    - name: cache
-      host:
-        path: /tmp/cache/drone
+
 
 
 - name: notify by email
@@ -219,3 +214,13 @@ steps:
   volumes:
     - name: cache
       path: /root/.cache
+
+
+
+volumes:
+  - name: pip_cache
+    host:
+      path: /tmp/cache/drone/pip
+  - name: cache
+    host:
+      path: /tmp/cache/drone
