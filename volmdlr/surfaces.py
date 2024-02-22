@@ -7276,7 +7276,7 @@ class BSplineSurface3D(Surface3D):
     @property
     def weights(self):
         """
-        Gets BSpline surface weights.
+        Gets the weights of the BSpline surface.
         """
         if self._weights is None:
             return self._weights
@@ -7389,52 +7389,68 @@ class BSplineSurface3D(Surface3D):
         :rtype: dict
         """
         umin, umax, vmin, vmax = self.domain
-        # v-direction
-        crvlist_v = []
 
         def extract_from_surface_boundary_u(u_pos):
             weights = None
             control_points = [self.control_points[j + (self.nb_v * u_pos)] for j in range(self.nb_v)]
             if self.rational:
                 weights = [self.weights[j + (self.nb_v * u_pos)] for j in range(self.nb_v)]
-            return edges.BSplineCurve3D(self.degree_u, control_points, self.u_multiplicities, self.u_knots, weights)
+            return edges.BSplineCurve3D(self.degree_v, control_points, self.v_multiplicities, self.v_knots, weights)
 
         def extract_from_surface_boundary_v(v_pos):
             weights = None
             control_points = [self.control_points[v_pos + (self.nb_v * i)] for i in range(self.nb_u)]
             if self.rational:
                 weights = [self.weights[v_pos + (self.nb_v * i)] for i in range(self.nb_u)]
-            return edges.BSplineCurve3D(self.degree_v, control_points, self.v_multiplicities, self.v_knots, weights)
-
+            return edges.BSplineCurve3D(self.degree_u, control_points, self.u_multiplicities, self.u_knots, weights)
+        # v-direction
+        crvlist_v = []
         if v:
-            if v[0] == vmin:
-                crvlist_v.append(extract_from_surface_boundary_v(0))
-            else:
-                crvlist_v.append(extract_surface_curve_v(self, v[0], edges.BSplineCurve3D))
-            for param in v[1:-1]:
-                crvlist_v.append(extract_surface_curve_v(self, param, edges.BSplineCurve3D))
-            if v[-1] == vmax:
-                crvlist_v.append(extract_from_surface_boundary_v(self.nb_v - 1))
-            else:
-                crvlist_v.append(extract_surface_curve_v(self, v[-1], edges.BSplineCurve3D))
+            for param in v:
+                if abs(param - vmin) < 1e-6:
+                    crvlist_v.append(extract_from_surface_boundary_v(0))
+                elif abs(param - vmax) < 1e-6:
+                    crvlist_v.append(extract_from_surface_boundary_v(self.nb_v - 1))
+                else:
+                    curve = extract_surface_curve_v(self, param, edges.BSplineCurve3D)
+                    crvlist_v.append(curve)
+
         # u-direction
         crvlist_u = []
         if u:
-            if u[0] == umin:
-                crvlist_u.append(extract_from_surface_boundary_u(0))
-            else:
-                crvlist_u.append(extract_surface_curve_u(self, u[0], edges.BSplineCurve3D))
-
-            for param in u[1:-1]:
-                crvlist_u.append(extract_surface_curve_u(self, param, edges.BSplineCurve3D))
-
-            if u[-1] == umax:
-                crvlist_u.append(extract_from_surface_boundary_u(self.nb_u - 1))
-            else:
-                crvlist_u.append(extract_surface_curve_u(self, u[-1], edges.BSplineCurve3D))
+            for param in u:
+                if abs(param - umin) < 1e-6:
+                    crvlist_u.append(extract_from_surface_boundary_u(0))
+                elif abs(param - umax) < 1e-6:
+                    crvlist_u.append(extract_from_surface_boundary_u(self.nb_u - 1))
+                else:
+                    curve = extract_surface_curve_u(self, param, edges.BSplineCurve3D)
+                    crvlist_u.append(curve)
 
         # Return shapes as a dict object
         return {"u": crvlist_u, "v": crvlist_v}
+
+    def u_iso(self, u: float) -> edges.BSplineCurve3D:
+        """
+        Returns the u-iso curve of the surface.
+
+        :param u: The value of u where to extract the curve.
+        :type u: float
+        :return: A line 3D
+        :rtype: :class:`curves.Line3D`
+        """
+        return self.extract_curves(u=[u])["u"][0]
+
+    def v_iso(self, v: float) -> edges.BSplineCurve3D:
+        """
+        Returns the v-iso curve of the surface.
+
+        :param v: The value of v where to extract the curve.
+        :type u: float
+        :return: A BSpline curve 3D
+        :rtype: :class:`edges.BSplineCurve3D`
+        """
+        return self.extract_curves(v=[v])["v"][0]
 
     def evaluate(self, **kwargs):
         """
@@ -8173,12 +8189,19 @@ class BSplineSurface3D(Surface3D):
         """Evaluates the Euclidean form for the parametric line segment."""
         points = []
         direction_vector = linesegment2d.unit_direction_vector(0.0)
+        start3d = self.point2d_to_3d(linesegment2d.start)
+        end3d = self.point2d_to_3d(linesegment2d.end)
         if direction_vector.is_colinear_to(volmdlr.X2D):
-            n = self.nb_u
-        elif direction_vector.is_colinear_to(volmdlr.Y2D):
-            n = self.nb_v
-        else:
-            n = 20
+            curve = self.v_iso(linesegment2d.start.y)
+            if linesegment2d.start.x > linesegment2d.end.x:
+                curve = curve.reverse()
+            return [curve.trim(start3d, end3d)]
+        if direction_vector.is_colinear_to(volmdlr.Y2D):
+            curve = self.u_iso(linesegment2d.start.x)
+            if linesegment2d.start.y > linesegment2d.end.y:
+                curve = curve.reverse()
+            return [curve.trim(start3d, end3d)]
+        n = 20
         for point in linesegment2d.discretization_points(number_points=n):
             point3d = self.point2d_to_3d(point)
             if not point3d.in_list(points):
