@@ -54,6 +54,31 @@ def octree_face_decomposition(face):
     return octree_decomposition(face.bounding_box, triangulation_faces)
 
 
+def parametric_face_inside(face1, face2, abs_tol: float = 1e-6):
+    """
+    Verifies if a face2 is inside face1.
+
+    It returns True if face2 is inside or False if the opposite.
+    """
+    if face1.surface3d.is_coincident(face2.surface3d, abs_tol):
+        if not face1.bounding_box.is_intersecting(face2.bounding_box) and \
+                not face1.bounding_box.is_inside_bbox(face2.bounding_box):
+            return False
+        self_contour2d = face1.surface2d.outer_contour
+        face2_contour2d = face2.surface2d.outer_contour
+        if self_contour2d.is_inside(face2_contour2d):
+            if self_contour2d.is_inside(face2_contour2d):
+                for inner_contour2d in face1.surface2d.inner_contours:
+                    if inner_contour2d.is_inside(face2_contour2d) or inner_contour2d.is_superposing(
+                            face2_contour2d
+                    ):
+                        return False
+            return True
+        if self_contour2d.is_superposing(face2_contour2d):
+            return True
+    return False
+
+
 class Face3D(volmdlr.core.Primitive3D):
     """
     Abstract method to define 3D faces.
@@ -61,6 +86,7 @@ class Face3D(volmdlr.core.Primitive3D):
 
     min_x_density = 1
     min_y_density = 1
+    face_tolerance = 1e-6
 
     def __init__(self, surface3d, surface2d: surfaces.Surface2D,
                  reference_path: str = volmdlr.PATH_ROOT, name: str = ""):
@@ -1343,11 +1369,25 @@ class Face3D(volmdlr.core.Primitive3D):
         for intersection_wire in intersections:
             wire2d = self.surface3d.contour3d_to_2d(intersection_wire)
             for primitive2d in wire2d.primitives:
+                if self.surface3d.x_periodicity is not None and not \
+                        self.surface2d.outer_contour.is_edge_inside(primitive2d):
+                    primitive_plus_periodicity = primitive2d.translation(
+                        volmdlr.Vector2D(self.surface3d.x_periodicity, 0))
+                    if self.surface2d.outer_contour.is_edge_inside(primitive_plus_periodicity, self.face_tolerance):
+                        face_intersecting_primitives2d.append(primitive_plus_periodicity)
+                        continue
+                    primitive_minus_periodicity = primitive2d.translation(
+                        volmdlr.Vector2D(- self.surface3d.x_periodicity, 0))
+                    if self.surface2d.outer_contour.is_edge_inside(primitive_minus_periodicity, self.face_tolerance):
+                        face_intersecting_primitives2d.append(primitive_minus_periodicity)
+                        continue
                 if volmdlr.core.edge_in_list(primitive2d, face_intersecting_primitives2d) or volmdlr.core.edge_in_list(
-                    primitive2d.reverse(), face_intersecting_primitives2d
+                        primitive2d.reverse(), face_intersecting_primitives2d
                 ):
                     continue
-                if not self.surface2d.outer_contour.primitive_over_contour(primitive2d, tol=1e-7):
+                if not self.surface2d.outer_contour.primitive_over_contour(primitive2d, tol=1e-7) and \
+                        not any(inner_contour.primitive_over_contour(primitive2d, tol=1e-7)
+                                for inner_contour in self.surface2d.inner_contours):
                     face_intersecting_primitives2d.append(primitive2d)
         return face_intersecting_primitives2d
 
@@ -2174,6 +2214,16 @@ class PeriodicalFaceMixin:
 
         return self.surface2d.point_belongs(point2d)
 
+    def face_inside(self, face2, abs_tol: float = 1e-6):
+        """
+        Verifies if a face is inside another one.
+
+        It returns True if face2 is inside or False if the opposite.
+        """
+        if self.surface3d.frame.is_close(face2.surface3d.frame):
+            return parametric_face_inside(self, face2, abs_tol)
+        return super().face_inside(face2, abs_tol)
+
 
 class Triangle3D(PlaneFace3D):
     """
@@ -2687,6 +2737,7 @@ class ToroidalFace3D(PeriodicalFaceMixin, Face3D):
 
     min_x_density = 5
     min_y_density = 1
+    face_tolerance = 1e-3
 
     def __init__(self, surface3d: surfaces.ToroidalSurface3D, surface2d: surfaces.Surface2D, name: str = ""):
 
@@ -3369,6 +3420,7 @@ class BSplineFace3D(Face3D):
     :param name: The name of the face.
     :type name: str
     """
+    face_tolerance = 1e-5
 
     def __init__(self, surface3d: surfaces.BSplineSurface3D, surface2d: surfaces.Surface2D, name: str = ""):
         Face3D.__init__(self, surface3d=surface3d, surface2d=surface2d, name=name)

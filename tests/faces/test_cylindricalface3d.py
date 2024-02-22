@@ -200,6 +200,11 @@ class TestCylindricalFace3D(unittest.TestCase):
                 for curve_solution, expected_result in zip(list_curves, expected_results[i][j]):
                     self.assertAlmostEqual(curve_solution.length(), expected_result, 6)
 
+    def test_face_inside(self):
+        face1, face2 = DessiaObject.from_json(
+            os.path.join(folder, "test_cylindricalface_face_inside.json")).primitives
+        self.assertTrue(face1.face_inside(face2))
+
 
 if __name__ == '__main__':
     unittest.main()
