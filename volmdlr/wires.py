@@ -4380,13 +4380,10 @@ class Contour3D(ContourMixin, Wire3D):
         Copies the Contour3D.
         """
         new_edges = [edge.copy(deep=deep, memo=memo) for edge in self.primitives]
-        # if self.point_inside_contour is not None:
-        #     new_point_inside_contour = self.point_inside_contour.copy()
-        # else:
-        #     new_point_inside_contour = None
         return Contour3D(new_edges, self.name)
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
+        """Contour 3D plot using Matplotlib."""
         if ax is None:
             # ax = Axes3D(plt.figure())
             fig = plt.figure()
