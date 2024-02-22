@@ -21,16 +21,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix FullArc2D generation from 3 points
 
 #### surfaces.py
-- u_iso/v_iso: Returns the u_iso/v_iso curve of the surface.
+- u_iso/v_iso: Returns the u-iso/v-iso curve of the surface.
 
 #### global
 - Add reference_path to a handful of classes
 
 ### Fixed
+### curves.py
+- Circle2D: line_intersections
+
 #### edges.py
+- edge: intersections -> new parameter force_sort, to force sorting intersection points along curve.
 - BSplineCurve3D: move_frame_along
-- arc2d: start and end angle, and arc angle.
+- Arc2D: start and end angle, and arc angle.
 - Contour2D: merge_with (consider abs_tol in is_sharing_primitives_with checking)
+- BezierCurve: trim.
+
 
 #### faces.py
 - Toroidalface ConicalFace intersections.
@@ -41,8 +47,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### core.py
 - Fix Compound step export for wireframe models.
 
-#### edges.py
-- edge: intersections -> new parameter force_sort, to force sorting intersection points along curve.
 
 #### surfaces.py
 - BSplineSurface3D: improves _fix_start_end_singularity_point_at_parametric_domain
@@ -72,6 +76,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - edges/curves.py cut_between_two_points -> trim
 - defines ordering of curve methods
 - npy -> np
+- curves.py: curve_intersections -> intersections
 
 #### CI
 - Avoid calling babylonjs method in CI to reduce CI time
