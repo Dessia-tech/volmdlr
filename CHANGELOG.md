@@ -33,7 +33,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### edges.py
 - edge: intersections -> new parameter force_sort, to force sorting intersection points along curve.
 - BSplineCurve3D: move_frame_along
-- Arc2D: start and end angle, and arc angle.
+- arc2d: start and end angle, and arc angle.
+- Contour2D: merge_with (consider abs_tol in is_sharing_primitives_with checking)
 
 #### faces.py
 - Toroidalface ConicalFace intersections.
@@ -49,6 +50,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineSurface3D: improves _fix_start_end_singularity_point_at_parametric_domain
 
 #### wires.py
+
+#### step.py
+- Fixes in step translator to VolumeModel.
 
 ### Refactor
 
