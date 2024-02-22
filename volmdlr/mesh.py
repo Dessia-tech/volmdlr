@@ -167,6 +167,12 @@ class TriangularElement(vmw.Triangle):
         vmw.Triangle.__init__(self, *points)
 
     def _to_linear_elements(self):
+        """
+        Converts the triangular element to linear elements.
+
+        :return: The linear elements corresponding to the sides of the triangle.
+        :rtype: List[LinearElement]
+        """
         vec1 = vm.Vector2D(self.points[1].x - self.points[0].x,
                            self.points[1].y - self.points[0].y)
         vec2 = vm.Vector2D(self.points[2].x - self.points[1].x,
@@ -310,6 +316,12 @@ class TriangularElement2D(TriangularElement, vmw.ClosedPolygon2D):
         # vmw.Triangle.__init__(self, points)
 
     def _to_linear_elements(self):
+        """
+        Converts the triangular element to linear elements.
+
+        :return: The linear elements corresponding to the sides of the triangle.
+        :rtype: List[LinearElement]
+        """
         vec1 = vm.Vector2D(self.points[1].x - self.points[0].x,
                            self.points[1].y - self.points[0].y)
         vec2 = vm.Vector2D(self.points[2].x - self.points[1].x,
