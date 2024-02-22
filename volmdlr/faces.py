@@ -2865,7 +2865,6 @@ class ConicalFace3D(PeriodicalFaceMixin, Face3D):
 
 
     """
-    face_tolerance = 1e-5
 
     def __init__(self, surface3d: surfaces.ConicalSurface3D, surface2d: surfaces.Surface2D, name: str = ""):
         Face3D.__init__(self, surface3d=surface3d, surface2d=surface2d, name=name)
@@ -3394,6 +3393,7 @@ class BSplineFace3D(Face3D):
     :param name: The name of the face.
     :type name: str
     """
+    face_tolerance = 1e-5
 
     def __init__(self, surface3d: surfaces.BSplineSurface3D, surface2d: surfaces.Surface2D, name: str = ""):
         Face3D.__init__(self, surface3d=surface3d, surface2d=surface2d, name=name)
