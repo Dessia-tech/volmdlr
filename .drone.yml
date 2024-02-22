@@ -3,12 +3,14 @@ kind: pipeline
 type: docker
 name: default
 
+
 steps:
 - name: merge master on testing
   image: alpine/git
   when:
     event: push
     branch: master
+
   commands:
   - cd /tmp
   - git clone $DRONE_GIT_HTTP_URL
@@ -19,11 +21,13 @@ steps:
   - git merge master
   - git push
 
+
 - name: merge testing on dev
   image: alpine/git
   when:
     event: push
     branch: testing
+
   commands:
   - cd /tmp
   - git clone $DRONE_GIT_HTTP_URL
@@ -34,34 +38,16 @@ steps:
   - git merge testing
   - git push
 
-- name: notify by email
-  when:
-    event: push
-    branch:
-      - master
-      - dev
-    status:
-    - failure
-  image: drillster/drone-email
-  settings:
-    host: mail.dessia.tech
-    username: technical@dessia.tech
-    password:
-      from_secret: email_password
-    from: technical@dessia.tech
-
-  volumes:
-    # Mount pip cache from host
-    - name: cache
-      path: /root/.cache
 
 - name: check changelog update
   image: python:3.9
   when:
     event: pull_request
+
   commands:
     - git fetch origin "$DRONE_TARGET_BRANCH" "$DRONE_SOURCE_BRANCH"
     - bash code_changelog.sh
+
 
 - name: check pep8 formatting
   image: python:3.9
@@ -70,6 +56,7 @@ steps:
       exclude:
       - tag
       - pull_request
+
   commands:
     - pip3 install -U pip autopep8==2.0.0
     - bash code_pep8.sh
@@ -79,6 +66,7 @@ steps:
     - name: pip_cache
       path: /root/.cache/pip
 
+
 - name: check code complexity
   image: dessia/python-ci:3.9
   when:
@@ -86,6 +74,7 @@ steps:
       exclude:
       - tag
       - pull_request
+
   commands:
   - pip install numpy Cython>3
   - pip install pylint==2.17.3 pydocstyle==6.3.0 pre-commit shellcheck-py cython-lint pyenchant==3.2.2
@@ -98,10 +87,12 @@ steps:
     - name: pip_cache
       path: /root/.cache/pip
 
+
 - name: install, build doc run scripts and tutorials
   image: python:3.9
   when:
     event: pull_request
+
   commands:
   - git fetch --tags
   - pip install .[doc,test]
@@ -130,6 +121,7 @@ steps:
   image: python:3.9
   when:
     branch: master
+
   commands:
   - git fetch --tags
   - pip install .
@@ -139,6 +131,7 @@ steps:
     # Mount pip cache from host
     - name: pip_cache
       path: /root/.cache/pip
+
 
 - name: generate bdist_wheel
   image: python:3.9
@@ -156,15 +149,18 @@ steps:
     - name: pip_cache
       path: /root/.cache/pip
 
+
 - name: upload to pypi
   image: plugins/pypi
   when:
       event: tag
+
   settings:
     skip_build: True
     username: dessia_tech
     password:
         from_secret: pypi_password
+
 
 - name: upload_doc_master
   image: appleboy/drone-scp
@@ -180,6 +176,7 @@ steps:
     password:
       from_secret: ssh_drone_password
 
+
 - name: upload coverage
   image: appleboy/drone-scp
   when:
@@ -193,13 +190,32 @@ steps:
     username: drone
     password:
       from_secret: ssh_drone_password
+  volumes:
+    - name: pip_cache
+      host:
+        path: /tmp/cache/drone/pip
+    - name: cache
+      host:
+        path: /tmp/cache/drone
 
 
+- name: notify by email
+  when:
+    event: push
+    branch:
+      - master
+      - dev
+    status:
+    - failure
 
-volumes:
-  - name: pip_cache
-    host:
-      path: /tmp/cache/drone/pip
-  - name: cache
-    host:
-      path: /tmp/cache/drone
+  image: drillster/drone-email
+  settings:
+    host: mail.dessia.tech
+    username: technical@dessia.tech
+    password:
+      from_secret: email_password
+    from: technical@dessia.tech
+
+  volumes:
+    - name: cache
+      path: /root/.cache
