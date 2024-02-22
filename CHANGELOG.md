@@ -92,6 +92,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ConicalSurface3D: conicalsurface_intersections.
 - cad_simplification: AlphaWrapSimplify
 - nurbs/operations: link_curves
+- ArcEllipse2D: straight_line_center_of_mass
 
 #### edges.py
 - BSplineCurve: decompose into béziers patches of same degree.

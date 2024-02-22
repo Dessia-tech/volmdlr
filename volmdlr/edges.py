@@ -4273,6 +4273,19 @@ class ArcEllipse2D(ArcEllipseMixin, Edge):
         raise NotImplementedError(f'the straight_line_point_belongs method must be'
                                   f' overloaded by {self.__class__.__name__}')
 
+    def straight_line_center_of_mass(self):
+        """
+        Straight line center of mass.
+
+        PS.: This is an approximation.
+        """
+        center_of_mass = volmdlr.O2D
+        number_points = 100
+        for point in self.discretization_points(number_points=number_points):
+            center_of_mass += point
+        center_of_mass /= number_points
+        return center_of_mass
+
     def split(self, split_point, tol: float = 1e-6):
         """
         Splits arc-ellipse at a given point.
