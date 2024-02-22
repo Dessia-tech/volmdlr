@@ -353,7 +353,7 @@ def conic_intersections(conic1, conic2, abs_tol: float = 1e-6):
             frame_mapped_conic1.frame.u,
             frame_mapped_conic1.frame.v,
         )
-        intersections_2d = conic1_2d.curve_intersections(conic2_2d, abs_tol)
+        intersections_2d = conic1_2d.intersections(conic2_2d, abs_tol)
         if not intersections_2d:
             return []
         local_intersections = []
