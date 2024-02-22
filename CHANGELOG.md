@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix FullArc2D generation from 3 points
 
 #### surfaces.py
-- u_iso/v_iso: Returns the u_iso/v_iso curve of the surface.
+- u_iso/v_iso: Returns the u-iso/v-iso curve of the surface.
 
 #### global
 - Add reference_path to a handful of classes
@@ -30,7 +30,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### edges.py
 - BSplineCurve3D: move_frame_along
 - Arc2D: start and end angle, and arc angle.
+- Contour2D: merge_with (consider abs_tol in is_sharing_primitives_with checking)
 - BezierCurve: trim.
+
 
 #### faces.py
 - Toroidalface ConicalFace intersections.
@@ -48,6 +50,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineSurface3D: improves _fix_start_end_singularity_point_at_parametric_domain
 
 #### wires.py
+
+#### step.py
+- Fixes in step translator to VolumeModel.
 
 ### Refactor
 

@@ -517,12 +517,12 @@ def extract_surface_curve_u(obj, param, curve_class, **kwargs):
         surf2_ctrlpts, weights = separate_ctrlpts_weights(surf2_ctrlpts)
     control_points = [volmdlr.Point3D(*point) for point in surf2_ctrlpts]
 
-    return curve_class(obj.degree_u, control_points, obj.u_multiplicities, obj.u_knots, weights)
+    return curve_class(obj.degree_v, control_points, obj.v_multiplicities, obj.v_knots, weights)
 
 
 def extract_surface_curve_v(obj, param, curve_class, **kwargs):
     """
-    Extract an isocurve from the surface at the input parametric coordinate on the u-direction.
+    Extract an isocurve from the surface at the input parametric coordinate on the v-direction.
 
     This method works by inserting knots to the surface so that from the new control points created we can extract
     the curve. Under the hood this method performs an incomplete process of splitting the surface.
@@ -564,7 +564,7 @@ def extract_surface_curve_v(obj, param, curve_class, **kwargs):
         surf2_ctrlpts, weights = separate_ctrlpts_weights(surf2_ctrlpts)
     control_points = [volmdlr.Point3D(*point) for point in surf2_ctrlpts]
 
-    return curve_class(obj.degree_v, control_points, obj.v_multiplicities, obj.v_knots, weights)
+    return curve_class(obj.degree_u, control_points, obj.u_multiplicities, obj.u_knots, weights)
 
 
 def split_surface_u(obj, param, **kwargs):
