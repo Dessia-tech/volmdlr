@@ -372,7 +372,9 @@ class Edge(dc.DessiaObject):
             if force_sort:
                 intersections = self.sort_points_along_curve(intersections)
             return intersections
-        return self._generic_edge_intersections(edge2, abs_tol)
+        if hasattr(edge2, 'start') and hasattr(edge2, 'end'):
+            return self._generic_edge_intersections(edge2, abs_tol)
+        return vm_utils_intersections.get_bsplinecurve_intersections(edge2, self, abs_tol)
 
     def validate_crossings(self, edge, intersection):
         """Validates the intersections as crossings: edge not touching the other at one end, or in a tangent point."""

@@ -88,7 +88,7 @@ class Curve(DessiaObject):
                 intersections.append(intersection)
         return intersections
 
-    def curve_intersections(self, other_curve, abs_tol: float = 1e-6):
+    def intersections(self, other_curve, abs_tol: float = 1e-6):
         """
         Gets the intersections between two curves.
 
