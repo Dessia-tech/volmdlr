@@ -15,7 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ArcEllipse3D/FullArcEllipse3D: to_step
 
 #### faces.py
--
+- PlaneFace3D: get_normal_at_point
+- CylindricalFace3D: get_normal_at_point
 
 #### edges.py
 - Fix FullArc2D generation from 3 points

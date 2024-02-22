@@ -1485,7 +1485,7 @@ class ClosedShell3D(Shell3D):
             points = [center_of_mass]
 
         if face.surface2d.inner_contours:
-            normal_0 = face.surface2d.outer_contour.primitives[0].normal_vector()
+            normal_0 = face.surface2d.outer_contour.primitives[0].normal_vector(0.0)
             middle_point_0 = face.surface2d.outer_contour.primitives[0].middle_point()
             point1 = middle_point_0 + 0.0001 * normal_0
             point2 = middle_point_0 - 0.0001 * normal_0
@@ -1496,8 +1496,9 @@ class ClosedShell3D(Shell3D):
         for point in points:
             point3d = face.surface3d.point2d_to_3d(point)
             if face.point_belongs(point3d):
-                normal1 = point3d - 0.00001 * face.surface3d.frame.w
-                normal2 = point3d + 0.00001 * face.surface3d.frame.w
+                normal_at_point = face.get_normal_at_point(point3d)
+                normal1 = point3d - 0.00001 * normal_at_point
+                normal2 = point3d + 0.00001 * normal_at_point
                 if (self.point_inside(normal1) and
                     shell2.point_inside(normal2)) or \
                         (shell2.point_inside(normal1) and
