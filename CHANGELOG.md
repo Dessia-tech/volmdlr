@@ -21,12 +21,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix FullArc2D generation from 3 points
 
 #### surfaces.py
--
+- u_iso/v_iso: Returns the u_iso/v_iso curve of the surface.
+
+#### global
+- Add reference_path to a handful of classes
 
 ### Fixed
 #### edges.py
 - BSplineCurve3D: move_frame_along
-- arc2d: start and end angle, and arc angle.
+- Arc2D: start and end angle, and arc angle.
 - BezierCurve: trim.
 
 #### faces.py
@@ -42,7 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - edge: intersections -> new parameter force_sort, to force sorting intersection points along curve.
 
 #### surfaces.py
--
+- BSplineSurface3D: improves _fix_start_end_singularity_point_at_parametric_domain
 
 #### wires.py
 
@@ -54,7 +57,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### surfaces.py
 - ToroidalSuface3D: toroidal_surface_intersections
 - Contour2D - point_belongs
+- edge: intersections -> new parameter force_sort, to force sorting intersection points along curve.
 - ConicalSurface3D: Refactoring of the conical surface definition in accordance with ISO 10303.
+- BSplineSurface3D: improves point_inversion_grid_search convergence.
 
 ### Changed
 - load_from_file -> from_json
