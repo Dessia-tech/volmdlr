@@ -44,7 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - edge: intersections -> new parameter force_sort, to force sorting intersection points along curve.
 
 #### surfaces.py
--
+- BSplineSurface3D: improves _fix_start_end_singularity_point_at_parametric_domain
 
 #### wires.py
 
@@ -58,6 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Contour2D - point_belongs
 - edge: intersections -> new parameter force_sort, to force sorting intersection points along curve.
 - ConicalSurface3D: Refactoring of the conical surface definition in accordance with ISO 10303.
+- BSplineSurface3D: improves point_inversion_grid_search convergence.
 
 ### Changed
 - load_from_file -> from_json
