@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### faces.py
 - PlaneFace3D: get_normal_at_point
 - CylindricalFace3D: get_normal_at_point
+- add tolerance parameter to many methods
 
 #### edges.py
 - Fix FullArc2D generation from 3 points
