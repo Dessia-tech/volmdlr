@@ -2083,12 +2083,13 @@ class BSplineCurve(Edge):
         bspline_curve = self
         if not same_sense:
             bspline_curve = self.reverse()
-        if bspline_curve.start.is_close(point1) and point1.is_close(point2):
-            return bspline_curve
         abscissa1 = bspline_curve.abscissa(point1)
         abscissa2 = bspline_curve.abscissa(point2)
-        if abscissa1 in (0.0, bspline_curve.length()) and abscissa2 in (0.0, bspline_curve.length()):
+
+        if (abscissa1 in (0.0, bspline_curve.length()) and abscissa2 in (0.0, bspline_curve.length()) or
+                bspline_curve.start.is_close(point1) and point1.is_close(point2)):
             return bspline_curve
+
         if abscissa2 > abscissa1:
             if abscissa1 == 0.0:
                 return bspline_curve.split(point2)[0]
