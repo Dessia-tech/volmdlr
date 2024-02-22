@@ -22,7 +22,7 @@ class TestDisplayPrimitives3D(unittest.TestCase):
         self.contour_points = [Point2D(0.0, 0.1), Point2D(0.1, 2.1), Point2D(-1.4, 0.5)]
         self.contour2d = Contour2D.from_points(self.contour_points)
 
-        self.expected_keys_merge = ["positions", "indices", "alpha", "name", "color"]
+        self.expected_keys_merge = ["positions", "indices", "alpha", "name", "color", "reference_path"]
         self.expected_keys_no_merge = ["primitives_meshes", "alpha", "name", "color"]
 
     def test_diplay_block(self):
@@ -159,7 +159,7 @@ class TestDisplaySTL(unittest.TestCase):
         self.double_space_path = os.path.join(FOLDER, "..", "..", "scripts", "stl", "double_space.stl")
         self.simple_path = os.path.join(FOLDER, "..", "..", "scripts", "stl", "simple.stl")
 
-        self.expected_keys = ["positions", "indices", "alpha", "name", "color"]
+        self.expected_keys = ["positions", "indices", "alpha", "name", "color", "reference_path"]
 
     def test_display_cube_ascii(self):
         mesh = Mesh3D.from_stl_file(self.cube_ascii_path)
