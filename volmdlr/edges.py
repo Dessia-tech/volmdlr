@@ -5126,8 +5126,10 @@ class BSplineCurve3D(BSplineCurve):
 
     def _bounding_box(self):
         """Creates a bounding box from the bspline points."""
-        xmin, ymin, zmin = self.ctrlpts.min(axis=0)
-        xmax, ymax, zmax = self.ctrlpts.max(axis=0)
+        if self._eval_points is None:
+            self.evaluate()
+        xmin, ymin, zmin = self._eval_points.min(axis=0)
+        xmax, ymax, zmax = self._eval_points.max(axis=0)
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
     def get_bounding_element(self):
