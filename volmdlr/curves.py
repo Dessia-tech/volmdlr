@@ -88,7 +88,7 @@ class Curve(DessiaObject):
                 intersections.append(intersection)
         return intersections
 
-    def curve_intersections(self, other_curve, abs_tol: float = 1e-6):
+    def intersections(self, other_curve, abs_tol: float = 1e-6):
         """
         Gets the intersections between two curves.
 
@@ -586,7 +586,7 @@ class Line2D(Line):
         """
         Gets the line's slope.
         """
-        if self.point1.x == self.point2.x:
+        if abs(self.point1.x - self.point2.x) < 1e-6:
             return math.inf
         return (self.point2.y - self.point1.y) / (self.point2.x - self.point1.x)
 
@@ -1599,6 +1599,8 @@ class Circle2D(CircleMixin, ClosedCurve):
         c = line2d.get_y_intersection()
         if m == math.inf and c is None:
             x_line = line2d.point1.x
+            if abs(self.radius ** 2 - x_line ** 2) < 1e-8:
+                return [volmdlr.Point2D(x_line, 0.0)]
             y1 = - math.sqrt(self.radius**2 - x_line**2)
             y2 = math.sqrt(self.radius**2 - x_line**2)
             return [volmdlr.Point2D(x_line, y1), volmdlr.Point2D(x_line, y2)]

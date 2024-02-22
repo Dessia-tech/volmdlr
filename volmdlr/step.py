@@ -739,7 +739,8 @@ class Step(dc.DessiaObject):
                     raise NotImplementedError('Error instantiating assembly') from key
                 if key.args[0] in assembly_shape_ids:
                     instantiate_ids.append(key.args[0])
-
+                else:
+                    object_dict, _ = self._helper_instantiate(key.args[0], object_dict, {}, False)
                 last_error = key.args[0]
         return volmdlr_object
 
