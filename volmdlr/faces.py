@@ -605,6 +605,9 @@ class Face3D(volmdlr.core.Primitive3D):
         It returns True if face2 is inside or False if the opposite.
         """
         if self.surface3d.is_coincident(face2.surface3d, abs_tol):
+            if not self.bounding_box.is_intersecting(face2.bounding_box) and \
+                    not self.bounding_box.is_inside_bbox(face2.bounding_box):
+                return False
             self_contour2d = self.outer_contour3d.to_2d(
                 self.surface3d.frame.origin, self.surface3d.frame.u, self.surface3d.frame.v
             )
