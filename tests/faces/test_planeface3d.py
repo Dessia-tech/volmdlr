@@ -287,9 +287,16 @@ class TestPlaneFace3D(unittest.TestCase):
         self.assertEqual(len(grid_points), 56)
 
     def test_get_coincident_face_intersections(self):
-        face1, face2 = faces.PlaneFace3D.from_json(
-            '/Users/wirajandasilva/Downloads/test_2planeface_intersections080224.json').primitives
+        face1, face2 = faces.PlaneFace3D.from_json(os.path.join(folder, 'test_2planeface_intersections080224.json')).primitives
         contours1, contours2 = face1.get_coincident_face_intersections(face2)
+        self.assertEqual(len(contours1), 4)
+        self.assertEqual(len(contours2), 4)
+        expected_lengths1 = [0.011076688468115516, 0.003025307984453718, 0.0033334586612949035, 0.006589539343294938]
+        expected_lengths2 = [0.003025307983954664, 0.011076688467748839, 0.003333458664466909, 0.006589539344301247]
+        for i, contour in enumerate(contours1):
+            self.assertAlmostEqual(contour.length(), expected_lengths1[i])
+        for i, contour in enumerate(contours2):
+            self.assertAlmostEqual(contour.length(), expected_lengths2[i])
 
 
 if __name__ == '__main__':

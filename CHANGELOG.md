@@ -125,6 +125,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add some missing docstrings.
 - Add _serializable_dict to points and vectors objects. This method is important to some platform checks, as they don't inherite from DessiaObject anymore.
 - Arc2D: arc_intersections
+
 #### curves.py
 - Ellipse2D/3D: mutualize length method.
 - Circle2D: abscissa method - consider frame direction during rotation.
@@ -144,7 +145,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Face3D: enhance from_contours3d.
 - Face3D: enhance from_contours3d. Checks if inner contours position are according outer contour position in parametric domain for periodical surfaces.
 - Face3D: divide_face_with_closed_cutting_contours - if inner_contour.area()/outer_contour.area() < 1e-9 ignore it.
-- Face3D: point_belongs
+- Face3D: point_belongs, get_coincident_face_intersections
 
 #### primitives3d.py
 - RevolvedProfile: to_dict
