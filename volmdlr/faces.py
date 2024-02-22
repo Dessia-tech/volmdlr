@@ -1563,17 +1563,30 @@ class Face3D(volmdlr.core.Primitive3D):
         :param face: other face.
         :return: two lists of intersections. one list containing wires intersecting face1, the other those for face2.
         """
-        points_intersections = self.outer_contour3d.wire_intersections(face.outer_contour3d)
+        contours1 = [self.outer_contour3d] + self.inner_contours3d
+        contours2 = [face.outer_contour3d] + face.inner_contours3d
+        points_intersections = []
+        for contour1, contour2 in product(contours1, contours2):
+            points_intersections.extend(contour1.wire_intersections(contour2))
         if not points_intersections:
             return [], []
-        extracted_contours = self.outer_contour3d.split_with_sorted_points(points_intersections)
-        extracted_contours2 = face.outer_contour3d.split_with_sorted_points(points_intersections)
+        extracted_contours = []
+        for contour in contours1:
+            extracted_contours.extend(contour.split_with_sorted_points(
+                contour.sort_points_along_wire([point for point in points_intersections
+                                                if contour.point_belongs(point)])))
+        extracted_contours2 = []
+        for contour in contours2:
+            points = contour.sort_points_along_wire(point for point in points_intersections
+                                                    if contour.point_belongs(point))
+            extracted_contours2.extend(contour.split_with_sorted_points(points))
         contours_in_self = [
             contour for contour in extracted_contours2 if all(self.edge3d_inside(edge) for edge in contour.primitives)
         ]
         contours_in_other_face = [
             contour for contour in extracted_contours if all(face.edge3d_inside(edge) for edge in contour.primitives)
         ]
+
         return contours_in_self, contours_in_other_face
 
 

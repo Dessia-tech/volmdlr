@@ -286,6 +286,11 @@ class TestPlaneFace3D(unittest.TestCase):
         grid_points = face.grid_points([10, 10])
         self.assertEqual(len(grid_points), 56)
 
+    def test_get_coincident_face_intersections(self):
+        face1, face2 = faces.PlaneFace3D.from_json(
+            '/Users/wirajandasilva/Downloads/test_2planeface_intersections080224.json').primitives
+        contours1, contours2 = face1.get_coincident_face_intersections(face2)
+
 
 if __name__ == '__main__':
     unittest.main()
