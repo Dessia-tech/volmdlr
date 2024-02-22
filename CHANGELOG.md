@@ -29,8 +29,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 #### edges.py
 - BSplineCurve3D: move_frame_along
-- arc2d: start and end angle, and arc angle.
+- Arc2D: start and end angle, and arc angle.
 - Contour2D: merge_with (consider abs_tol in is_sharing_primitives_with checking)
+- BezierCurve: trim.
+
 
 #### faces.py
 - Toroidalface ConicalFace intersections.
