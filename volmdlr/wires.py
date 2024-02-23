@@ -492,6 +492,8 @@ class WireMixin:
         :param sorted_points: sorted list of points.
         :return: list of Contour sections.
         """
+        if not sorted_points:
+            return []
         self_start_equal_to_end = True
         if not self.primitives[0].start.is_close(self.primitives[-1].end):
             self_start_equal_to_end = False
