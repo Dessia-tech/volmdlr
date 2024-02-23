@@ -2239,16 +2239,6 @@ class PeriodicalFaceMixin:
             return parametric_face_inside(self, face2, abs_tol)
         return super().face_inside(face2, abs_tol)
 
-    def face_inside(self, face2, abs_tol: float = 1e-6):
-        """
-        Verifies if a face is inside another one.
-
-        It returns True if face2 is inside or False if the opposite.
-        """
-        if self.surface3d.frame.is_close(face2.surface3d.frame):
-            return parametric_face_inside(self, face2, abs_tol)
-        return super().face_inside(face2, abs_tol)
-
 
 class Triangle3D(PlaneFace3D):
     """
