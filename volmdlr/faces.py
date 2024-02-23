@@ -1430,7 +1430,8 @@ class Face3D(volmdlr.core.Primitive3D):
             return True
         return False
 
-    def linesegment_intersections_approximation(self, linesegment: vme.LineSegment3D, abs_tol: float = 1e-6) -> List[volmdlr.Point3D]:
+    def linesegment_intersections_approximation(self, linesegment: vme.LineSegment3D,
+                                                abs_tol: float = 1e-6) -> List[volmdlr.Point3D]:
         """Approximation of intersections face 3D and a line segment 3D."""
         if not self._is_linesegment_intersection_possible(linesegment):
             return []
