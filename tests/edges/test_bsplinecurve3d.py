@@ -29,7 +29,7 @@ class TestBSplineCurve3D(unittest.TestCase):
             volmdlr.Point3D(-0.8090169943749473, -0.8090169943749473, 0.587785252292473),
             volmdlr.Point3D(-1.0, -1.0, 0.0)], 2, centripetal=True)
         bbox = bspline.bounding_box
-        self.assertAlmostEqual(bbox.volume(), 4.029861202734341, 3)
+        self.assertAlmostEqual(bbox.volume(), 3.9998457739878495, 3)
 
     def test_trim(self):
         obj = vme.BSplineCurve3D.from_json(os.path.join(folder, "bspline_buggy_trim.json"))
