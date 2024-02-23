@@ -372,7 +372,9 @@ class Edge(dc.DessiaObject):
             if force_sort:
                 intersections = self.sort_points_along_curve(intersections)
             return intersections
-        return self._generic_edge_intersections(edge2, abs_tol)
+        if hasattr(edge2, 'start') and hasattr(edge2, 'end'):
+            return self._generic_edge_intersections(edge2, abs_tol)
+        return vm_utils_intersections.get_bsplinecurve_intersections(edge2, self, abs_tol)
 
     def validate_crossings(self, edge, intersection):
         """Validates the intersections as crossings: edge not touching the other at one end, or in a tangent point."""
@@ -4280,6 +4282,19 @@ class ArcEllipse2D(ArcEllipseMixin, Edge):
         raise NotImplementedError(f'the straight_line_point_belongs method must be'
                                   f' overloaded by {self.__class__.__name__}')
 
+    def straight_line_center_of_mass(self):
+        """
+        Straight line center of mass.
+
+        PS.: This is an approximation.
+        """
+        center_of_mass = volmdlr.O2D
+        number_points = 100
+        for point in self.discretization_points(number_points=number_points):
+            center_of_mass += point
+        center_of_mass /= number_points
+        return center_of_mass
+
     def split(self, split_point, tol: float = 1e-6):
         """
         Splits arc-ellipse at a given point.
@@ -5120,8 +5135,10 @@ class BSplineCurve3D(BSplineCurve):
 
     def _bounding_box(self):
         """Creates a bounding box from the bspline points."""
-        xmin, ymin, zmin = self.ctrlpts.min(axis=0)
-        xmax, ymax, zmax = self.ctrlpts.max(axis=0)
+        if self._eval_points is None:
+            self.evaluate()
+        xmin, ymin, zmin = self._eval_points.min(axis=0)
+        xmax, ymax, zmax = self._eval_points.max(axis=0)
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
     def get_bounding_element(self):
