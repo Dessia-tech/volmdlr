@@ -1625,10 +1625,6 @@ class Face3D(volmdlr.core.Primitive3D):
         """
         if not self.point_belongs(point):
             raise ValueError(f'Point {point} not in this face.')
-        # p_vector = (point - self.surface3d.frame.origin).to_vector()
-        # t_param = p_vector.dot(self.surface3d.frame.w) / self.surface3d.frame.w.dot(self.surface3d.frame.w)
-        # proj_point = self.surface3d.frame.origin + t_param * self.surface3d.frame.w
-        # return (proj_point - point).unit_vector()
         return self.surface3d.normal_at_point(point)
 
 
@@ -2705,21 +2701,6 @@ class CylindricalFace3D(PeriodicalFaceMixin, Face3D):
         point1 = self.surface3d.frame.origin + self.surface3d.frame.w * zmin
         point2 = self.surface3d.frame.origin + self.surface3d.frame.w * zmax
         return volmdlr.wires.Wire3D([vme.LineSegment3D(point1, point2)])
-
-    def normal_at_point(self, point):
-        """
-        Gets Normal vector at a given point on the face.
-
-        :param point: point on the face.
-        :return:
-        """
-        if not self.point_belongs(point):
-            raise ValueError(f'Point {point} not in this face.')
-        # p_vector = (point - self.surface3d.frame.origin).to_vector()
-        # t_param = p_vector.dot(self.surface3d.frame.w) / self.surface3d.frame.w.dot(self.surface3d.frame.w)
-        # proj_point = self.surface3d.frame.origin + t_param * self.surface3d.frame.w
-        # return (proj_point - point).unit_vector()
-        return self.surface3d.normal_at_point(point)
 
 
 class ToroidalFace3D(PeriodicalFaceMixin, Face3D):
