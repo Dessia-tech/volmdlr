@@ -3209,7 +3209,8 @@ class Arc2D(ArcMixin, Edge):
     def arc_intersections(self, arc, abs_tol: float = 1e-6):
         """Intersections between two arc 2d."""
         circle_intersections = vm_utils_intersections.get_circle_intersections(self.circle, arc.circle)
-        arc_intersections = [inter for inter in circle_intersections if self.point_belongs(inter, abs_tol)]
+        arc_intersections = [inter for inter in circle_intersections
+                             if self.point_belongs(inter, abs_tol) and arc.point_belongs(inter, abs_tol)]
         return arc_intersections
 
     def arcellipse_intersections(self, arcellipse, abs_tol: float = 1e-6):
@@ -3987,6 +3988,7 @@ class ArcEllipse2D(ArcEllipseMixin, Edge):
                 aproximation_point = point1
                 break
             aproximation_abscissa += dist1
+            aproximation_point = point1
         initial_point = self.ellipse.frame.global_to_local_coordinates(aproximation_point)
         u1, u2 = initial_point.x / self.ellipse.major_axis, initial_point.y / self.ellipse.minor_axis
         initial_angle = volmdlr.geometry.sin_cos_angle(u1, u2)
@@ -6275,6 +6277,16 @@ class FullArc3D(FullArcMixin, Arc3D):
         if distance_center_lineseg > self.radius:
             return []
         return self.circle.linesegment_intersections(linesegment3d)
+
+    def fullarc_intersections(self, fullarc3d, abs_tol: float = 1e-6):
+        """
+        Calculates the intersections between two full arc 3d.
+
+        :param fullarc3d: linesegment 3d to verify intersections.
+        :param abs_tol: tolerance.
+        :return: list of points 3d, if there are any intersections, an empty list if otherwise.
+        """
+        return self.circle.circle_intersections(fullarc3d.circle, abs_tol)
 
     def get_reverse(self):
         """

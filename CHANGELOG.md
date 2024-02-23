@@ -101,6 +101,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ConicalSurface3D: conicalsurface_intersections.
 - cad_simplification: AlphaWrapSimplify
 - nurbs/operations: link_curves
+- FullArc3D: fullarc3d_intersections
 - ArcEllipse2D: straight_line_center_of_mass
 
 #### edges.py
@@ -129,7 +130,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix pylint.
 - Add some missing docstrings.
 - Add _serializable_dict to points and vectors objects. This method is important to some platform checks, as they don't inherite from DessiaObject anymore.
-
+- Arc2D: arc_intersections
 #### curves.py
 - Ellipse2D/3D: mutualize length method.
 - Circle2D: abscissa method - consider frame direction during rotation.
