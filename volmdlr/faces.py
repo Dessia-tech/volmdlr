@@ -1576,6 +1576,21 @@ class Face3D(volmdlr.core.Primitive3D):
         ]
         return contours_in_self, contours_in_other_face
 
+    def normal_at_point(self, point):
+        """
+        Gets Normal vector at a given point on the face.
+
+        :param point: point on the face.
+        :return:
+        """
+        if not self.point_belongs(point):
+            raise ValueError(f'Point {point} not in this face.')
+        # p_vector = (point - self.surface3d.frame.origin).to_vector()
+        # t_param = p_vector.dot(self.surface3d.frame.w) / self.surface3d.frame.w.dot(self.surface3d.frame.w)
+        # proj_point = self.surface3d.frame.origin + t_param * self.surface3d.frame.w
+        # return (proj_point - point).unit_vector()
+        return self.surface3d.normal_at_point(point)
+
 
 class PlaneFace3D(Face3D):
     """
@@ -2125,16 +2140,6 @@ class PlaneFace3D(Face3D):
         surface = surfaces.Surface2D(outer_contour, [])
         return cls(plane3d, surface, name)
 
-    def normal_at_point(self, point):
-        """
-        Gets Normal vector at a given point on the face.
-        :param point: point on the face.
-        :return:
-        """
-        if not self.point_belongs(point):
-            raise ValueError(f'Point {point} not in this face.')
-        return self.surface3d.frame.w
-
 
 class PeriodicalFaceMixin:
     """
@@ -2654,15 +2659,17 @@ class CylindricalFace3D(PeriodicalFaceMixin, Face3D):
     def normal_at_point(self, point):
         """
         Gets Normal vector at a given point on the face.
+
         :param point: point on the face.
         :return:
         """
         if not self.point_belongs(point):
             raise ValueError(f'Point {point} not in this face.')
-        p_vector = (point - self.surface3d.frame.origin).to_vector()
-        t_param = p_vector.dot(self.surface3d.frame.w) / self.surface3d.frame.w.dot(self.surface3d.frame.w)
-        proj_point = self.surface3d.frame.origin + t_param * self.surface3d.frame.w
-        return (proj_point - point).unit_vector()
+        # p_vector = (point - self.surface3d.frame.origin).to_vector()
+        # t_param = p_vector.dot(self.surface3d.frame.w) / self.surface3d.frame.w.dot(self.surface3d.frame.w)
+        # proj_point = self.surface3d.frame.origin + t_param * self.surface3d.frame.w
+        # return (proj_point - point).unit_vector()
+        return self.surface3d.normal_at_point(point)
 
 
 class ToroidalFace3D(PeriodicalFaceMixin, Face3D):

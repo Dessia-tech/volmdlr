@@ -1829,6 +1829,17 @@ class Plane3D(Surface3D):
 
         return curves.Line3D.from_point_and_vector(point_at_v, self.frame.u)
 
+    def normal_at_point(self, point):
+        """
+        Gets Normal vector at a given point on the surface.
+
+        :param point: point on the surface.
+        :return:
+        """
+        if not self.point_belongs(point):
+            raise ValueError(f'Point {point} not on this surface.')
+        return self.frame.w
+
 
 PLANE3D_OXY = Plane3D(volmdlr.OXYZ)
 PLANE3D_OYZ = Plane3D(volmdlr.OYZX)
@@ -3030,6 +3041,19 @@ class CylindricalSurface3D(UPeriodicalSurface):
         frame = self.frame.translation(self.frame.w * v)
         return curves.Circle3D(frame, self.radius)
 
+    def normal_at_point(self, point: volmdlr.Point3D):
+        """
+        Gets normal vector at given point on the surface.
+
+        :param point: point to be verified.
+        :return: normal
+        """
+        if not self.point_belongs(point):
+            raise ValueError('Point given not on surface.')
+        theta, _ = self.point3d_to_2d(point)
+        normal = math.cos(theta) * self.frame.u + math.sin(theta) * self.frame.v
+        return normal
+
 
 class ToroidalSurface3D(UVPeriodicalSurface):
     """
@@ -4170,6 +4194,20 @@ class ToroidalSurface3D(UVPeriodicalSurface):
         radius = abs(self.major_radius + self.minor_radius * math.cos(v))
         return curves.Circle3D(frame, radius)
 
+    def normal_at_point(self, point: volmdlr.Point3D):
+        """
+        Gets normal vector at given point on the surface.
+
+        :param point: point to be verified.
+        :return: normal
+        """
+        if not self.point_belongs(point):
+            raise ValueError('Point given not on surface.')
+        theta, phi = self.point3d_to_2d(point)
+        normal = math.cos(phi) * (math.cos(theta) * self.frame.u +
+                                  math.sin(theta) * self.frame.v) + math.sin(phi) * self.frame.w
+        return normal
+
 
 class ConicalSurface3D(UPeriodicalSurface):
     """
@@ -4913,6 +4951,23 @@ class ConicalSurface3D(UPeriodicalSurface):
             return None
         frame = self.frame.translation(self.frame.w * v)
         return curves.Circle3D(frame, radius)
+
+    def normal_at_point(self, point: volmdlr.Point3D):
+        """
+        Gets normal vector at given point on the surface.
+
+        :param point: point to be verified.
+        :return: normal
+        """
+        if not self.point_belongs(point):
+            raise ValueError('Point given not on surface.')
+        theta, z_apex = self.point3d_to_2d(point)
+
+        normal = (math.cos(theta) * self.frame.u + math.sin(theta) * self.frame.v -
+                  math.tan(self.semi_angle) * self.frame.w) / (math.sqrt(1 + math.tan(self.semi_angle)**2))
+        if self.ref_radius + z_apex * math.tan(self.semi_angle) < 0:
+            return - normal
+        return normal
 
 
 class SphericalSurface3D(UVPeriodicalSurface):
@@ -5942,6 +5997,21 @@ class SphericalSurface3D(UVPeriodicalSurface):
         z = self.radius * math.sin(v)
         frame = self.frame.translation(self.frame.w * z)
         return curves.Circle3D(frame, radius)
+
+    def normal_at_point(self, point: volmdlr.Point3D):
+        """
+        Gets normal vector at given point on the surface.
+
+        :param point: point to be verified.
+        :return: normal
+        """
+        if not self.point_belongs(point):
+            raise ValueError('Point given not on surface.')
+        theta, phi = self.point3d_to_2d(point)
+        normal = math.cos(phi) * (math.cos(theta) * self.frame.u +
+                                  math.sin(theta) * self.frame.v) + math.sin(theta) * self.frame.w
+        return normal
+
 
 
 class RuledSurface3D(Surface3D):

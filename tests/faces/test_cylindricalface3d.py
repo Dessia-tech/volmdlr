@@ -200,6 +200,16 @@ class TestCylindricalFace3D(unittest.TestCase):
                 for curve_solution, expected_result in zip(list_curves, expected_results[i][j]):
                     self.assertAlmostEqual(curve_solution.length(), expected_result, 6)
 
+    def test_normal_at_point(self):
+        cylindricalsurface = surfaces.CylindricalSurface3D(volmdlr.OXYZ, 0.15)
+        cylindricalface = faces.CylindricalFace3D.from_surface_rectangular_cut(
+            cylindricalsurface, 0, volmdlr.TWO_PI, -.25, .25)
+
+        point = volmdlr.Point3D(-0.15, 0.0, 0.0)
+
+        normal = cylindricalface.normal_at_point(point)
+        self.assertTrue(normal.is_close(volmdlr.Vector3D(-1, 0, 0)))
+
 
 if __name__ == '__main__':
     unittest.main()
