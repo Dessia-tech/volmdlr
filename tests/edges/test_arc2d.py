@@ -5,8 +5,8 @@ import volmdlr
 from volmdlr.edges import Arc2D
 from volmdlr import curves
 
-
 folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'arc_objects')
+
 
 class TestArc2D(unittest.TestCase):
     circle2d = curves.Circle2D(volmdlr.OXY, 1)
@@ -34,6 +34,61 @@ class TestArc2D(unittest.TestCase):
                    volmdlr.Point2D(-0.7071067811865475, 0.7071067811865475),
                    volmdlr.Point2D(0, 1),
                    volmdlr.Point2D(0.7071067811865475, 0.7071067811865475)]
+
+    def test_arc_angles(self):
+        frame = volmdlr.Frame2D(volmdlr.Point2D(-8.300842483198, 33.937305367912), volmdlr.Vector2D(-1.0, 0.0),
+                                volmdlr.Vector2D(-0.0, -1.0))
+
+        radius = 18.985621313014995
+
+        circle = curves.Circle2D(frame, radius)
+
+        start = volmdlr.Point2D(-21.897737241977318, 47.18790043228133)
+        end = volmdlr.Point2D(0.5512862323650758, 50.732948667420146)
+        arc = Arc2D(circle, start, end)
+        self.assertAlmostEqual(arc.angle_start, 2.369092548558922)
+        self.assertAlmostEqual(arc.angle_end, 1.085744328897209)
+        expected_angles = [2.369092548558922, 2.9246300027275742, -2.8030178502833594, -2.247480396114707,
+                           -1.6919429419460545, -1.136405487777402, -0.5808680336087492, -0.02533057944009658,
+                           0.5302068747285559, 1.0857443288972086]
+        for i, point in enumerate(arc.discretization_points(number_points=10)):
+            self.assertAlmostEqual(arc._arc_point_angle(point), expected_angles[i])
+
+        arc1 = Arc2D(self.circle2d, volmdlr.Point2D(1, 0), volmdlr.Point2D(0, 1))
+        arc2 = Arc2D(self.circle2d, volmdlr.Point2D(0, 1), volmdlr.Point2D(-1, 0))
+        arc3 = Arc2D(self.circle2d, volmdlr.Point2D(-1, 0), volmdlr.Point2D(0, -1))
+        arc4 = Arc2D(self.circle2d, volmdlr.Point2D(0, -1), volmdlr.Point2D(1, 0))
+        circle_reversed = self.circle2d.reverse()
+        arc5 = Arc2D(circle_reversed, volmdlr.Point2D(1, 0), volmdlr.Point2D(0, -1))
+        arc6 = Arc2D(circle_reversed, volmdlr.Point2D(0, -1), volmdlr.Point2D(-1, 0))
+        arc7 = Arc2D(circle_reversed, volmdlr.Point2D(-1, 0), volmdlr.Point2D(0, 1))
+        arc8 = Arc2D(circle_reversed, volmdlr.Point2D(0, 1), volmdlr.Point2D(1, 0))
+
+        expected_angles = [(0.0, 0.5 * math.pi), (0.5 * math.pi, math.pi), (-math.pi, -0.5 * math.pi),
+                           (-0.5 * math.pi, 0.0),
+                           (0.0, -0.5 * math.pi), (-0.5 * math.pi, -math.pi), (math.pi, 0.5 * math.pi),
+                           (0.5 * math.pi, 0.0)
+                           ]
+        for arc, angles in zip([arc1, arc2, arc3, arc4, arc5, arc6, arc7, arc8], expected_angles):
+            self.assertAlmostEqual(arc.angle_start, angles[0])
+            self.assertAlmostEqual(arc.angle_end, angles[1])
+            self.assertAlmostEqual(arc.angle, 0.5 * math.pi)
+
+    def test_angle(self):
+        arc1 = Arc2D(self.circle2d, volmdlr.Point2D(-1/math.sqrt(2), 1/math.sqrt(2)),
+                     volmdlr.Point2D(-1/math.sqrt(2), -1/math.sqrt(2)))
+
+        circle_reversed = self.circle2d.reverse()
+        arc2 = Arc2D(circle_reversed, volmdlr.Point2D(-1/math.sqrt(2), -1/math.sqrt(2)),
+                     volmdlr.Point2D(-1/math.sqrt(2), 1/math.sqrt(2)))
+
+
+        expected_angles = [(0.75 * math.pi, -0.75 * math.pi), (-0.75 * math.pi, 0.75 * math.pi)
+                           ]
+        for arc, angles in zip([arc1, arc2], expected_angles):
+            self.assertAlmostEqual(arc.angle_start, angles[0])
+            self.assertAlmostEqual(arc.angle_end, angles[1])
+            self.assertAlmostEqual(arc.angle, 0.5 * math.pi)
 
     def test_split(self):
         arc_split1 = self.arc2d.split(self.arc2d.start)
@@ -105,11 +160,11 @@ class TestArc2D(unittest.TestCase):
         for result_list, expected_result_list in zip(list_point_belongs, expected_results):
             self.assertEqual(result_list, expected_result_list)
 
-        arc = Arc2D.load_from_file(os.path.join(folder, "arc2d_bug_point_belongs.json"))
+        arc = Arc2D.from_json(os.path.join(folder, "arc2d_bug_point_belongs.json"))
         point = volmdlr.Point2D(0.01330629098214331, 0.0032923224261096617)
         self.assertTrue(arc.point_belongs(point))
 
-        arc = Arc2D.load_from_file(os.path.join(folder, "arc2d_point_belongs.json"))
+        arc = Arc2D.from_json(os.path.join(folder, "arc2d_point_belongs.json"))
         point = volmdlr.Point2D(0.0007151488183559929, 0.007258543823331798)
         self.assertTrue(arc.point_belongs(point))
 
@@ -177,7 +232,7 @@ class TestArc2D(unittest.TestCase):
         rotated_arc2d = rotated_arc2d.rotation(volmdlr.O2D, -math.pi / 2)
         self.assertTrue(rotated_arc2d.is_close(self.arc2))
 
-        arc2d = Arc2D.load_from_file(os.path.join(folder, "arc2d_rotation_test.json"))
+        arc2d = Arc2D.from_json(os.path.join(folder, "arc2d_rotation_test.json"))
         rotated_arc2d = arc2d.rotation(volmdlr.Point2D(0.5, 0.5), math.pi / 1.5)
         self.assertEqual(arc2d.frame.u, rotated_arc2d.frame.u)
         self.assertEqual(arc2d.frame.v, rotated_arc2d.frame.v)

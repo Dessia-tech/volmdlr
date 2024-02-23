@@ -3,7 +3,7 @@ Usefull operations
 ==================
 
 Export to json file
-******************
+*******************
 
 You can export any volmdlr objects to a json file. To do so, you can just call the method ``save_to_file``.
 
@@ -19,9 +19,9 @@ Here is an example how you can save a plan face 3d to a .json file:
 
 
 Import from json file
-********************
+*********************
 
-If you have a json file containing volmdlr objects, you can use the method ``dessia_common.core.DessiaObect.load_from_file`` to import it.
+If you have a json file containing volmdlr objects, you can use the method ``dessia_common.core.DessiaObect.from_json`` to import it.
 
 Example:
 
@@ -29,7 +29,7 @@ Example:
 
     import dessia_common
 
-    volmdlr_object = dessia_common.core.DessiaObject.load_from_file('path/to/your/file.json')
+    volmdlr_object = dessia_common.core.DessiaObject.from_json('path/to/your/file.json')
 
 Matplotlib plots
 ****************

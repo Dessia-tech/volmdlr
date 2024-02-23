@@ -4,7 +4,7 @@ Class for discrete representations of volmdlr models (voxelization for 3D geomet
 import itertools
 import math
 import warnings
-from typing import Any, Dict, Iterable, List, Set, Tuple, TypeVar, Union
+from typing import Dict, Iterable, List, Set, Tuple, TypeVar, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -19,12 +19,13 @@ from volmdlr.discrete_representation_compiled import (
     flood_fill_matrix_2d,
     flood_fill_matrix_3d,
     line_segments_to_pixels,
+    mesh_data_to_voxel_matrix,
     round_point_3d_to_digits,
     round_to_digits,
     triangle_intersects_voxel,
-    triangles_to_voxel_matrix,
     voxel_triangular_faces,
 )
+from volmdlr.display import Mesh3D
 from volmdlr.edges import LineSegment2D
 from volmdlr.faces import Face3D, Triangle3D
 from volmdlr.shells import ClosedTriangleShell3D, DisplayTriangleShell3D, Shell3D
@@ -471,18 +472,22 @@ class Voxelization(DiscreteRepresentation, PhysicalObject):
 
     # CLASS METHODS
     @classmethod
-    def from_triangles(cls, triangles: List[_Triangle3D], voxel_size: float, name: str = "") -> VoxelizationType:
+    def from_mesh_data(
+        cls, vertices: Iterable[Iterable[float]], faces: Iterable[Iterable[int]], voxel_size: float, name: str = ""
+    ) -> VoxelizationType:
         """
-        Create a voxelization from a list of triangles.
+        Create a voxelization from mesh data.
 
-        :param triangles: The list of triangles to create the voxelization from.
-        :type triangles: list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]
+        :param vertices: The vertices of the mesh.
+        :type vertices: Iterable[Iterable[float]]
+        :param faces: The faces of the mesh, using vertices indexes.
+        :type faces: Iterable[Iterable[int]]
         :param voxel_size: The size of each voxel.
         :type voxel_size: float
         :param name: Optional name for the voxelization.
         :type name: str
 
-        :return: A voxelization created from the list of triangles.
+        :return: A voxelization created from the mesh data.
         :rtype: VoxelizationType
         """
         raise NotImplementedError("Voxelization is an abstract class and should not be use directly.")
@@ -505,7 +510,8 @@ class Voxelization(DiscreteRepresentation, PhysicalObject):
         if isinstance(shell, DisplayTriangleShell3D):
             return cls.from_mesh_data(shell.positions, shell.indices, voxel_size, name)
 
-        return cls.from_triangles(cls._shell_to_triangles(shell), voxel_size, name)
+        mesh = shell.triangulation()
+        return cls.from_mesh_data(mesh.vertices, mesh.triangles, voxel_size, name)
 
     @classmethod
     def from_volume_model(cls, volume_model: VolumeModel, voxel_size: float, name: str = "") -> VoxelizationType:
@@ -522,28 +528,26 @@ class Voxelization(DiscreteRepresentation, PhysicalObject):
         :return: A voxelization created from the VolumeModel.
         :rtype: VoxelizationType
         """
-        return cls.from_triangles(cls._volume_model_to_triangles(volume_model), voxel_size, name)
+        mesh = volume_model.to_mesh()
+        return cls.from_mesh_data(mesh.vertices, mesh.triangles, voxel_size, name)
 
     @classmethod
-    def from_mesh_data(
-        cls, vertices: Iterable[Iterable[float]], faces: Iterable[Iterable[int]], voxel_size: float, name: str = ""
-    ) -> "VoxelizationType":
+    def from_triangles(cls, triangles: List[_Triangle3D], voxel_size: float, name: str = "") -> VoxelizationType:
         """
-        Create a voxelization from mesh data.
+        Create a voxelization from a list of triangles.
 
-        :param vertices: The vertices of the mesh.
-        :type vertices: Iterable[Iterable[float]]
-        :param faces: The faces of the mesh, using vertices indexes.
-        :type faces: Iterable[Iterable[int]]
+        :param triangles: The list of triangles to create the voxelization from.
+        :type triangles: list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]
         :param voxel_size: The size of each voxel.
         :type voxel_size: float
         :param name: Optional name for the voxelization.
         :type name: str
 
-        :return: A voxelization created from the mesh data.
+        :return: A voxelization created from the list of triangles.
         :rtype: VoxelizationType
         """
-        return cls.from_triangles(cls._mesh_data_to_triangles(vertices, faces), voxel_size, name)
+        vertices, triangles = cls._triangles_to_mesh_data(triangles)
+        return cls.from_mesh_data(vertices, triangles, voxel_size, name)
 
     # FILLING METHODS
     def fill_outer_voxels(self) -> VoxelizationType:
@@ -601,12 +605,12 @@ class Voxelization(DiscreteRepresentation, PhysicalObject):
 
         return shell
 
-    def to_display_triangle_shell(self) -> DisplayTriangleShell3D:
+    def to_mesh(self) -> Mesh3D:
         """
-        Generate a closed triangle shell representing the voxelization.
+        Generate a Mesh3D representing the voxelization.
 
-        :return: A closed triangle shell representation of the voxelization.
-        :rtype: ClosedTriangleShell3D
+        :return: A mesh representation of the voxelization.
+        :rtype: Mesh3D
         """
         # Flatten and round the vertices array
         faces = self.to_triangles()
@@ -619,7 +623,7 @@ class Voxelization(DiscreteRepresentation, PhysicalObject):
         flattened_indices = unique_indices.reshape(-1, 3)
         faces = flattened_indices[: len(faces)]
 
-        return DisplayTriangleShell3D(vertices, faces, name=self.name)
+        return Mesh3D(vertices=vertices, triangles=faces, name=self.name)
 
     def volmdlr_primitives(self, **kwargs):
         """
@@ -628,65 +632,26 @@ class Voxelization(DiscreteRepresentation, PhysicalObject):
         :param kwargs: Additional keyword arguments.
 
         :return: A list of volmdlr primitives.
-        :rtype: List[ClosedTriangleShell3D]
         """
-        return [self.to_closed_triangle_shell()]
+        return [self.to_mesh().split_shared_vertices()]  # split shared vertices for shadow display purpose
 
     # HELPER METHODS
-
     @staticmethod
-    def _shell_to_triangles(shell: Shell3D) -> List[_Triangle3D]:
+    def _triangles_to_mesh_data(triangles: List[_Triangle3D]) -> Tuple[NDArray[float], NDArray[int]]:
         """
-        Helper method to convert a Shell3D to a list of triangles.
+        Helper method to convert a list of triangles to mesh data.
 
-        It uses the "triangulation" method to triangulate the Shell3D.
+        :param triangles: The triangles to converts.
+        :type triangles: list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]
 
-        :param shell: The Shell3D to convert to triangles.
-        :type shell: Shell3D
-
-        :return: The list of triangles extracted from the triangulated Shell3D.
-        :rtype: List[Triangle]
+        :return: The mesh data of the triangles.
+        :rtype: Tuple[NDArray[float], NDArray[int]]
         """
-        triangulation = shell.triangulation()
-        return [
-            (
-                (
-                    float(triangulation.vertices[triangle[0]][0]),
-                    float(triangulation.vertices[triangle[0]][1]),
-                    float(triangulation.vertices[triangle[0]][2]),
-                ),
-                (
-                    float(triangulation.vertices[triangle[1]][0]),
-                    float(triangulation.vertices[triangle[1]][1]),
-                    float(triangulation.vertices[triangle[1]][2]),
-                ),
-                (
-                    float(triangulation.vertices[triangle[2]][0]),
-                    float(triangulation.vertices[triangle[2]][1]),
-                    float(triangulation.vertices[triangle[2]][2]),
-                ),
-            )
-            for triangle in triangulation.triangles
-        ]
+        all_vertices = np.array(triangles).reshape(-1, 3)
+        unique_vertices, indices = np.unique(all_vertices, axis=0, return_inverse=True)
+        faces = indices.reshape(-1, 3)
 
-    @staticmethod
-    def _volume_model_to_triangles(volume_model: VolumeModel) -> List[_Triangle3D]:
-        """
-        Helper method to convert a VolumeModel to a list of triangles.
-
-        It uses the "triangulation" method to triangulate the shells of the VolumeModel.
-
-        :param volume_model: The VolumeModel to convert to triangles.
-        :type volume_model: VolumeModel
-
-        :return: The list of triangles extracted from the triangulated primitives of the VolumeModel.
-        :rtype: List[Triangle]
-        """
-        triangles = []
-        for shell in volume_model.get_shells():
-            triangles.extend(Voxelization._shell_to_triangles(shell))
-
-        return triangles
+        return unique_vertices, faces
 
     @staticmethod
     def _mesh_data_to_triangles(
@@ -824,23 +789,27 @@ class PointBasedVoxelization(Voxelization):
 
     # CLASS METHODS
     @classmethod
-    def from_triangles(
-        cls, triangles: List[_Triangle3D], voxel_size: float, name: str = ""
+    def from_mesh_data(
+        cls, vertices: Iterable[Iterable[float]], faces: Iterable[Iterable[int]], voxel_size: float, name: str = ""
     ) -> "PointBasedVoxelization":
         """
-        Create a PointBasedVoxelization from a list of triangles.
+        Create a PointBasedVoxelization from mesh data.
 
-        :param triangles: The list of triangles to create the PointBasedVoxelization from.
-        :type triangles: list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]
+        :param vertices: The vertices of the mesh.
+        :type vertices: Iterable[Iterable[float]]
+        :param faces: The faces of the mesh, using vertices indexes.
+        :type faces: Iterable[Iterable[int]]
         :param voxel_size: The size of each voxel.
         :type voxel_size: float
         :param name: Optional name for the PointBasedVoxelization.
         :type name: str
 
-        :return: A PointBasedVoxelization created from the list of triangles.
+        :return: A PointBasedVoxelization created from the mesh data.
         :rtype: PointBasedVoxelization
         """
-        return cls(MatrixBasedVoxelization.from_triangles(triangles, voxel_size).get_voxel_centers(), voxel_size, name)
+        return cls(
+            MatrixBasedVoxelization.from_mesh_data(vertices, faces, voxel_size).get_voxel_centers(), voxel_size, name
+        )
 
     @classmethod
     def from_matrix_based_voxelization(
@@ -1017,9 +986,7 @@ class PointBasedVoxelization(Voxelization):
         return self.__class__(intersecting_voxels, self.voxel_size)
 
     # SERIALIZATION
-    def to_dict(
-        self, use_pointers: bool = True, memo=None, path: str = "#", id_method=True, id_memo=None
-    ) -> JsonSerializable:
+    def to_dict(self, *args, **kwargs) -> JsonSerializable:
         """Specific 'to_dict' method to allow serialization of a set."""
         dict_ = self.base_dict()
 
@@ -1030,14 +997,7 @@ class PointBasedVoxelization(Voxelization):
         return dict_
 
     @classmethod
-    def dict_to_object(
-        cls,
-        dict_: JsonSerializable,
-        force_generic: bool = False,
-        global_dict=None,
-        pointers_memo: Dict[str, Any] = None,
-        path: str = "#",
-    ) -> "PointBasedVoxelization":
+    def dict_to_object(cls, dict_: JsonSerializable, *args, **kwargs) -> "PointBasedVoxelization":
         """Specific 'dict_to_object' method to allow deserialization of a set."""
 
         voxel_centers = set(tuple(voxel_center) for voxel_center in dict_["voxel_centers"])
@@ -1133,7 +1093,7 @@ class PointBasedVoxelization(Voxelization):
 
         :raises ValueError: If the point is not within the bounding box of the voxelization.
         """
-        if not self.bounding_box.point_belongs(Point3D(*point)):
+        if not self.bounding_box.point_inside(Point3D(*point)):
             raise ValueError("Point not in local voxel grid.")
 
         x_index = int((point[0] - self.bounding_box.xmin) // self.voxel_size)
@@ -1215,8 +1175,8 @@ class PointBasedVoxelization(Voxelization):
 
         points_coords = np.array(list(self.voxel_centers))
 
-        display_triangle_shell = self.to_display_triangle_shell()
-        vertices, faces = display_triangle_shell.positions, display_triangle_shell.indices
+        mesh = self.to_mesh()
+        vertices, faces = mesh.vertices, mesh.triangles
         distances_array = signed_distance(points_coords, vertices, faces.astype(int), sign_type=3)[0]
 
         if len(self) == 1:
@@ -1326,23 +1286,25 @@ class MatrixBasedVoxelization(Voxelization):
 
     # CLASS METHODS
     @classmethod
-    def from_triangles(
-        cls, triangles: List[_Triangle3D], voxel_size: float, name: str = ""
+    def from_mesh_data(
+        cls, vertices: Iterable[Iterable[float]], faces: Iterable[Iterable[int]], voxel_size: float, name: str = ""
     ) -> "MatrixBasedVoxelization":
         """
-        Create a MatrixBasedVoxelization from a list of triangles.
+        Create a MatrixBasedVoxelization from mesh data.
 
-        :param triangles: The list of triangles to create the MatrixBasedVoxelization from.
-        :type triangles: list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]
+        :param vertices: The vertices of the mesh.
+        :type vertices: Iterable[Iterable[float]]
+        :param faces: The faces of the mesh, using vertices indexes.
+        :type faces: Iterable[Iterable[int]]
         :param voxel_size: The size of each voxel.
         :type voxel_size: float
         :param name: Optional name for the MatrixBasedVoxelization.
         :type name: str
 
-        :return: A MatrixBasedVoxelization created from the list of triangles.
+        :return: A MatrixBasedVoxelization created from mesh data.
         :rtype: MatrixBasedVoxelization
         """
-        matrix, min_grid_center = triangles_to_voxel_matrix(triangles, voxel_size)
+        matrix, min_grid_center = mesh_data_to_voxel_matrix(np.array(vertices), np.array(faces), voxel_size)
 
         return cls(matrix, min_grid_center, voxel_size, name).crop_matrix()
 
@@ -1464,9 +1426,7 @@ class MatrixBasedVoxelization(Voxelization):
         return inner_filled_voxel_matrix
 
     # SERIALIZATION
-    def to_dict(
-        self, use_pointers: bool = True, memo=None, path: str = "#", id_method=True, id_memo=None
-    ) -> JsonSerializable:
+    def to_dict(self, *args, **kwargs) -> JsonSerializable:
         """Specific 'to_dict' method to allow serialization of a numpy array."""
         dict_ = self.base_dict()
 
@@ -1478,14 +1438,7 @@ class MatrixBasedVoxelization(Voxelization):
         return dict_
 
     @classmethod
-    def dict_to_object(
-        cls,
-        dict_: JsonSerializable,
-        force_generic: bool = False,
-        global_dict=None,
-        pointers_memo: Dict[str, Any] = None,
-        path: str = "#",
-    ) -> "MatrixBasedVoxelization":
+    def dict_to_object(cls, dict_: JsonSerializable, *args, **kwargs) -> "MatrixBasedVoxelization":
         """Specific 'dict_to_object' method to allow deserialization of a numpy array."""
 
         matrix = np.array(dict_["matrix"])
@@ -1856,25 +1809,29 @@ class OctreeBasedVoxelization(Voxelization):
 
     # CLASS METHODS
     @classmethod
-    def from_triangles(
-        cls, triangles: List[_Triangle3D], voxel_size: float, name: str = ""
+    def from_mesh_data(
+        cls, vertices: Iterable[Iterable[float]], faces: Iterable[Iterable[int]], voxel_size: float, name: str = ""
     ) -> "OctreeBasedVoxelization":
         """
-        Create a OctreeBasedVoxelization from a list of triangles.
+        Create a OctreeBasedVoxelization from mesh data.
 
-        :param triangles: The list of triangles to create the OctreeBasedVoxelization from.
-        :type triangles: list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]
+        :param vertices: The vertices of the mesh.
+        :type vertices: Iterable[Iterable[float]]
+        :param faces: The faces of the mesh, using vertices indexes.
+        :type faces: Iterable[Iterable[int]]
         :param voxel_size: The size of each voxel.
         :type voxel_size: float
-        :param name: Optional name for the OctreeBasedVoxelization.
+        :param name: Optional name for the voxelization.
         :type name: str
 
-        :return: A OctreeBasedVoxelization created from the list of triangles.
+        :return: A OctreeBasedVoxelization created from the mesh data.
         :rtype: OctreeBasedVoxelization
         """
-        triangles_np = np.array(triangles)
-        min_corner = np.min(np.min(triangles_np, axis=1), axis=0)
-        max_corner = np.max(np.max(triangles_np, axis=1), axis=0)
+        vertices = np.array(vertices)
+        faces = np.array(faces)
+
+        min_corner = np.amin(vertices, axis=0)
+        max_corner = np.amax(faces, axis=0)
 
         # Compute the corners in the implicit grid defined by the voxel size
         min_corner = (np.floor_divide(min_corner, voxel_size) - 2) * voxel_size
@@ -1889,7 +1846,9 @@ class OctreeBasedVoxelization(Voxelization):
         sizes = [round_to_digits(voxel_size * 2**i, DECIMALS) for i in range(max_depth, -1, -1)]
         sizes.append(round_to_digits(voxel_size * 1 / 2, DECIMALS))
 
-        octree = cls._subdivide_from_triangles(triangles, list(range(len(triangles))), center, sizes, 0, max_depth)
+        octree = cls._subdivide_from_mesh_data(vertices, faces, list(range(len(faces))), center, sizes, 0, max_depth)
+
+        triangles = cls._mesh_data_to_triangles(vertices, faces)
 
         return cls(octree, center, max_depth, voxel_size, triangles, name)
 
@@ -2505,15 +2464,16 @@ class OctreeBasedVoxelization(Voxelization):
 
     # HELPER CREATION METHODS
     @staticmethod
-    def _subdivide_from_triangles(
-        triangles: List[_Triangle3D],
+    def _subdivide_from_mesh_data(
+        vertices: NDArray[float],
+        faces: NDArray[int],
         intersecting_indices: List[int],
         center: _Point3D,
         sizes: List[float],
         depth: int,
         max_depth: int,
     ) -> Octree:
-        """Recursive method to create an OctreeBasedVoxelization from a list of triangles."""
+        """Recursive method to create an OctreeBasedVoxelization from mesh data."""
         if depth < max_depth:  # not yet reached max depth
             half_size = sizes[depth + 1]
             quarter_size = sizes[depth + 2]
@@ -2538,7 +2498,9 @@ class OctreeBasedVoxelization(Voxelization):
                             i
                             for i in intersecting_indices
                             if triangle_intersects_voxel(
-                                triangles[i], sub_voxel_center, (quarter_size, quarter_size, quarter_size)
+                                (vertices[faces[i][0]], vertices[faces[i][1]], vertices[faces[i][2]]),
+                                sub_voxel_center,
+                                (quarter_size, quarter_size, quarter_size),
                             )
                         ]
 
@@ -2550,8 +2512,9 @@ class OctreeBasedVoxelization(Voxelization):
                         else:
                             # If sub-voxel intersecting
                             sub_voxels.append(
-                                OctreeBasedVoxelization._subdivide_from_triangles(
-                                    triangles=triangles,
+                                OctreeBasedVoxelization._subdivide_from_mesh_data(
+                                    vertices=vertices,
+                                    faces=faces,
                                     intersecting_indices=sub_voxel_intersecting_indices,
                                     center=sub_voxel_center,
                                     sizes=sizes,
@@ -3026,9 +2989,7 @@ class OctreeBasedVoxelization(Voxelization):
         return octree_1, octree_2
 
     # SERIALIZATION
-    def to_dict(
-        self, use_pointers: bool = True, memo=None, path: str = "#", id_method=True, id_memo=None
-    ) -> JsonSerializable:
+    def to_dict(self, *args, **kwargs) -> JsonSerializable:
         """Specific 'to_dict' method."""
         dict_ = self.base_dict()
 
@@ -3042,14 +3003,7 @@ class OctreeBasedVoxelization(Voxelization):
         return dict_
 
     @classmethod
-    def dict_to_object(
-        cls,
-        dict_: JsonSerializable,
-        force_generic: bool = False,
-        global_dict=None,
-        pointers_memo: Dict[str, Any] = None,
-        path: str = "#",
-    ) -> "OctreeBasedVoxelization":
+    def dict_to_object(cls, dict_: JsonSerializable, *args, **kwargs) -> "OctreeBasedVoxelization":
         """Specific 'dict_to_object' method."""
 
         octree = dict_["octree"]
@@ -3538,9 +3492,7 @@ class PointBasedPixelization(Pixelization):
         return self.from_matrix_based_pixelization(self.to_matrix_based_pixelization().fill_enclosed_pixels())
 
     # SERIALIZATION
-    def to_dict(
-        self, use_pointers: bool = True, memo=None, path: str = "#", id_method=True, id_memo=None
-    ) -> JsonSerializable:
+    def to_dict(self, *args, **kwargs) -> JsonSerializable:
         """Specific 'to_dict' method to allow serialization of a set."""
         dict_ = self.base_dict()
 
@@ -3551,14 +3503,7 @@ class PointBasedPixelization(Pixelization):
         return dict_
 
     @classmethod
-    def dict_to_object(
-        cls,
-        dict_: JsonSerializable,
-        force_generic: bool = False,
-        global_dict=None,
-        pointers_memo: Dict[str, Any] = None,
-        path: str = "#",
-    ) -> "PointBasedPixelization":
+    def dict_to_object(cls, dict_: JsonSerializable, *args, **kwargs) -> "PointBasedPixelization":
         """Specific 'dict_to_object' method to allow deserialization of a set."""
 
         pixel_centers = set(tuple(pixel_center) for pixel_center in dict_["pixel_centers"])
@@ -3600,7 +3545,7 @@ class PointBasedPixelization(Pixelization):
 
         :raises ValueError: If the point is not within the bounding rectangle of the pixelization.
         """
-        if not self.bounding_rectangle.point_belongs(Point2D(*point)):
+        if not self.bounding_rectangle.point_inside(Point2D(*point)):
             raise ValueError("Point not in local pixel grid.")
 
         x_index = int((point[0] - self.bounding_rectangle.xmin) // self.pixel_size)
@@ -3864,9 +3809,7 @@ class MatrixBasedPixelization(Pixelization):
         return inner_filled_pixel_matrix
 
     # SERIALIZATION
-    def to_dict(
-        self, use_pointers: bool = True, memo=None, path: str = "#", id_method=True, id_memo=None
-    ) -> JsonSerializable:
+    def to_dict(self, *args, **kwargs) -> JsonSerializable:
         """Specific 'to_dict' method to allow serialization of a numpy array."""
         dict_ = self.base_dict()
 
@@ -3878,14 +3821,7 @@ class MatrixBasedPixelization(Pixelization):
         return dict_
 
     @classmethod
-    def dict_to_object(
-        cls,
-        dict_: JsonSerializable,
-        force_generic: bool = False,
-        global_dict=None,
-        pointers_memo: Dict[str, Any] = None,
-        path: str = "#",
-    ) -> "MatrixBasedPixelization":
+    def dict_to_object(cls, dict_: JsonSerializable, *args, **kwargs) -> "MatrixBasedPixelization":
         """Specific 'dict_to_object' method to allow deserialization of a numpy array."""
 
         matrix = np.array(dict_["matrix"])

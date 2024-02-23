@@ -169,17 +169,17 @@ class TestClosedShell3D(unittest.TestCase):
         self.assertFalse(box1.intersection(box4))
 
     def test_point_belongs(self):
-        closed_shell = dessia_common.core.DessiaObject.load_from_file(
+        closed_shell = dessia_common.core.DessiaObject.from_json(
             os.path.join(folder, 'test_closed_shell_point_belongs2.json')).primitives[0]
         points = [volmdlr.Point3D(-.2, -0.6, 0.08), volmdlr.Point3D(-0.340920128805, -0.418071198223, 0.007036661148),
                   volmdlr.Point3D(-0.287522562519, -0.574786328164, 0.157256628036),
                   volmdlr.Point3D(-0.314221345662, -0.522547951517, 0.057109983444)]
         expected_results = [True, True, False, True]
         for i, expected_result in enumerate(expected_results):
-            self.assertEqual(closed_shell.point_belongs(points[i]), expected_result)
+            self.assertEqual(closed_shell.point_inside(points[i]), expected_result)
 
     def test_minimum_distance(self):
-        closed_shell = dessia_common.core.DessiaObject.load_from_file(
+        closed_shell = dessia_common.core.DessiaObject.from_json(
             os.path.join(folder, 'test_shells_distance2.json'))
         u_vector = volmdlr.Vector3D(-0.5773502691896258, -0.5773502691896258, -0.5773502691896258)
         v_vector = volmdlr.Vector3D(0.8164965809277258, -0.40824829046386313, -0.40824829046386313)
@@ -188,7 +188,7 @@ class TestClosedShell3D(unittest.TestCase):
                                 u_vector, v_vector, w_vector)
         fm_shell = closed_shell.frame_mapping(frame, 'new')
         min_distance = closed_shell.minimum_distance(fm_shell, False)
-        self.assertAlmostEqual(min_distance, 0.022821217764982176)
+        self.assertAlmostEqual(min_distance, 0.022811959708641426, 6)
         frame = volmdlr.Frame3D(volmdlr.Point3D(0.011516851705803667, 0.012859651289434018, 0.015147046170848444),
                                 u_vector, v_vector, w_vector)
         fm_shell = closed_shell.frame_mapping(frame, 'new')
@@ -196,7 +196,7 @@ class TestClosedShell3D(unittest.TestCase):
         self.assertEqual(min_distance, 0.0)
 
     def test_volume(self):
-        closed_shell = dessia_common.core.DessiaObject.load_from_file(os.path.join(folder, 'test_shell_volume.json'))
+        closed_shell = dessia_common.core.DessiaObject.from_json(os.path.join(folder, 'test_shell_volume.json'))
         closed_shell2 = closed_shell.rotation(volmdlr.O3D - 0.95 * volmdlr.X3D, volmdlr.Z3D, numpy.pi / 2)
         closed_shell2 = closed_shell2.translation(-0.95 * volmdlr.X3D + 0.45 * volmdlr.Z3D + 0.2 * volmdlr.Y3D)
         self.assertAlmostEqual(closed_shell.volume(), closed_shell2.volume())

@@ -12,7 +12,7 @@ from volmdlr.shells import (
 from volmdlr.primitives3d import Block
 from volmdlr import OXYZ
 
-SHOW_BABYLONJS = True
+SHOW_BABYLONJS = False
 
 
 folder = os.path.dirname(os.path.realpath(__file__))
@@ -50,7 +50,7 @@ class TestTriangleShell3D(unittest.TestCase):
             display_triangle_shell.babylonjs()
 
     def test_turn_normals_outwards(self):
-        closed_shell = DessiaObject.load_from_file(
+        closed_shell = DessiaObject.from_json(
             os.path.join(folder, "closedtriangleshell3d.json")
         )
         self.assertFalse(closed_shell.are_normals_pointing_outwards())
@@ -58,7 +58,7 @@ class TestTriangleShell3D(unittest.TestCase):
         self.assertTrue(new_closed_shell.are_normals_pointing_outwards())
 
     def test_turn_normals_inwards(self):
-        closed_shell = DessiaObject.load_from_file(
+        closed_shell = DessiaObject.from_json(
             os.path.join(folder, "closedtriangleshell3d.json")
         )
         self.assertFalse(closed_shell.are_normals_pointing_inwards())
@@ -66,8 +66,8 @@ class TestTriangleShell3D(unittest.TestCase):
         self.assertTrue(new_closed_shell.are_normals_pointing_inwards())
 
     def test_closedtriagleshell3d_subtraction(self):
-        shell1 = DessiaObject.load_from_file(os.path.join(folder, "shell1(1).json"))
-        shell2 = DessiaObject.load_from_file(os.path.join(folder, "shell2(1).json"))
+        shell1 = DessiaObject.from_json(os.path.join(folder, "shell1(1).json"))
+        shell2 = DessiaObject.from_json(os.path.join(folder, "shell2(1).json"))
         new_shell = shell2.subtract_to_closed_shell(shell1)[0]
         self.assertEqual(len(new_shell.faces), 76)
 

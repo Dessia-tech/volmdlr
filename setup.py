@@ -126,7 +126,7 @@ setup(
     include_package_data=True,
     install_requires=[
         "packaging",
-        "dessia_common>=0.10.0",
+        "dessia_common>=0.14.0",
         "Cython>=3.0.0",
         "numpy",
         "matplotlib",
@@ -134,7 +134,7 @@ setup(
         "geomdl",
         "networkx",
         "triangle",
-        "plot_data>=0.10.9",
+        "plot_data>=0.23.0",
         "kaitaistruct",
         "binaryornot",
         "sympy",

@@ -133,7 +133,7 @@ class TestArcEllipse2D(unittest.TestCase):
         for point, expected_point in zip(list_points, expected_points):
             self.assertTrue(point.is_close(expected_point))
 
-        arcellipse = edges.ArcEllipse2D.load_from_file(os.path.join(folder, "ellipse2d_point_at_abscissa.json"))
+        arcellipse = edges.ArcEllipse2D.from_json(os.path.join(folder, "ellipse2d_point_at_abscissa.json"))
         abscissa = 1.4594044224379008
         point = arcellipse.point_at_abscissa(abscissa)
         self.assertTrue(point.is_close(volmdlr.Point2D(0.2409700344646443, -0.10841585996396141)))
@@ -206,6 +206,9 @@ class TestArcEllipse2D(unittest.TestCase):
         self.assertEqual(delete_shared_section[1].end, arc_ellipse2d.end)
         self.assertEqual(delete_shared_section[1].start, arc_ellipse2d_2.end)
 
+    def test_straight_line_center_of_mass(self):
+        straight_line_center_of_mass = self.arc_ellipse2d.straight_line_center_of_mass()
+        self.assertTrue(straight_line_center_of_mass, volmdlr.Point2D(-0.4100897136188068, -0.4100897136188069))
 
 if __name__ == '__main__':
     unittest.main()

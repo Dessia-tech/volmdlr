@@ -25,3 +25,5 @@ ZXY = Basis3D(Z3D, X3D, Y3D)
 OXYZ = Frame3D(O3D, X3D, Y3D, Z3D)
 OYZX = Frame3D(O3D, Y3D, Z3D, X3D)
 OZXY = Frame3D(O3D, Z3D, X3D, Y3D)
+
+PATH_ROOT = "#"

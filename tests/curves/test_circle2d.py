@@ -2,6 +2,7 @@ import os
 import math
 import unittest
 
+from dessia_common.core import DessiaObject
 from geomdl import utilities
 
 import volmdlr.edges
@@ -10,6 +11,7 @@ from volmdlr import curves, wires
 circle = curves.Circle2D(volmdlr.OXY, 0.50)
 line = curves.Line2D(volmdlr.O2D, volmdlr.Point2D(0, 1))
 folder = os.path.join(os.path.dirname(os.path.realpath(__file__)))
+folder_2 = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'circle2d_objects')
 
 
 class TestCircle2D(unittest.TestCase):
@@ -113,6 +115,18 @@ class TestCircle2D(unittest.TestCase):
         circle_line_intersections_3 = circle.line_intersections(line_3)
         self.assertTrue(circle_line_intersections_3[0].is_close(volmdlr.Point2D(0.4898979485566356, 0.1)))
         self.assertTrue(circle_line_intersections_3[1].is_close(volmdlr.Point2D(-0.4898979485566356, 0.1)))
+        circle_, line2d = DessiaObject.from_json(os.path.join(folder_2, 'test_circle2d_line2d_intersections.json')).primitives
+        intersections = circle_.line_intersections(line2d)
+        self.assertEqual(len(intersections), 2)
+        self.assertTrue(intersections[0].is_close(volmdlr.Point2D(0.031959341501134664, -0.12658445641691748)))
+        self.assertTrue(intersections[1].is_close(volmdlr.Point2D(0.031959341501134664, 0.12658445641691748)))
+
+        circle_ = curves.Circle2D(volmdlr.OXY, 1)
+        line2d = curves.Line2D.from_point_and_vector(volmdlr.Point2D(1, 0), volmdlr.Y2D)
+
+        intersections = circle_.line_intersections(line2d)
+        self.assertEqual(len(intersections), 1)
+        self.assertTrue(intersections[0].is_close(volmdlr.Point2D(1, 0.0)))
 
     def test_linesegment_intersections(self):
         linesegment = volmdlr.edges.LineSegment2D(volmdlr.Point2D(-2.0, -2.0),
@@ -235,7 +249,7 @@ class TestCircle2D(unittest.TestCase):
             self.assertTrue(intersection.is_close(expected_intersection))
         circle_2 = curves.Circle2D(volmdlr.OXY.translation(volmdlr.Vector2D(4.257776625181402, -2.6149184392658222)),
                                    1.1791034225674362)
-        bspline = volmdlr.edges.BSplineCurve2D.load_from_file(os.path.join(folder, 'bspline.json'))
+        bspline = volmdlr.edges.BSplineCurve2D.from_json(os.path.join(folder, 'bspline.json'))
         intersections = circle_2.bsplinecurve_intersections(bspline, 1e-6)
         self.assertEqual(len(intersections), 1)
         self.assertTrue(intersections[0], volmdlr.Point2D(3.218528920632699, -3.1719185197869))

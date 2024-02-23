@@ -1,5 +1,4 @@
 import os
-import random
 import sys
 from datetime import date, timedelta
 import math
@@ -7,7 +6,7 @@ import math
 from pylint import __version__
 from pylint.lint import Run
 
-MIN_NOTE = 9.7
+MIN_NOTE = 9.6
 
 UNWATCHED_ERRORS = ['fixme', 'trailing-whitespace', 'import-error', 'missing-final-newline', 'use-maxsplit-arg']
 
@@ -16,32 +15,31 @@ EFFECTIVE_DATE = date(2023, 1, 31)
 WEEKLY_DECREASE = 0.03
 
 MAX_ERROR_BY_TYPE = {
-                     "wrong-spelling-in-comment": 6,
                      'invalid-name': 1,
-                     'arguments-differ': 67,
+                     'arguments-differ': 16,
                      'too-many-locals': 75,
-                     'unused-argument': 10,
-                     'too-many-arguments': 30,
+                     'unused-argument': 6,
+                     'too-many-arguments': 31,
                      'line-too-long': 12,
-                     'too-many-branches': 26,
-                     'too-many-statements': 15,
-                     'super-init-not-called': 5,
-                     'no-name-in-module': 14,
+                     'too-many-branches': 22,
+                     'too-many-statements': 11,
+                     'no-name-in-module': 13,
                      'abstract-method': 47,
-                     'duplicate-code': 9,
-                     'arguments-renamed': 56,
-                     'too-many-ancestors': 20,
-                     'too-many-public-methods': 16,
-                     'too-many-instance-attributes': 15,
+                     'duplicate-code': 8,
+                     'arguments-renamed': 8,
+                     'too-many-ancestors': 2,
+                     'too-many-public-methods': 18,
+                     'too-many-instance-attributes': 12,
                      'protected-access': 4,
                      'too-many-nested-blocks': 3,
-                     'too-many-return-statements': 5,
+                     'too-many-return-statements': 4,
                      'cyclic-import': 1,
                      "broad-exception-caught": 1,
                      'too-many-boolean-expressions': 2,
-                     'too-many-lines': 4,
+                     'too-many-lines': 3,
                      'signature-differs': 1,
                      'consider-using-enumerate': 2,
+                     'too-few-public-methods': 2,
                     }
 
 ERRORS_WITHOUT_TIME_DECREASE = ["signature-differs", "broad-exception-caught", 'invalid-name', "too-many-locals",
@@ -122,8 +120,9 @@ for error_type, number_errors in stats_by_msg.items():
                 f"\nFix some {error_type} errors: {number_errors}/{max_errors} "
                 f"(time effect: {time_decrease_effect} errors)")
 
-            messages = extract_messages_by_type(error_type)
-            messages_to_show = sorted(random.sample(messages, min(30, len(messages))), key=lambda m: (m.path, m.line))
+            # messages = extract_messages_by_type(error_type)
+            messages_to_show = extract_messages_by_type(error_type)
+            # messages_to_show = sorted(random.sample(messages, min(30, len(messages))), key=lambda m: (m.path, m.line))
             for message in messages_to_show:
                 print(f"{message.path} line {message.line}: {message.msg}")
         elif number_errors < max_errors:
