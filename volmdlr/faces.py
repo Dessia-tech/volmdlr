@@ -1430,14 +1430,14 @@ class Face3D(volmdlr.core.Primitive3D):
             return True
         return False
 
-    def linesegment_intersections_approximation(self, linesegment: vme.LineSegment3D) -> List[volmdlr.Point3D]:
+    def linesegment_intersections_approximation(self, linesegment: vme.LineSegment3D, abs_tol: float = 1e-6) -> List[volmdlr.Point3D]:
         """Approximation of intersections face 3D and a line segment 3D."""
         if not self._is_linesegment_intersection_possible(linesegment):
             return []
         linesegment_intersections = []
         for inters in self._get_linesegment_intersections_approximation(linesegment):
             for point in inters:
-                if not point.in_list(linesegment_intersections):
+                if not point.in_list(linesegment_intersections, abs_tol):
                     linesegment_intersections.append(point)
 
         return linesegment_intersections
@@ -3959,11 +3959,12 @@ class BSplineFace3D(Face3D):
             return volmdlr.wires.Wire3D([neutral_fiber.trim(point1, neutral_fiber.point_projection(point3d_max)[0])])
         return volmdlr.wires.Wire3D([neutral_fiber.trim(point1, neutral_fiber.end)])
 
-    def linesegment_intersections(self, linesegment: vme.LineSegment3D) -> List[volmdlr.Point3D]:
+    def linesegment_intersections(self, linesegment: vme.LineSegment3D, abs_tol: float = 1e-6) -> List[volmdlr.Point3D]:
         """
         Get intersections between a BSpline face 3d and a Line Segment 3D.
 
         :param linesegment: other linesegment.
+        :param abs_tol: tolerance.
         :return: a list of intersections.
         """
-        return self.linesegment_intersections_approximation(linesegment)
+        return self.linesegment_intersections_approximation(linesegment, abs_tol)
