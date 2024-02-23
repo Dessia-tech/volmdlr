@@ -1496,7 +1496,7 @@ class ClosedShell3D(Shell3D):
         for point in points:
             point3d = face.surface3d.point2d_to_3d(point)
             if face.point_belongs(point3d):
-                normal_at_point = face.get_normal_at_point(point3d)
+                normal_at_point = face.normal_at_point(point3d)
                 normal1 = point3d - 0.00001 * normal_at_point
                 normal2 = point3d + 0.00001 * normal_at_point
                 if (self.point_inside(normal1) and

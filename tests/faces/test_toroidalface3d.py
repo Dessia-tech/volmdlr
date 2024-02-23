@@ -140,6 +140,15 @@ class TestToroidalFace3D(unittest.TestCase):
         self.assertLess(n_triangles, n_triangles_max,
                         f'Too much triangles in toroidal face triangulation: {n_triangles}/{n_triangles_max}')
 
+    def test_normal_at_point(self):
+        toroidalsurface = surfaces.ToroidalSurface3D(volmdlr.OXYZ, 2, 1)
+        toroidaface = faces.ToroidalFace3D.from_surface_rectangular_cut(toroidalsurface, -1.4, 3.5, 0., 2.5)
+
+        point = volmdlr.Point3D(1.1520373740641632, 2.008364391878863, 0.9489846193555862)
+
+        normal = toroidaface.normal_at_point(point)
+        self.assertTrue(normal.is_close(volmdlr.Vector3D(0.1568952782807088, 0.27351794069082946, 0.9489846193555862)))
+
 
 if __name__ == '__main__':
     unittest.main()

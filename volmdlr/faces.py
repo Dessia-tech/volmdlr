@@ -1622,6 +1622,17 @@ class Face3D(volmdlr.core.Primitive3D):
         ]
         return contours_in_self, contours_in_other_face
 
+    def normal_at_point(self, point):
+        """
+        Gets Normal vector at a given point on the face.
+
+        :param point: point on the face.
+        :return:
+        """
+        if not self.point_belongs(point):
+            raise ValueError(f'Point {point} not in this face.')
+        return self.surface3d.normal_at_point(point)
+
 
 class PlaneFace3D(Face3D):
     """
@@ -2217,6 +2228,16 @@ class PeriodicalFaceMixin:
                 point2d.y -= self.surface3d.y_periodicity
 
         return self.surface2d.point_belongs(point2d, tol)
+
+    def face_inside(self, face2, abs_tol: float = 1e-6):
+        """
+        Verifies if a face is inside another one.
+
+        It returns True if face2 is inside or False if the opposite.
+        """
+        if self.surface3d.frame.is_close(face2.surface3d.frame):
+            return parametric_face_inside(self, face2, abs_tol)
+        return super().face_inside(face2, abs_tol)
 
     def face_inside(self, face2, abs_tol: float = 1e-6):
         """

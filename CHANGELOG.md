@@ -18,12 +18,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PlaneFace3D: get_normal_at_point
 - CylindricalFace3D: get_normal_at_point
 - add tolerance parameter to many methods
+- Face3D: normal_at_point
 
 #### edges.py
 - Fix FullArc2D generation from 3 points
 
 #### surfaces.py
 - u_iso/v_iso: Returns the u-iso/v-iso curve of the surface.
+- Plane3D/CylindricalSurface/ConicalSurface/SphericalSurface3D : normal_at_point
 
 #### global
 - Add reference_path to a handful of classes
@@ -103,6 +105,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ConicalSurface3D: conicalsurface_intersections.
 - cad_simplification: AlphaWrapSimplify
 - nurbs/operations: link_curves
+- FullArc3D: fullarc3d_intersections
+- ArcEllipse2D: straight_line_center_of_mass
 
 #### edges.py
 - BSplineCurve: decompose into béziers patches of same degree.
@@ -131,7 +135,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix pylint.
 - Add some missing docstrings.
 - Add _serializable_dict to points and vectors objects. This method is important to some platform checks, as they don't inherite from DessiaObject anymore.
-
+- Arc2D: arc_intersections
 #### curves.py
 - Ellipse2D/3D: mutualize length method.
 - Circle2D: abscissa method - consider frame direction during rotation.
