@@ -631,6 +631,9 @@ class Face3D(volmdlr.core.Primitive3D):
         It returns True if face2 is inside or False if the opposite.
         """
         if self.surface3d.is_coincident(face2.surface3d, abs_tol):
+            if not self.bounding_box.is_intersecting(face2.bounding_box) and \
+                    not self.bounding_box.is_inside_bbox(face2.bounding_box):
+                return False
             self_contour2d = self.outer_contour3d.to_2d(
                 self.surface3d.frame.origin, self.surface3d.frame.u, self.surface3d.frame.v
             )
@@ -661,7 +664,7 @@ class Face3D(volmdlr.core.Primitive3D):
         elif hasattr(self.surface3d, method_name):
             edge_surface_intersections = getattr(self.surface3d, method_name)(edge)
             for intersection in edge_surface_intersections:
-                if self.point_belongs(intersection) and not intersection.in_list(intersections):
+                if self.point_belongs(intersection, self.face_tolerance) and not intersection.in_list(intersections):
                     intersections.append(intersection)
         if not intersections:
             for point in [edge.start, edge.end]:
@@ -690,18 +693,19 @@ class Face3D(volmdlr.core.Primitive3D):
 
         return intersections
 
-    def linesegment_intersections(self, linesegment: vme.LineSegment3D) -> List[volmdlr.Point3D]:
+    def linesegment_intersections(self, linesegment: vme.LineSegment3D, abs_tol: float = 1e-6) -> List[volmdlr.Point3D]:
         """
         Get intersections between a face 3d and a Line Segment 3D.
 
         :param linesegment: other linesegment.
+        :param abs_tol: tolerance used.
         :return: a list of intersections.
         """
         linesegment_intersections = []
         if not self.bounding_box.is_intersecting(linesegment.bounding_box):
             return []
         for intersection in self.surface3d.linesegment_intersections(linesegment):
-            if self.point_belongs(intersection):
+            if self.point_belongs(intersection, abs_tol):
                 linesegment_intersections.append(intersection)
         return linesegment_intersections
 
@@ -984,10 +988,11 @@ class Face3D(volmdlr.core.Primitive3D):
         :param intersecting_combinations: faces intersecting combinations dictionary.
         :return: new split faces.
         """
-        list_cutting_contours = self.get_face_cutting_contours(intersecting_combinations)
+        self_copy = self.copy(True)
+        list_cutting_contours = self_copy.get_face_cutting_contours(intersecting_combinations)
         if not list_cutting_contours:
-            return [self]
-        return self.divide_face(list_cutting_contours)
+            return [self_copy]
+        return self_copy.divide_face(list_cutting_contours)
 
     def split_inner_contour_intersecting_cutting_contours(self, list_cutting_contours):
         """
@@ -1134,11 +1139,12 @@ class Face3D(volmdlr.core.Primitive3D):
         )
         return valid_cutting_contours + list_split_inner_contours
 
-    def divide_face(self, list_cutting_contours: List[volmdlr.wires.Contour2D]):
+    def divide_face(self, list_cutting_contours: List[volmdlr.wires.Contour2D], abs_tol: float = 1e-6):
         """
         Divides a Face 3D with a list of cutting contours.
 
         :param list_cutting_contours: list of contours cutting the face.
+        :param abs_tol: tolerance.
         """
         list_faces = []
         list_open_cutting_contours = []
@@ -1187,27 +1193,27 @@ class Face3D(volmdlr.core.Primitive3D):
                 continue
             list_closed_cutting_contours.append(cutting_contour)
         if list_open_cutting_contours:
-            list_faces = self.divide_face_with_open_cutting_contours(list_open_cutting_contours)
+            list_faces = self.divide_face_with_open_cutting_contours(list_open_cutting_contours, abs_tol)
         list_faces = self.divide_face_with_closed_cutting_contours(list_closed_cutting_contours, list_faces)
         list_faces = [face for face in list_faces if not math.isclose(face.area(), 0.0, abs_tol=1e-08)]
         return list_faces
 
-    def divide_face_with_open_cutting_contours(self, list_open_cutting_contours):
+    def divide_face_with_open_cutting_contours(self, list_open_cutting_contours, abs_tol: float = 1e-6):
         """
         Divides a face 3D with a list of closed cutting contour, that is, it will cut holes on the face.
 
         :param list_open_cutting_contours: list containing the open cutting contours.
+        :param abs_tol: tolerance.
         :return: list divided faces.
         """
         list_faces = []
         if not self.surface2d.outer_contour.edge_polygon.is_trigo:
             self.surface2d.outer_contour = self.surface2d.outer_contour.invert()
-        new_faces_contours = self.surface2d.outer_contour.divide(list_open_cutting_contours)
+        new_faces_contours = self.surface2d.outer_contour.divide(list_open_cutting_contours, self.face_tolerance)
         new_inner_contours = len(new_faces_contours) * [[]]
         if self.surface2d.inner_contours:
             new_faces_contours, new_inner_contours = self.get_open_contour_divided_faces_inner_contours(
-                new_faces_contours
-            )
+                new_faces_contours, abs_tol)
         if isinstance(self, Triangle3D):
             class_to_instanciate = PlaneFace3D
         else:
@@ -1272,11 +1278,12 @@ class Face3D(volmdlr.core.Primitive3D):
             list_faces.append(new_plane)
         return list_faces
 
-    def get_open_contour_divided_faces_inner_contours(self, new_faces_contours):
+    def get_open_contour_divided_faces_inner_contours(self, new_faces_contours, abs_tol: float = 1e-6):
         """
         If there is any inner contour, verifies which ones belong to the new divided faces.
 
         :param new_faces_contours: new faces outer contour.
+        :param abs_tol: tolerance.
         :return: valid_new_faces_contours, valid_new_faces_contours.
         """
         valid_new_faces_contours = []
@@ -1284,7 +1291,7 @@ class Face3D(volmdlr.core.Primitive3D):
         new_faces_contours_ = []
         for new_contour in new_faces_contours:
             for inner_contour in self.surface2d.inner_contours:
-                if new_contour.is_superposing(inner_contour):
+                if new_contour.is_superposing(inner_contour, abs_tol):
                     break
             else:
                 new_faces_contours_.append(new_contour)
@@ -1424,14 +1431,15 @@ class Face3D(volmdlr.core.Primitive3D):
             return True
         return False
 
-    def linesegment_intersections_approximation(self, linesegment: vme.LineSegment3D) -> List[volmdlr.Point3D]:
+    def linesegment_intersections_approximation(self, linesegment: vme.LineSegment3D,
+                                                abs_tol: float = 1e-6) -> List[volmdlr.Point3D]:
         """Approximation of intersections face 3D and a line segment 3D."""
         if not self._is_linesegment_intersection_possible(linesegment):
             return []
         linesegment_intersections = []
         for inters in self._get_linesegment_intersections_approximation(linesegment):
             for point in inters:
-                if not point.in_list(linesegment_intersections):
+                if not point.in_list(linesegment_intersections, abs_tol):
                     linesegment_intersections.append(point)
 
         return linesegment_intersections
@@ -1615,6 +1623,17 @@ class Face3D(volmdlr.core.Primitive3D):
             contour for contour in extracted_contours if all(face.edge3d_inside(edge) for edge in contour.primitives)
         ]
         return contours_in_self, contours_in_other_face
+
+    def normal_at_point(self, point):
+        """
+        Gets Normal vector at a given point on the face.
+
+        :param point: point on the face.
+        :return:
+        """
+        if not self.point_belongs(point):
+            raise ValueError(f'Point {point} not in this face.')
+        return self.surface3d.normal_at_point(point)
 
 
 class PlaneFace3D(Face3D):
@@ -1868,9 +1887,10 @@ class PlaneFace3D(Face3D):
                 continue
             points_on_primitive = primitive.sort_points_along_curve(points_on_primitive)
             if isinstance(primitive, volmdlr_curves.ClosedCurve):
-                # if isinstance(primitive, volmdlr_curves.Ellipse3D) or isinstance(primitive, volmdlr_curves.Circle3D):
                 points_on_primitive = points_on_primitive + [points_on_primitive[0]]
             for point1, point2 in zip(points_on_primitive[:-1], points_on_primitive[1:]):
+                if point1 == point2:
+                    continue
                 edge = primitive.trim(point1, point2)
                 if self.edge3d_inside(edge) and conical_face.edge3d_inside(edge):
                     face_intersections.append(volmdlr.wires.Wire3D([edge]))
@@ -2199,7 +2219,7 @@ class PeriodicalFaceMixin:
             elif point2d.y > v_max + tol:
                 point2d.y -= self.surface3d.y_periodicity
 
-        return self.surface2d.point_belongs(point2d)
+        return self.surface2d.point_belongs(point2d, tol)
 
     def face_inside(self, face2, abs_tol: float = 1e-6):
         """
@@ -3917,11 +3937,12 @@ class BSplineFace3D(Face3D):
             return volmdlr.wires.Wire3D([neutral_fiber.trim(point1, neutral_fiber.point_projection(point3d_max)[0])])
         return volmdlr.wires.Wire3D([neutral_fiber.trim(point1, neutral_fiber.end)])
 
-    def linesegment_intersections(self, linesegment: vme.LineSegment3D) -> List[volmdlr.Point3D]:
+    def linesegment_intersections(self, linesegment: vme.LineSegment3D, abs_tol: float = 1e-6) -> List[volmdlr.Point3D]:
         """
         Get intersections between a BSpline face 3d and a Line Segment 3D.
 
         :param linesegment: other linesegment.
+        :param abs_tol: tolerance.
         :return: a list of intersections.
         """
-        return self.linesegment_intersections_approximation(linesegment)
+        return self.linesegment_intersections_approximation(linesegment, abs_tol)

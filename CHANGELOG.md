@@ -15,13 +15,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ArcEllipse3D/FullArcEllipse3D: to_step
 
 #### faces.py
--
+- PlaneFace3D: get_normal_at_point
+- CylindricalFace3D: get_normal_at_point
+- add tolerance parameter to many methods
+- Face3D: normal_at_point
 
 #### edges.py
 - Fix FullArc2D generation from 3 points
 
 #### surfaces.py
 - u_iso/v_iso: Returns the u-iso/v-iso curve of the surface.
+- Plane3D/CylindricalSurface/ConicalSurface/SphericalSurface3D : normal_at_point
 
 #### global
 - Add reference_path to a handful of classes
@@ -41,6 +45,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### faces.py
 - Toroidalface ConicalFace intersections.
 
+#### shells.py
+- ClosedShell3D.point_belongs
+
 #### step.py
 - Fix Step.create_connections with wireframe models
 
@@ -52,6 +59,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineSurface3D: improves _fix_start_end_singularity_point_at_parametric_domain
 
 #### wires.py
+- Fix some constructors: connected edges must share vertices.
 
 #### step.py
 - Fixes in step translator to VolumeModel.
