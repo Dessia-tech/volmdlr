@@ -767,6 +767,8 @@ class LineSegment(Edge):
         :param abscissa: abscissa where in the curve the point should be calculated.
         :return: Corresponding point.
         """
+        if self.length() < 1e-6:
+            print(True)
         return self.start + self.unit_direction_vector() * abscissa
 
     def get_geo_lines(self, tag: int, start_point_tag: int, end_point_tag: int):
@@ -2592,7 +2594,7 @@ class LineSegment2D(LineSegment):
         """
         Invert the sense of the line segment.
         """
-        return LineSegment2D(self.end.copy(), self.start.copy())
+        return LineSegment2D(self.end, self.start)
 
     def rotation(self, center: volmdlr.Point2D, angle: float):
         """
@@ -4191,7 +4193,7 @@ class ArcEllipse2D(ArcEllipseMixin, Edge):
         ellipse = self.ellipse.__class__(self.ellipse.major_axis, self.ellipse.minor_axis,
                                          volmdlr.Frame2D(self.ellipse.center, self.ellipse.frame.u,
                                                          -self.ellipse.frame.v))
-        return self.__class__(ellipse, self.end.copy(), self.start.copy(), self.name + '_reverse')
+        return self.__class__(ellipse, self.end, self.start, self.name + '_reverse')
 
     def line_intersections(self, line2d: volmdlr_curves.Line2D, tol: float = 1e-6):
         """

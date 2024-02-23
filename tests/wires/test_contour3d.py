@@ -1,9 +1,9 @@
 import os
 import unittest
 import volmdlr
-from volmdlr.wires import Contour3D
+from volmdlr.wires import Contour3D, Contour2D
 from volmdlr.step import Step
-from volmdlr import edges, core
+from volmdlr import edges, core, curves
 from volmdlr.models.contours import contour3d
 
 
@@ -94,6 +94,11 @@ class TestContour3D(unittest.TestCase):
                             volmdlr. Point3D(7.115095100684387, 0.408886063311686, 1.136295354437229)]
         for intersection, expected_result in zip(edge_intersections, expected_results):
             self.assertTrue(intersection.is_close(expected_result))
+
+    def test_copy(self):
+        contour = Contour2D.from_bounding_rectangle(-0.5, 0.5, -0.5, 0.5).to_3d(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D)
+        new_contour = contour.copy(deep=True, memo={})
+        self.assertTrue(True)
 
 
 if __name__ == '__main__':
