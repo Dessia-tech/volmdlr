@@ -1212,8 +1212,7 @@ class Face3D(volmdlr.core.Primitive3D):
         new_inner_contours = len(new_faces_contours) * [[]]
         if self.surface2d.inner_contours:
             new_faces_contours, new_inner_contours = self.get_open_contour_divided_faces_inner_contours(
-                new_faces_contours
-            )
+                new_faces_contours, abs_tol)
         if isinstance(self, Triangle3D):
             class_to_instanciate = PlaneFace3D
         else:
@@ -1278,11 +1277,12 @@ class Face3D(volmdlr.core.Primitive3D):
             list_faces.append(new_plane)
         return list_faces
 
-    def get_open_contour_divided_faces_inner_contours(self, new_faces_contours):
+    def get_open_contour_divided_faces_inner_contours(self, new_faces_contours, abs_tol: float = 1e-6):
         """
         If there is any inner contour, verifies which ones belong to the new divided faces.
 
         :param new_faces_contours: new faces outer contour.
+        :param abs_tol: tolerance.
         :return: valid_new_faces_contours, valid_new_faces_contours.
         """
         valid_new_faces_contours = []
@@ -1290,7 +1290,7 @@ class Face3D(volmdlr.core.Primitive3D):
         new_faces_contours_ = []
         for new_contour in new_faces_contours:
             for inner_contour in self.surface2d.inner_contours:
-                if new_contour.is_superposing(inner_contour):
+                if new_contour.is_superposing(inner_contour, abs_tol):
                     break
             else:
                 new_faces_contours_.append(new_contour)
