@@ -6281,6 +6281,7 @@ class FullArc3D(FullArcMixin, Arc3D):
     def fullarc_intersections(self, fullarc3d, abs_tol: float = 1e-6):
         """
         Calculates the intersections between two full arc 3d.
+
         :param fullarc3d: linesegment 3d to verify intersections.
         :param abs_tol: tolerance.
         :return: list of points 3d, if there are any intersections, an empty list if otherwise.
