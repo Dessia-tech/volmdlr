@@ -696,6 +696,7 @@ class Face3D(volmdlr.core.Primitive3D):
     def linesegment_intersections(self, linesegment: vme.LineSegment3D, abs_tol: float = 1e-6) -> List[volmdlr.Point3D]:
         """
         Get intersections between a face 3d and a Line Segment 3D.
+
         :param linesegment: other linesegment.
         :param abs_tol: tolerance used.
         :return: a list of intersections.
