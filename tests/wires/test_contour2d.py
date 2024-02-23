@@ -63,9 +63,9 @@ class TestContour2D(unittest.TestCase):
     def test_cut_by_wire(self):
         results = contour1_cut_by_wire.cut_by_wire(contour2_cut_by_wire)
         results1 = contour2_cut_by_wire.cut_by_wire(contour1_cut_by_wire)
-        list_expected_contour_lengths = [0.735061566418825, 0.7350615482415725, 0.7350613283792926, 3.4786699386591753,
-                                         0.7350615900834909, 1.2716033189138256, 0.8996336040021796,
-                                         1.2716033047094752, 3.4786699386591753, 0.8996337337370333]
+        list_expected_contour_lengths = [0.735061566418825, 3.4786699386591753, 0.7350615900834909, 0.7350613283792926,
+                                         0.7350615482415725, 1.2716033189138256, 3.478669938659176, 0.8996337337370333,
+                                         1.2716033047094752, 0.8996336040021796]
         self.assertEqual(len(results) + len(results1), 10)
         for i, contour in enumerate(results + results1):
             self.assertAlmostEqual(contour.length(), list_expected_contour_lengths[i])
