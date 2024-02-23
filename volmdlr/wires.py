@@ -2500,10 +2500,7 @@ class Contour2D(ContourMixin, Wire2D):
                              closing_contour, abs_tol: float = 1e-6):
         """
         Get divided contours.
-<<<<<<< HEAD
 
-=======
->>>>>>> origin/dev
         """
         extracted_innerpoints_contour1_prims, extracted_outerpoints_contour1_prims = self.split_with_two_points(
             cutting_point1, cutting_point2, abs_tol)
