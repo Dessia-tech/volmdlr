@@ -1616,6 +1616,17 @@ class Face3D(volmdlr.core.Primitive3D):
         ]
         return contours_in_self, contours_in_other_face
 
+    def normal_at_point(self, point):
+        """
+        Gets Normal vector at a given point on the face.
+
+        :param point: point on the face.
+        :return:
+        """
+        if not self.point_belongs(point):
+            raise ValueError(f'Point {point} not in this face.')
+        return self.surface3d.normal_at_point(point)
+
 
 class PlaneFace3D(Face3D):
     """

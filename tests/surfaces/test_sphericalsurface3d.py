@@ -275,6 +275,12 @@ class TestSphericalSurface3D(unittest.TestCase):
         self.assertEqual(len(inters), 1)
         self.assertAlmostEqual(inters[0].length(), 6.283185306688713)
 
+    def test_normal_at_point(self):
+        spherical_surface3d = surfaces.SphericalSurface3D(volmdlr.OXYZ, 1)
+        point = volmdlr.Point3D(0.908248233153, 0.295875797457, 0.295875797457)
+        normal = spherical_surface3d.normal_at_point(point)
+        self.assertTrue(normal.is_close(volmdlr.Vector3D(0.9082483187228496, 0.2958758253326914, 0.30974418137711035)))
+
 
 if __name__ == '__main__':
     unittest.main()

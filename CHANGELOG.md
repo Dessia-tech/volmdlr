@@ -15,13 +15,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ArcEllipse3D/FullArcEllipse3D: to_step
 
 #### faces.py
--
+- Face3D: normal_at_point
 
 #### edges.py
 - Fix FullArc2D generation from 3 points
 
 #### surfaces.py
 - u_iso/v_iso: Returns the u-iso/v-iso curve of the surface.
+- Plane3D/CylindricalSurface/ConicalSurface/SphericalSurface3D : normal_at_point
 
 #### global
 - Add reference_path to a handful of classes
