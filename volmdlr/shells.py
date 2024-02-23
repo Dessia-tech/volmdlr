@@ -1217,8 +1217,8 @@ class ClosedShell3D(Shell3D):
                     continue
                 break
             else:
-                break
-            continue
+                continue
+            break
         is_inside = True
         if count % 2 == 0:
             is_inside = False
@@ -1522,7 +1522,8 @@ class ClosedShell3D(Shell3D):
             inside_shell2 = shell2.point_inside(new_face.random_point_inside())
             face_on_shell2 = shell2.face_on_shell(new_face)
             if not inside_shell2 or face_on_shell2:
-                if list_coincident_faces:
+                if list_coincident_faces and any(new_face.surface3d.is_coincident(face.surface3d)
+                                                 for faces in list_coincident_faces for face in faces):
                     if self.is_face_between_shells(shell2, new_face):
                         return False
                 return True

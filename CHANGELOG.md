@@ -41,6 +41,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### faces.py
 - Toroidalface ConicalFace intersections.
 
+#### shells.py
+- ClosedShell3D.point_belongs
+
 #### step.py
 - Fix Step.create_connections with wireframe models
 
