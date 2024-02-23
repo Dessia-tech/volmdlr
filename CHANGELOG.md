@@ -28,7 +28,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add reference_path to a handful of classes
 
 ### Fixed
+### curves.py
+- Circle2D: line_intersections
+
 #### edges.py
+- edge: intersections -> new parameter force_sort, to force sorting intersection points along curve.
 - BSplineCurve3D: move_frame_along
 - Arc2D: start and end angle, and arc angle.
 - Contour2D: merge_with (consider abs_tol in is_sharing_primitives_with checking)
@@ -44,8 +48,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### core.py
 - Fix Compound step export for wireframe models.
 
-#### edges.py
-- edge: intersections -> new parameter force_sort, to force sorting intersection points along curve.
 
 #### surfaces.py
 - BSplineSurface3D: improves _fix_start_end_singularity_point_at_parametric_domain
@@ -75,6 +77,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - edges/curves.py cut_between_two_points -> trim
 - defines ordering of curve methods
 - npy -> np
+- curves.py: curve_intersections -> intersections
 
 #### CI
 - Avoid calling babylonjs method in CI to reduce CI time
@@ -99,6 +102,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ConicalSurface3D: conicalsurface_intersections.
 - cad_simplification: AlphaWrapSimplify
 - nurbs/operations: link_curves
+- FullArc3D: fullarc3d_intersections
+- ArcEllipse2D: straight_line_center_of_mass
 
 #### edges.py
 - BSplineCurve: decompose into béziers patches of same degree.
@@ -107,6 +112,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### faces.py
 - Add primitives_mapping property: returns a dictionary containing the correspondence between the parametric and 3D boundaries of the faces.
 - grid_points: returns a grid of points inside the surface2d of the face.
+- PeriodicalFaceMixin: face_inside
 
 #### surfaces.py
 - CylindricalSurface3D: parametric_points_to_3d
@@ -126,7 +132,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix pylint.
 - Add some missing docstrings.
 - Add _serializable_dict to points and vectors objects. This method is important to some platform checks, as they don't inherite from DessiaObject anymore.
-
+- Arc2D: arc_intersections
 #### curves.py
 - Ellipse2D/3D: mutualize length method.
 - Circle2D: abscissa method - consider frame direction during rotation.

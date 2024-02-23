@@ -209,6 +209,11 @@ class TestCylindricalFace3D(unittest.TestCase):
 
         normal = cylindricalface.normal_at_point(point)
         self.assertTrue(normal.is_close(volmdlr.Vector3D(-1, 0, 0)))
+      
+    def test_face_inside(self):
+        face1, face2 = DessiaObject.from_json(
+            os.path.join(folder, "test_cylindricalface_face_inside.json")).primitives
+        self.assertTrue(face1.face_inside(face2))
 
 
 if __name__ == '__main__':
