@@ -208,6 +208,22 @@ class TestCylindricalFace3D(unittest.TestCase):
         self.assertAlmostEqual(intersections[0].primitives[0].length(), 0.004773175304187915)
         self.assertTrue(isinstance(intersections[0].primitives[0], edges.ArcEllipse3D))
 
+    def test_normal_at_point(self):
+        cylindricalsurface = surfaces.CylindricalSurface3D(volmdlr.OXYZ, 0.15)
+        cylindricalface = faces.CylindricalFace3D.from_surface_rectangular_cut(
+            cylindricalsurface, 0, volmdlr.TWO_PI, -.25, .25)
+
+        point = volmdlr.Point3D(-0.15, 0.0, 0.0)
+
+        normal = cylindricalface.normal_at_point(point)
+        self.assertTrue(normal.is_close(volmdlr.Vector3D(-1, 0, 0)))
+
+    def test_face_inside(self):
+        face1, face2 = DessiaObject.from_json(
+            os.path.join(folder, "test_cylindricalface_face_inside.json")).primitives
+        self.assertTrue(face1.face_inside(face2))
+
+
 
 if __name__ == '__main__':
     unittest.main()

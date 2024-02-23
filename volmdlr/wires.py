@@ -643,7 +643,6 @@ class WireMixin:
     def is_superposing(self, contour2, abs_tol: float = 1e-6):
         """
         Check if the contours are superposing (one on the other without necessarily having an absolute equality).
-
         """
 
         for primitive_2 in contour2.primitives:
@@ -2501,7 +2500,10 @@ class Contour2D(ContourMixin, Wire2D):
                              closing_contour, abs_tol: float = 1e-6):
         """
         Get divided contours.
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/dev
         """
         extracted_innerpoints_contour1_prims, extracted_outerpoints_contour1_prims = self.split_with_two_points(
             cutting_point1, cutting_point2, abs_tol)
@@ -2557,8 +2559,8 @@ class Contour2D(ContourMixin, Wire2D):
                     point1, point2 = [cutting_contour.primitives[0].start,
                                       cutting_contour.primitives[-1].end]
                     cutting_points = []
-                    if base_contour.point_inside(cutting_contour.middle_point()) and\
-                            base_contour.point_belongs(point1, abs_tol) and\
+                    if base_contour.point_inside(cutting_contour.middle_point()) and \
+                            base_contour.point_belongs(point1, abs_tol) and \
                             base_contour.point_belongs(point2, abs_tol):
                         cutting_points = [point1, point2]
                     if cutting_points:
