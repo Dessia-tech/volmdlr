@@ -88,7 +88,7 @@ class Curve(DessiaObject):
                 intersections.append(intersection)
         return intersections
 
-    def curve_intersections(self, other_curve, abs_tol: float = 1e-6):
+    def intersections(self, other_curve, abs_tol: float = 1e-6):
         """
         Gets the intersections between two curves.
 
@@ -344,6 +344,20 @@ class Line(Curve):
         return [self.__class__(self.point1, split_point),
                 self.__class__(split_point, self.point2)]
 
+    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, **kwargs):
+        """
+        Trims a line creating a line segment.
+
+        :param point1: line segment start.
+        :param point2: line segment end.
+        :param same_sense: Used for periodical curves only. Indicates whether the curve direction agrees with (True)
+            or is in the opposite direction (False) to the edge direction. By default, it's assumed True
+        :return: line segment.
+        """
+        linesegment_class = getattr(volmdlr.edges, 'LineSegment' + self.__class__.__name__[-2:])
+        linesegment = linesegment_class(point1, point2)
+        return linesegment
+
     def to_step(self, current_id, *args, **kwargs):
         """Exports to STEP format."""
         p1_content, p1_id = self.point1.to_step(current_id)
@@ -459,21 +473,6 @@ class Line2D(Line):
         distance, _ = self.point_projection(other_line.point1)
         return distance
 
-    def trim(self, point1: volmdlr.Point2D, point2: volmdlr.Point2D):
-        """
-        Cut the line between two points to create a linesegment.
-
-        :param point1: The first point defining the linesegment
-        :type point1: :class:`volmdlr.Point2D`
-        :param point2: The second point defining the linesegment
-        :type point2: :class:`volmdlr.Point2D`
-        :return: The created linesegment
-        :rtype: :class:`volmdlr.edges.LineSegment2D`
-        """
-        if not self.point_belongs(point1) or not self.point_belongs(point2):
-            raise ValueError('Point not on curve')
-        return volmdlr.edges.LineSegment2D(point1, point2)
-
     def line_intersections(self, line, abs_tol: float = 1e-6):
         """
         Calculate the intersection between the two lines.
@@ -587,7 +586,7 @@ class Line2D(Line):
         """
         Gets the line's slope.
         """
-        if self.point1.x == self.point2.x:
+        if abs(self.point1.x - self.point2.x) < 1e-6:
             return math.inf
         return (self.point2.y - self.point1.y) / (self.point2.x - self.point1.x)
 
@@ -877,20 +876,6 @@ class Line3D(Line):
         """
         return Line2D(self.point1.plane_projection2d(center, x, y),
                       self.point2.plane_projection2d(center, x, y))
-
-    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, **kwargs):
-        """
-        Trims a line creating a line segment.
-
-        :param point1: line segment start.
-        :param point2: line segment end.
-        :return: line segment.
-        """
-        if not self.point_belongs(point1) or not self.point_belongs(point2):
-            print('Point not on curve')
-        #     raise ValueError('Point not on curve')
-
-        return volmdlr.edges.LineSegment3D(point1, point2)
 
     def intersection(self, line2, tol: float = 1e-6):
         """
@@ -1614,7 +1599,7 @@ class Circle2D(CircleMixin, ClosedCurve):
         c = line2d.get_y_intersection()
         if m == math.inf and c is None:
             x_line = line2d.point1.x
-            if abs(self.radius**2 - x_line**2) < 1e-8:
+            if abs(self.radius ** 2 - x_line ** 2) < 1e-8:
                 return [volmdlr.Point2D(x_line, 0.0)]
             y1 = - math.sqrt(self.radius**2 - x_line**2)
             y2 = math.sqrt(self.radius**2 - x_line**2)
@@ -2838,6 +2823,19 @@ class Ellipse3D(ConicMixin, EllipseMixin, ClosedCurve):
         # major_dir_2d = self.major_dir.to_2d()
         # _d2 = self.minor_dir.to_2d(plane_origin, x, y)
         return Ellipse2D(self.major_axis, self.minor_axis, volmdlr.Frame2D(center, major_dir_2d, minor_dir_2d))
+
+    def to_step(self, current_id, *args, **kwargs):
+        """
+        Exports the circle 3d to STEP.
+
+        """
+        content, frame_id = self.frame.to_step(current_id)
+        curve_id = frame_id + 1
+        content += (f"#{curve_id} = ELLIPSE('{self.name}',#{frame_id},{self.major_axis * 1000},"
+                    f"{self.minor_axis * 1000});\n")
+        current_id = curve_id
+
+        return content, current_id
 
     def _bounding_box(self):
         """

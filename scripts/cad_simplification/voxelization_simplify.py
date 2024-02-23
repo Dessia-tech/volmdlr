@@ -20,7 +20,7 @@ print(f"Simplification took {time.perf_counter() - start:.6f} seconds\n")
 
 # Count faces triangles:
 n_faces = sum(len(shell.faces) for shell in volume_model.get_shells())
-n_triangles = sum(len(shell.triangulation().faces) for shell in volume_model.get_shells())
+n_triangles = sum(len(shell.triangulation().triangles) for shell in volume_model.get_shells())
 print(f"Given model has {n_faces} faces and {n_triangles} triangles when triangulated for display.")
 
 n_faces = sum(len(shell.faces) for shell in simplified_volume_model.get_shells())

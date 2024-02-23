@@ -89,7 +89,7 @@ Here are some examples:
     :align: center
 
     import volmdlr
-    from nurbs import utilities
+    import volmdlr.nurbs.helpers as nurbs_helpers
     from volmdlr import edges
     from volmdlr.core import EdgeStyle
 
@@ -98,7 +98,7 @@ Here are some examples:
     #Defining the BSplineCurve2D
     DEGREE = 3
     points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 1), volmdlr.Point2D(2, -1), volmdlr.Point2D(3, 0)]
-    knotvector = utilities.generate_knot_vector(DEGREE, len(points))
+    knotvector = nurbs_helpers.generate_knot_vector(DEGREE, len(points))
     knot_multiplicity = [1] * len(knotvector)
     bspline1 = edges.BSplineCurve2D(DEGREE, points, knot_multiplicity, knotvector, None, False)
 
@@ -215,7 +215,7 @@ Likewise, you can calculate the distance between two shells as shown in the next
     bottom_surface3d = surfaces.Plane3D.from_plane_vectors(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D)
     bottom_surface2d = surfaces.Surface2D(polygon1_vol1.to_2d(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D),[])
 
-    top_surface3d = surfaces.Plane3D.from_plane_vectors(0.3*volmdlr.Z3D, volmdlr.X3D, volmdlr.Y3D)
+    top_surface3d = surfaces.Plane3D.from_plane_vectors((0.3*volmdlr.Z3D).to_point(), volmdlr.X3D, volmdlr.Y3D)
     top_surface2d = surfaces.Surface2D(polygon3_vol1.to_2d(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D),[])
 
     bottom_face = faces.PlaneFace3D(bottom_surface3d, bottom_surface2d)

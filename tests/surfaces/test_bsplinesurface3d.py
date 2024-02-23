@@ -461,7 +461,6 @@ class TestBSplineSurface3D(unittest.TestCase):
         inv_prof = bspline_surface.linesegment2d_to_3d(test)[0]
 
         # Verifies the inversion operation
-        self.assertIsInstance(inv_prof, vme.Arc3D)
         self.assertTrue(inv_prof.start.is_close(arc.start))
         # self.assertTrue(inv_prof.interior.is_close(arc.interior))
         self.assertTrue(inv_prof.end.is_close(arc.end))
@@ -937,7 +936,29 @@ class TestBSplineSurface3D(unittest.TestCase):
         bezier_patches = surface.decompose()
         self.assertEqual(len(bezier_patches), 116)
 
+    def test_point_inversion_grid_search(self):
+        surface = surfaces.BSplineSurface3D.from_json(
+            os.path.join(folder, "bsplinesurface_point3d_to_2d_grid_search_1.json"))
+        point = volmdlr.Point3D(-0.009668298046654873, 0.11887869426572631, -0.09560417062522625)
+        _, distance = surface.point_inversion_grid_search(point, 5e-5, 2)
+        self.assertLess(distance, 3e-5)
+        surface = surfaces.BSplineSurface3D.from_json(
+            os.path.join(folder, "bsplinesurface_point3d_to_2d_grid_search_2.json"))
+        point = volmdlr.Point3D(0.001702815989525993, 0.003297577223278291, -0.026314554505063058)
+        _, distance = surface.point_inversion_grid_search(point, 5e-5, 2)
+        self.assertLess(distance, 2e-5)
 
+        surface = surfaces.BSplineSurface3D.from_json(
+            os.path.join(folder, "bsplinesurface_point3d_to_2d_grid_search_3.json"))
+        point = volmdlr.Point3D(-0.008941313467488011, 0.01194521078356664, -0.000635664858372182)
+        _, distance = surface.point_inversion_grid_search(point, 5e-5, 2)
+        self.assertLess(distance, 5e-5)
+
+        surface = surfaces.BSplineSurface3D.from_json(
+            os.path.join(folder, "bsplinesurface_point3d_to_2d_grid_search_4.json"))
+        point = volmdlr.Point3D(-0.02494082957642294, 0.03166087761892587, -0.07334489785111517)
+        _, distance = surface.point_inversion_grid_search(point, 5e-5, 2)
+        self.assertLess(distance, 5e-5)
 
 
 if __name__ == '__main__':

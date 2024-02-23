@@ -24,7 +24,7 @@ import volmdlr
 import volmdlr.core
 import volmdlr.display as vmd
 import volmdlr.geometry
-from volmdlr import curves, edges
+from volmdlr import curves, edges, PATH_ROOT
 from volmdlr.core_compiled import polygon_point_belongs, points_in_polygon
 from volmdlr.core import EdgeStyle
 
@@ -790,10 +790,11 @@ class Wire2D(WireMixin, PhysicalObject):
 
     """
 
-    def __init__(self, primitives, name: str = ''):
+    def __init__(self, primitives, reference_path: str = PATH_ROOT, name: str = ''):
         self._bounding_rectangle = None
         self._length = None
         self.primitives = primitives
+        self.reference_path = reference_path
         PhysicalObject.__init__(self, name=name)
 
     def __hash__(self):
@@ -815,7 +816,7 @@ class Wire2D(WireMixin, PhysicalObject):
         primitives3d = []
         for edge in self.primitives:
             primitives3d.append(edge.to_3d(plane_origin, x, y))
-        return Wire3D(primitives3d)
+        return Wire3D(primitives3d, reference_path=self.reference_path)
         # TODO: method to check if it is a wire
 
     def infinite_intersections(self, infinite_primitives):
@@ -900,10 +901,8 @@ class Wire2D(WireMixin, PhysicalObject):
 
     def plot_data(self, *args, **kwargs):
         """Plot data for Wire2D."""
-        data = []
-        for item in self.primitives:
-            data.append(item.plot_data())
-        return data
+        reference_path = kwargs.get("reference_path", PATH_ROOT)
+        return [p.plot_data(reference_path=reference_path) for p in self.primitives]
 
     def line_intersections(self, line: 'curves.Line2D'):
         """
@@ -1331,12 +1330,13 @@ class Wire3D(WireMixin, PhysicalObject):
     """
 
     def __init__(self, primitives: List[volmdlr.core.Primitive3D], color=None, alpha: float = 1.0,
-                 name: str = ''):
+                 reference_path: str = PATH_ROOT, name: str = ''):
         self._bbox = None
         self._length = None
         self.primitives = primitives
         self.color = color
         self.alpha = alpha
+        self.reference_path = reference_path
         PhysicalObject.__init__(self, name=name)
 
     def _bounding_box(self):
@@ -1454,6 +1454,38 @@ class Wire3D(WireMixin, PhysicalObject):
         primitives2d = self.get_primitives_2d(plane_origin, x, y)
         return Wire2D(primitives=primitives2d)
 
+    def to_step(self, current_id, *args, **kwargs):
+        """
+        Converts the object to a STEP representation.
+
+        :param current_id: The ID of the last written primitive.
+        :type current_id: int
+        :return: The STEP representation of the object and the last ID.
+        :rtype: tuple[str, list[int]]
+        """
+        content = ''
+        composite_curve_segment_ids = []
+        for primitive in self.primitives:
+            primitive_content, primitive_id = primitive.to_step(current_id, trimmed_curve=True)
+
+            content += primitive_content
+            current_id = primitive_id + 1
+
+            # COMPOSITE_CURVE_SEGMENT(trasition_code, same_sense, parent_curve)
+            # arguments[0] = trasition_code (unused)
+            # The transition_code type conveys the continuity properties of a composite curve or surface.
+            # The continuity referred to is geometric, not parametric continuity.
+            # arguments[1] = same_sense : BOOLEAN;
+            # arguments[2] = parent_curve : curve;
+            content += f"#{current_id} = COMPOSITE_CURVE_SEGMENT(.CONTINUOUS.,.T.,#{primitive_id});\n"
+            composite_curve_segment_ids.append(current_id)
+
+        current_id += 1
+        content += (f"#{current_id} = COMPOSITE_CURVE('{self.name}',"
+                    f"({volmdlr.core.step_ids_to_str(composite_curve_segment_ids)}),.U.);\n")
+
+        return content, current_id
+
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
         """
@@ -1493,7 +1525,8 @@ class Wire3D(WireMixin, PhysicalObject):
         babylon_lines = {'points': points,
                          'alpha': self.alpha,
                          'name': self.name,
-                         'color': list(self.color) if self.color is not None else [0.8, 0.8, 0.8]
+                         'color': list(self.color) if self.color is not None else [0.8, 0.8, 0.8],
+                         "reference_path": self.reference_path
                          }
         return [babylon_lines]
 
@@ -1998,9 +2031,8 @@ class Contour2D(ContourMixin, Wire2D):
                                     'primitive_to_index',
                                     'basis_primitives', '_utd_analysis']
 
-    def __init__(self, primitives: List[volmdlr.edges.Edge],
-                 name: str = ''):
-        Wire2D.__init__(self, primitives, name)
+    def __init__(self, primitives: List[volmdlr.edges.Edge], reference_path: str = PATH_ROOT, name: str = ''):
+        Wire2D.__init__(self, primitives, reference_path=reference_path, name=name)
         self._edge_polygon = None
         self._polygon_100_points = None
         self._area = None
@@ -2189,6 +2221,7 @@ class Contour2D(ContourMixin, Wire2D):
         return plot_data.Contour2D(plot_data_primitives=plot_data_primitives,
                                    edge_style=edge_style,
                                    surface_style=surface_style,
+                                   reference_path=self.reference_path,
                                    name=self.name)
 
     def is_edge_inside(self, edge, abs_tol: float = 1e-6):
@@ -2597,7 +2630,7 @@ class Contour2D(ContourMixin, Wire2D):
         :param abs_tol: tolerance.
         :return: merged contours.
         """
-        is_sharing_primitive = self.is_sharing_primitives_with(contour2d)
+        is_sharing_primitive = self.is_sharing_primitives_with(contour2d, abs_tol)
         if not is_sharing_primitive:
             if self.is_inside(contour2d):
                 return [self]
@@ -4173,13 +4206,12 @@ class Contour3D(ContourMixin, Wire3D):
     _non_data_hash_attributes = ['points', 'name']
     _generic_eq = True
 
-    def __init__(self, primitives: List[volmdlr.core.Primitive3D],
-                 name: str = ''):
+    def __init__(self, primitives: List[volmdlr.core.Primitive3D], reference_path: str = PATH_ROOT, name: str = ""):
         """
         Defines a contour3D from a collection of edges following each other stored in primitives list.
         """
 
-        Wire3D.__init__(self, primitives=primitives, name=name)
+        Wire3D.__init__(self, primitives=primitives, reference_path=reference_path, name=name)
         self._edge_polygon = None
         self._utd_bounding_box = False
 
@@ -4367,13 +4399,10 @@ class Contour3D(ContourMixin, Wire3D):
         Copies the Contour3D.
         """
         new_edges = [edge.copy(deep=deep, memo=memo) for edge in self.primitives]
-        # if self.point_inside_contour is not None:
-        #     new_point_inside_contour = self.point_inside_contour.copy()
-        # else:
-        #     new_point_inside_contour = None
         return Contour3D(new_edges, self.name)
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
+        """Contour 3D plot using Matplotlib."""
         if ax is None:
             # ax = Axes3D(plt.figure())
             fig = plt.figure()
@@ -4856,7 +4885,23 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
 
         return closing_point_index, list_remove_closing_points, passed_by_zero_index
 
-    def concave_sewing(self, polygon2, x, y):
+    def concave_sewing(self, polygon2: "ClosedPolygon3D", x: float, y: float):
+        """
+        Sews the current polygon with another specified polygon when one of them is concave.
+
+        This method performs sewing between the current polygon and the specified polygon
+        when one of the polygons is concave, using the provided x and y directions of the plane used to project the
+        polygons in.
+
+        :param polygon2: The polygon to sew with the current polygon.
+        :type polygon2: ClosedPolygon3D
+        :param x: The x-direction of the projection plane.
+        :type x: float
+        :param y: The y-direction of the projection plane.
+        :type y: float
+        :return: A list of triangles' points representing the sewn polygons.
+        :rtype: list[list[Point3D]]
+        """
         polygon1_2d = self.to_2d(volmdlr.O3D, x, y)
         polygon2_2d = polygon2.to_2d(volmdlr.O3D, x, y)
         polygon1_3d = self

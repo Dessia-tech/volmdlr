@@ -80,7 +80,7 @@ class TestToroidalSurface3D(unittest.TestCase):
         inverse_prof = surface.linesegment2d_to_3d(brep_primitive)[0]
         self.assertAlmostEqual(brep_primitive.length(), 0.5 * math.pi, 3)
         self.assertEqual(brep_primitive.end.y, math.pi)
-        self.assertAlmostEqual(arc3d.length(), inverse_prof.length(), 4)
+        self.assertAlmostEqual(arc3d.length(), inverse_prof.length())
         self.assertTrue(arc3d.start.is_close(inverse_prof.start, 5e-5))
         self.assertTrue(arc3d.end.is_close(inverse_prof.end))
 

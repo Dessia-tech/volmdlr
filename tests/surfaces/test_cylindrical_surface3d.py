@@ -129,6 +129,33 @@ class TestCylindricalSurface3D(unittest.TestCase):
         self.assertTrue(self.cylindrical_surface.point_belongs(point))
         self.assertFalse((self.cylindrical_surface.point_belongs(point2)))
 
+    def test_linesegment2d_to_3d(self):
+        point1 = volmdlr.Point2D(0.0, 0.0)
+        u_linesegment = edges.LineSegment2D(point1, volmdlr.Point2D(0.0, 1.0))
+        v_linesegment = edges.LineSegment2D(point1, volmdlr.Point2D(math.pi, 0.0))
+        uv_linesegment = edges.LineSegment2D(point1, volmdlr.Point2D(math.pi, 1.0))
+
+        linesegment3d = self.cylindrical_surface2.linesegment2d_to_3d(u_linesegment)[0]
+        self.assertAlmostEqual(linesegment3d.length(), 1.0)
+        self.assertTrue(linesegment3d.start.is_close(volmdlr.Point3D(1.0, 0.0, 0.0)))
+        self.assertTrue(linesegment3d.end.is_close(volmdlr.Point3D(1.0, 0.0, 1.0)))
+
+        arc3d = self.cylindrical_surface2.linesegment2d_to_3d(v_linesegment)[0]
+        self.assertAlmostEqual(arc3d.radius, 1.0)
+        self.assertTrue(arc3d.start.is_close(volmdlr.Point3D(1.0, 0.0, 0.0)))
+        self.assertTrue(arc3d.end.is_close(volmdlr.Point3D(-1.0, 0.0, 0.0)))
+
+        arc3d = self.cylindrical_surface2.linesegment2d_to_3d(v_linesegment.reverse())[0]
+        self.assertAlmostEqual(arc3d.radius, 1.0)
+        self.assertTrue(arc3d.start.is_close(volmdlr.Point3D(-1.0, 0.0, 0.0)))
+        self.assertTrue(arc3d.end.is_close(volmdlr.Point3D(1.0, 0.0, 0.0)))
+        self.assertAlmostEqual(self.cylindrical_surface2.frame.w.dot(arc3d.circle.normal), -1.0)
+
+        bsplinecurve3d = self.cylindrical_surface2.linesegment2d_to_3d(uv_linesegment)[0]
+        distances = [self.cylindrical_surface2.point_distance(point)
+                     for point in bsplinecurve3d.discretization_points(number_points=100)]
+        self.assertLess(max(distances), 1e-7)
+
     def test_parametric_points_to_3d(self):
         parametric_points = np.array([[0.0, 0.0], [0.5 * math.pi, 0.0], [math.pi, 0.0], [1.5 * math.pi, 0.0],
                                       [0.0, 1.0], [0.5 * math.pi, 1.0], [math.pi, 1.0], [1.5 * math.pi, 1.0]])

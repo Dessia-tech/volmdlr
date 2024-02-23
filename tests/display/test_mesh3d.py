@@ -24,11 +24,11 @@ class TestMesh3D(unittest.TestCase):
         # Sample data for testing
         self.vertices1 = np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
         self.triangles1 = np.array([[0, 1, 2]])
-        self.mesh1 = Mesh3D(self.vertices1, self.triangles1, "Mesh1")
+        self.mesh1 = Mesh3D(self.vertices1, self.triangles1, name="Mesh1")
 
         self.vertices2 = np.array([[0, 1, 0], [1, 1, 0], [1, 0, 0]])  # Note shared vertex with mesh1
         self.triangles2 = np.array([[0, 1, 2]])
-        self.mesh2 = Mesh3D(self.vertices2, self.triangles2, "Mesh2")
+        self.mesh2 = Mesh3D(self.vertices2, self.triangles2, name="Mesh2")
 
         self.vertices3 = np.array(
             [
@@ -58,7 +58,7 @@ class TestMesh3D(unittest.TestCase):
                 [0, 3, 1],
             ]
         )
-        self.mesh3 = Mesh3D(self.vertices3, self.triangles3, "Mesh3")
+        self.mesh3 = Mesh3D(self.vertices3, self.triangles3, name="Mesh3")
 
         self.vertices4 = np.array(
             [
@@ -88,7 +88,7 @@ class TestMesh3D(unittest.TestCase):
                 [0, 5, 1],
             ]
         )
-        self.mesh4 = Mesh3D(self.vertices4, self.triangles4, "Mesh4")
+        self.mesh4 = Mesh3D(self.vertices4, self.triangles4, name="Mesh4")
 
     def test_resize(self):
         exepected_vertices = np.array([[0.0, 0.0, 0.0], [0.001, 0.0, 0.0], [0.0, 0.001, 0.0]])
