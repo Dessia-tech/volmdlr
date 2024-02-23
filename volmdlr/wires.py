@@ -550,8 +550,10 @@ class WireMixin:
 
                     if primitive.is_point_edge_extremity(new_primitives[i][-1].end, tol):
                         if new_primitives[i][-1].end.is_close(primitive.start, tol):
+                            primitive.start = new_primitives[i][-1].end
                             new_primitives[i].append(primitive)
                         else:
+                            primitive.end = new_primitives[i][-1].end
                             new_primitives[i].append(primitive.reverse())
                         list_edges.remove(primitive)
                         broke = True
@@ -559,8 +561,10 @@ class WireMixin:
 
                     if primitive.is_point_edge_extremity(new_primitives[i][0].start, tol):
                         if new_primitives[i][0].start.is_close(primitive.end, tol):
+                            primitive.end = new_primitives[i][0].start
                             new_primitives[i].insert(0, primitive)
                         else:
+                            primitive.start = new_primitives[i][0].start
                             new_primitives[i].insert(0, primitive.reverse())
                         list_edges.remove(primitive)
                         broke = True
@@ -1574,7 +1578,8 @@ class ContourMixin(WireMixin):
         """
         if not list_edges:
             return []
-        if len(list_edges) == 1:
+        if (len(list_edges) == 1 or
+                (len(list_edges) == 2 and list_edges[0].direction_independent_is_close(list_edges[1]))):
             return [cls(list_edges, name=name)]
         list_contours = []
         points = [list_edges[0].start, list_edges[0].end]
@@ -1584,9 +1589,12 @@ class ContourMixin(WireMixin):
                 if (edge.is_point_edge_extremity(contour_primitives[-1].end, tol) and
                         not edge.direction_independent_is_close(contour_primitives[-1])):
                     if contour_primitives[-1].end.is_close(edge.start, tol):
+                        edge.start = contour_primitives[-1].end
                         contour_primitives.append(edge)
                     else:
-                        contour_primitives.append(edge.reverse())
+                        edge = edge.reverse()
+                        edge.start = contour_primitives[-1].end
+                        contour_primitives.append(edge)
                     list_edges.pop(i)
                     validating_points = points[:]
                     validating_point = contour_primitives[-1].end
@@ -1595,9 +1603,12 @@ class ContourMixin(WireMixin):
                 if (edge.is_point_edge_extremity(contour_primitives[0].start, tol) and
                         not edge.direction_independent_is_close(contour_primitives[0])):
                     if contour_primitives[0].start.is_close(edge.end, tol):
+                        edge.end = contour_primitives[0].start
                         contour_primitives.insert(0, edge)
                     else:
-                        contour_primitives.insert(0, edge.reverse())
+                        edge = edge.reverse()
+                        edge.end = contour_primitives[0].start
+                        contour_primitives.insert(0, edge)
                     validating_points = points[:]
                     validating_point = contour_primitives[0].start
                     points.insert(0, contour_primitives[0].start)
@@ -1622,8 +1633,10 @@ class ContourMixin(WireMixin):
                         new_contour = cls(contour_primitives[spliting_primitives_index:])
                         contour_primitives = contour_primitives[:spliting_primitives_index]
                         points = points[:spliting_primitives_index + 1]
+                    new_contour.primitives[0].start = new_contour.primitives[-1].end
                     list_contours.append(new_contour)
                 else:
+                    contour_primitives[0].start = contour_primitives[-1].end
                     list_contours.append(cls(contour_primitives))
                     if list_edges:
                         points = [list_edges[0].start, list_edges[0].end]
@@ -2572,13 +2585,8 @@ class Contour2D(ContourMixin, Wire2D):
         Create a contour 2d with bounding_box parameters, using line segments 2d.
 
         """
-
-        edge0 = volmdlr.edges.LineSegment2D(volmdlr.Point2D(x_min, y_min), volmdlr.Point2D(x_max, y_min))
-        edge1 = volmdlr.edges.LineSegment2D(volmdlr.Point2D(x_max, y_min), volmdlr.Point2D(x_max, y_max))
-        edge2 = volmdlr.edges.LineSegment2D(volmdlr.Point2D(x_max, y_max), volmdlr.Point2D(x_min, y_max))
-        edge3 = volmdlr.edges.LineSegment2D(volmdlr.Point2D(x_min, y_max), volmdlr.Point2D(x_min, y_min))
-
-        return Contour2D([edge0, edge1, edge2, edge3], name=name)
+        warnings.warn("from_bounding_rectangle is deprecated use rectangle instead.")
+        return Contour2D.rectangle(xmin=x_min, xmax=x_max, ymin=y_min, ymax=y_max, name=name)
 
     def cut_by_bspline_curve(self, bspline_curve2d: volmdlr.edges.BSplineCurve2D):
         """
@@ -2765,7 +2773,7 @@ class Contour2D(ContourMixin, Wire2D):
         return new_contour
 
     @classmethod
-    def rectangle(cls, xmin: float, xmax: float, ymin: float, ymax: float, is_trigo: bool = True):
+    def rectangle(cls, xmin: float, xmax: float, ymin: float, ymax: float, is_trigo: bool = True, name: str = ""):
         """
         Creates a rectangular contour.
 
@@ -2779,6 +2787,8 @@ class Contour2D(ContourMixin, Wire2D):
         :type ymax: float
         :param is_trigo: (Optional) If True, triangle is drawn in counterclockwise direction.
         :type is_trigo: bool
+        :param name: (Optional) Allows to assign a name to the object.
+        :type name: str
         :return: Contour2D
         """
         point1 = volmdlr.Point2D(xmin, ymin)
@@ -2786,11 +2796,11 @@ class Contour2D(ContourMixin, Wire2D):
         point3 = volmdlr.Point2D(xmax, ymax)
         point4 = volmdlr.Point2D(xmin, ymax)
         if is_trigo:
-            return cls.from_points([point1, point2, point3, point4])
-        return cls.from_points([point1, point4, point3, point2])
+            return cls.from_points([point1, point2, point3, point4], name=name)
+        return cls.from_points([point1, point4, point3, point2], name=name)
 
     @classmethod
-    def rectangle_from_center_and_sides(cls, center, x_length, y_length, is_trigo: bool = True):
+    def rectangle_from_center_and_sides(cls, center, x_length, y_length, is_trigo: bool = True, name: str = ""):
         """
         Creates a rectangular contour given a center and a side.
         """
@@ -2799,8 +2809,7 @@ class Contour2D(ContourMixin, Wire2D):
         xmax = xmin + x_length
         ymin = y_center - 0.5 * y_length
         ymax = ymin + y_length
-        return cls.rectangle(xmin, xmax, ymin, ymax, is_trigo)
-
+        return cls.rectangle(xmin, xmax, ymin, ymax, is_trigo, name=name)
 
 
 class ClosedPolygonMixin:
@@ -4375,12 +4384,21 @@ class Contour3D(ContourMixin, Wire3D):
                      self.primitives]
         return Contour3D(new_edges, self.name)
 
-    def copy(self, deep=True, memo=None):
-        """
-        Copies the Contour3D.
-        """
-        new_edges = [edge.copy(deep=deep, memo=memo) for edge in self.primitives]
-        return Contour3D(new_edges, self.name)
+    # def copy(self, deep=True, memo=None):
+    #     """
+    #     Creates a copy of the Contour3D.
+    #
+    #     As contours are containers, if deep is set to False, this method will return a new instance with the
+    #     same primitives of self.
+    #
+    #     :param deep: If False, perform a shallow copy. If True, perform a deep copy.
+    #     :param memo: A dict that keep track of references.
+    #     """
+    #     if not deep:
+    #         return Contour3D(self.primitives, self.name)
+    #     memo = {}
+    #     new_edges = [edge.copy(deep=deep, memo=memo) for edge in self.primitives]
+    #     return Contour3D(new_edges, self.name)
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         """Contour 3D plot using Matplotlib."""
@@ -4486,6 +4504,7 @@ class Contour3D(ContourMixin, Wire3D):
         contours = Contour3D.contours_from_edges(merged_primitives, tol=abs_tol)
 
         return contours
+
 
 class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
     """
