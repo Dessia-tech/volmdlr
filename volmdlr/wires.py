@@ -792,7 +792,18 @@ class Wire2D(WireMixin, PhysicalObject):
         self._length = None
         self.primitives = primitives
         PhysicalObject.__init__(self, name=name)
+        self.index_next = 0
 
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self.index_next >= len(self.primitives):
+            self.index_next = 0
+            raise StopIteration
+        else:
+            self.index_next += 1
+            return self.primitives[self.index_next-1]
     def __hash__(self):
         return hash(('wire2d', tuple(self.primitives)))
 
@@ -909,7 +920,7 @@ class Wire2D(WireMixin, PhysicalObject):
         :returns: a tuple (point, primitive)
         """
         intersection_points = []
-        for primitive in self.primitives:
+        for primitive in self:
             for point in primitive.line_intersections(line):
                 intersection_points.append((point, primitive))
         return intersection_points
@@ -1332,7 +1343,20 @@ class Wire3D(WireMixin, PhysicalObject):
         self.color = color
         self.alpha = alpha
         PhysicalObject.__init__(self, name=name)
+        self.index_next = 0
 
+'''
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self.index_next >= len(self.primitives):
+            self.index_next = 0
+            raise StopIteration
+        else:
+            self.index_next += 1
+            return self.primitives[self.index_next-1]
+'''
     def _bounding_box(self):
         """
         Flawed method, to be enforced by overloading.
