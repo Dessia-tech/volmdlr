@@ -1342,21 +1342,20 @@ class Wire3D(WireMixin, PhysicalObject):
         self.primitives = primitives
         self.color = color
         self.alpha = alpha
+        self.index = 0
         PhysicalObject.__init__(self, name=name)
-        self.index_next = 0
 
-'''
     def __iter__(self):
         return self
 
     def __next__(self):
-        if self.index_next >= len(self.primitives):
-            self.index_next = 0
+        if self.index >= len(self.primitives):
+            self.index = 0
             raise StopIteration
         else:
-            self.index_next += 1
-            return self.primitives[self.index_next-1]
-'''
+            self.index += 1
+            return self.primitives[self.index-1]
+
     def _bounding_box(self):
         """
         Flawed method, to be enforced by overloading.
@@ -1398,8 +1397,8 @@ class Wire3D(WireMixin, PhysicalObject):
         :return:
         """
         distance = []
-        for element in self.primitives:
-            for element2 in wire2.primitives:
+        for element in self:
+            for element2 in wire2:
                 distance.append(element.minimum_distance(element2))
 
         return min(distance)
@@ -2022,6 +2021,7 @@ class Contour2D(ContourMixin, Wire2D):
         self._edge_polygon = None
         self._polygon_100_points = None
         self._area = None
+        self.index = 0
 
     def copy(self, deep=True, memo=None):
         """
@@ -2089,7 +2089,7 @@ class Contour2D(ContourMixin, Wire2D):
         :return: Contour3D.
         """
         p3d = []
-        for edge in self.primitives:
+        for edge in self:
             p3d.append(edge.to_3d(plane_origin, x, y))
 
         return Contour3D(p3d)
@@ -2913,9 +2913,20 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
     def __init__(self, points: List[volmdlr.Point2D], name: str = ''):
         self.points = points
         self._line_segments = None
+        self.index = 0
 
         Contour2D.__init__(self, self.line_segments, name)
 
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self.index >= len(self.points):
+            self.index = 0
+            raise StopIteration
+        else:
+            self.index += 1
+            return self.points[self.index-1]
     def copy(self, *args, **kwargs):
         """Returns a copy of the object."""
         points = [point.copy() for point in self.points]
@@ -2938,8 +2949,8 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         if len(self.points) < 3:
             return 0.
 
-        x = [point.x for point in self.points]
-        y = [point.y for point in self.points]
+        x = [point.x for point in self]
+        y = [point.y for point in self]
 
         x1 = [x[-1]] + x[0:-1]
         y1 = [y[-1]] + y[0:-1]
@@ -4354,7 +4365,7 @@ class Contour3D(ContourMixin, Wire3D):
         :return: A new translated Contour3D.
         """
         new_edges = [edge.translation(offset) for edge in
-                     self.primitives]
+                     self]
         return Contour3D(new_edges, self.name)
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
@@ -4493,8 +4504,19 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
     def __init__(self, points: List[volmdlr.Point3D], name: str = ''):
         self.points = points
         self._line_segments = None
-
+        self.index = 0
         Contour3D.__init__(self, self.line_segments, name)
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self.index >= len(self.points):
+            self.index = 0
+            raise StopIteration
+        else:
+            self.index += 1
+            return self.points[self.index-1]
 
     def get_line_segments(self):
         """Get polygon lines."""
@@ -4549,7 +4571,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         :return: A new translated ClosedPolygon3D.
         """
         new_points = [point.translation(offset) for point in
-                      self.points]
+                      self]
         return ClosedPolygon3D(new_points, self.name)
 
     def to_2d(self, plane_origin, x, y):
