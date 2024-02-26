@@ -190,7 +190,7 @@ class WireMixin:
 
     def to_dict(self, *args, **kwargs):
         """Avoids storing points in memo that makes serialization slow."""
-        return PhysicalObject.to_dict(self, use_pointers=False)
+        return PhysicalObject.to_dict(self, use_pointers=True)
 
     def length(self):
         """Returns the wire's length."""
