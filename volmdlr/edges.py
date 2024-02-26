@@ -767,8 +767,6 @@ class LineSegment(Edge):
         :param abscissa: abscissa where in the curve the point should be calculated.
         :return: Corresponding point.
         """
-        if self.length() < 1e-6:
-            print(True)
         return self.start + self.unit_direction_vector() * abscissa
 
     def get_geo_lines(self, tag: int, start_point_tag: int, end_point_tag: int):
