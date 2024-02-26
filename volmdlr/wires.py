@@ -4702,6 +4702,21 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         return triangles
 
     def get_valid_concave_sewing_polygon(self, polygon1_2d, polygon2_2d):
+        """
+        Determines a valid concave sewing polygon based on the 2D projections of two polygons.
+
+        This method calculates a valid concave sewing polygon for further sewing operations,
+        based on the provided 2D projections of two polygons. It identifies the valid primitive segment
+        from the first polygon (`polygon1_2d`) with respect to the second polygon (`polygon2_2d`),
+        and rearranges the segments of the current polygon accordingly.
+
+        :param polygon1_2d: The 2D projection of the first polygon.
+        :type polygon1_2d: ClosedPolygon2D
+        :param polygon2_2d: The 2D projection of the second polygon.
+        :type polygon2_2d: ClosedPolygon2D
+        :return: A valid concave sewing polygon for further operations.
+        :rtype: ClosedPolygon3D
+        """
         polygon1_2d_valid__primitive = \
             polygon1_2d.get_valid_sewing_polygon_primitive(polygon2_2d)
         if polygon1_2d_valid__primitive == polygon1_2d.line_segments[0]:
@@ -4739,6 +4754,20 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         return triangles_points
 
     def check_sewing(self, polygon2, sewing_faces):
+        """
+        Checks the consistency of sewing between two polygons.
+
+        This method verifies the consistency of the sewing process between the current polygon
+        and another specified polygon. It compares the total number of line segments from both
+        polygons with the length of the list of sewing faces to ensure they match.
+
+        :param polygon2: The other polygon to check sewing consistency with.
+        :type polygon2: ClosedPolygon3D
+        :param sewing_faces: The list of sewing faces representing the sewn polygons.
+        :type sewing_faces: list[list[Point3D]]
+        :return: True if the sewing is consistent, False otherwise.
+        :rtype: bool
+        """
         if not len(self.line_segments) + len(polygon2.line_segments) == len(sewing_faces):
             return False
         return True
@@ -4747,6 +4776,25 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
                                          passed_by_zero_index,
                                          closing_point_index,
                                          previous_closing_point_index):
+        """
+        Redefines the points of triangles based on specific conditions during sewing.
+
+        This method adjusts the points of triangles based on certain conditions encountered
+        during the sewing process. It iterates through the list of triangles and modifies
+        their points if they meet the specified criteria related to the closing point index,
+        previous closing point index, and the direction of traversal.
+
+        :param triangles_points: The list of triangles' points representing the sewn polygons.
+        :type triangles_points: list[list[Point3D]]
+        :param passed_by_zero_index: A flag indicating whether the sewing has passed by the zero index.
+        :type passed_by_zero_index: bool
+        :param closing_point_index: The index of the closing point on the polygon.
+        :type closing_point_index: int
+        :param previous_closing_point_index: The index of the previous closing point on the polygon.
+        :type previous_closing_point_index: int
+        :return: The adjusted list of triangles' points after redefinition.
+        :rtype: list[list[Point3D]]
+        """
         for n, triangle_points in enumerate(triangles_points[::-1]):
             if (not passed_by_zero_index and
                 self.points.index(
@@ -4793,12 +4841,44 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
 
     @staticmethod
     def is_sewing_forward(closing_point_index, list_closing_point_indexes) -> bool:
+        """
+        Checks if the sewing process is moving forward based on the closing point index.
+
+        This static method determines whether the sewing process is moving forward
+        based on the closing point index and the list of closing point indexes.
+        It compares the current closing point index with the last index in the list
+        to ascertain the direction of sewing.
+
+        :param closing_point_index: The index of the current closing point.
+        :type closing_point_index: int
+        :param list_closing_point_indexes: The list of closing point indexes.
+        :type list_closing_point_indexes: list[int]
+        :return: True if the sewing process is moving forward, False otherwise.
+        :rtype: bool
+        """
         if closing_point_index < list_closing_point_indexes[-1]:
             return False
         return True
 
     @staticmethod
     def sewing_closing_points_to_remove(closing_point_index, list_closing_point_indexes, passed_by_zero_index):
+        """
+        Determines the closing points to remove during the sewing process.
+
+        This static method identifies the closing points that need to be removed
+        during the sewing process based on the current closing point index, the list
+        of closing point indexes, and the flag indicating whether the sewing process
+        has passed by zero index.
+
+        :param closing_point_index: The index of the current closing point.
+        :type closing_point_index: int
+        :param list_closing_point_indexes: The list of closing point indexes.
+        :type list_closing_point_indexes: list[int]
+        :param passed_by_zero_index: A flag indicating if the sewing has passed by the zero index.
+        :type passed_by_zero_index: bool
+        :return: The list of closing points to be removed.
+        :rtype: list[int]
+        """
         list_remove_closing_points = []
         for idx in list_closing_point_indexes[::-1]:
             if not passed_by_zero_index:
