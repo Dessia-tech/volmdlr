@@ -5065,6 +5065,20 @@ class SphericalSurface3D(UVPeriodicalSurface):
         circle = curves.Circle3D(volmdlr.Frame3D(center1, self.frame.u, self.frame.v, self.frame.w), circle_radius)
         return circle
 
+    def is_coincident(self, surface3d, abs_tol: float = 1e-6):
+        """
+        Verifies if two SphericalSurface are coincident.
+
+        :param surface3d: surface to verify.
+        :param abs_tol: tolerance.
+        :return: True if they are coincident, False otherwise.
+        """
+        if not isinstance(self, surface3d.__class__):
+            return False
+        if self.frame.is_close(surface3d.frame, abs_tol) and abs(self.radius - surface3d.radius) < abs_tol:
+            return True
+        return False
+
     def contour2d_to_3d(self, contour2d, return_primitives_mapping: bool = False):
         """
         Transforms a Contour2D in the parametric domain of the surface into a Contour3D in Cartesian coordinate.
@@ -7635,6 +7649,16 @@ class BSplineSurface3D(Surface3D):
             surface.delta = 0.05
             self._surface = surface
         return self._surface
+
+    def is_coincident(self, surface3d, abs_tol: float = 1e-6):
+        """
+        Verifies if two BSplineSurface are coincident.
+
+        :param surface3d: surface to verify.
+        :param abs_tol: tolerance.
+        :return: True if they are coincident, False otherwise.
+        """
+        return self == surface3d
 
     def to_dict(self, *args, **kwargs):
         """Avoids storing points in memo that makes serialization slow."""
