@@ -7733,7 +7733,7 @@ class BSplineSurface3D(Surface3D):
         :param abs_tol: tolerance.
         :return: True if they are coincident, False otherwise.
         """
-        return False
+        return self == surface3d
 
     def to_dict(self, *args, **kwargs):
         """Avoids storing points in memo that makes serialization slow."""

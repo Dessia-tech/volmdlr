@@ -2292,7 +2292,7 @@ class Ellipse2D(EllipseMixin, ClosedCurve):
         :param tol: tolerance.
         :return: the corresponding abscissa, 0 < abscissa < ellipse's length.
         """
-        if self.point_belongs(point):
+        if self.point_belongs(point, tol):
             angle_abscissa = self.point_angle_with_major_dir(point)
 
             def arc_length(theta):
