@@ -83,7 +83,7 @@ class TestSphericalFace3D(unittest.TestCase):
         spherical_face = volmdlr.faces.SphericalFace3D.from_surface_rectangular_cut(
             spherical_surface, 0, 2 * math.pi, phi1, 0.5 * math.pi)
         self.assertAlmostEqual(spherical_face.bounding_box.volume(),
-                               0.5 * (2 * spherical_surface.radius * math.cos(phi1)) ** 2, delta=0.1)
+                               0.5 * (2 * spherical_surface.radius * math.cos(phi1)) ** 2, delta =0.1)
 
 
 if __name__ == '__main__':
