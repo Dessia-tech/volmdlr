@@ -26,10 +26,11 @@ We have a process based on three branches:
 - testing that is regularly a freeze of testing. Release candidate (RC) can be made on testing
 - master that receive the code from testing before the release. Release are made on master
 
-Before coding, think of where to start from. You should start your branch for pull request where the pull request will point at:
+If you want to contribute, you need first to fork this project on your repository, following the GitHub directive. See:
+https://git-scm.com/book/en/v2/GitHub-Contributing-to-a-Project
 
-- if your contribution is trivial or has low risk of negative impact, start from master branch: simple and urgent bug fixes, docs, build...
-- in most other case, start from dev and submit your pull request to dev
+Once you have forked the project you can create a thematic branch where you will add your contribution and then open a
+pull request
 
 ### CI
 
