@@ -954,6 +954,10 @@ class Face3D(volmdlr.core.Primitive3D):
             if not point.in_list(intersections_points):
                 intersections_points.append(point)
         face_intersections = []
+        if not intersections_points:
+            for edge in surface_intersections:
+                if self.edge3d_inside(edge, 1e-3) and generic_face.edge3d_inside(edge, 1e-3):
+                    face_intersections.append(volmdlr.wires.Wire3D([edge]))
         for primitive in surface_intersections:
             points_on_primitive = []
             for point in intersections_points:
