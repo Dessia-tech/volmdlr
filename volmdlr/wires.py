@@ -4533,6 +4533,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         return equal
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
+        """Arc 3D plot using Matplotlib"""
         for line_segment in self.line_segments:
             ax = line_segment.plot(ax=ax, edge_style=edge_style)
         return ax
