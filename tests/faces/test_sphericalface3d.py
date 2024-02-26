@@ -68,6 +68,19 @@ class TestSphericalFace3D(unittest.TestCase):
         grid_points = face.grid_points([10, 10])
         self.assertEqual(len(grid_points), 518)
 
+    def test_boudingbox(self):
+        spherical_surface = surfaces.SphericalSurface3D(volmdlr.OXYZ, 1)
+        spherical_face = volmdlr.faces.SphericalFace3D.from_surface_rectangular_cut(
+            spherical_surface, 0, math.pi)
+        self.assertEqual(spherical_face.bounding_box.volume(), 4.0)
+        spherical_face = volmdlr.faces.SphericalFace3D.from_surface_rectangular_cut(
+            spherical_surface, 0, 2 * math.pi)
+        self.assertEqual(spherical_face.bounding_box.volume(), 8.0)
+        spherical_surface = surfaces.SphericalSurface3D(volmdlr.OXYZ, 1)
+        spherical_face = volmdlr.faces.SphericalFace3D.from_surface_rectangular_cut(
+            spherical_surface, 0, 1.5 * math.pi)
+        self.assertEqual(spherical_face.bounding_box.volume(), 8.0)
+
 
 if __name__ == '__main__':
     unittest.main()

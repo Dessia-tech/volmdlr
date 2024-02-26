@@ -3158,9 +3158,22 @@ class SphericalFace3D(PeriodicalFaceMixin, Face3D):
         for contour in contours2d:
             if not contour.point_inside(point2d):
                 inner_contours.append(contour)
-
         surface2d = surfaces.Surface2D(outer_contour=surface_rectangular_cut, inner_contours=inner_contours)
         return cls(surface3d, surface2d=surface2d, name=name)
+
+    def get_bounding_box(self):
+        """
+        Calculates the bounding box of a spherical face.
+
+        :return: Bounding Box.
+        """
+        brect = self.surface2d.outer_contour.bounding_rectangle
+        point = self.surface3d.frame.origin + self.surface3d.radius * math.cos(brect[0]) * self.surface3d.frame.u
+        points = [point.rotation(self.surface3d.frame.origin, self.surface3d.frame.w, angle)
+                  for angle in np.linspace(brect[0], brect[1], 25)]
+        points += [self.surface3d.frame.origin + self.surface3d.radius * math.sin(brect[2])*self.surface3d.frame.w,
+                   self.surface3d.frame.origin + self.surface3d.radius * math.sin(brect[3])*self.surface3d.frame.w]
+        return volmdlr.core.BoundingBox.from_points(points)
 
 
 class RuledFace3D(Face3D):
