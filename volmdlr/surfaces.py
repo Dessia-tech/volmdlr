@@ -4745,19 +4745,18 @@ class ConicalSurface3D(UPeriodicalSurface):
     #         return [intersection.frame_mapping(self.frame, 'old') for intersection in local_intersections]
     #     return self._parallel_plane_intersections_hyperbola_helper(plane3d)
 
-    # todo DO NOT DELETE THIS COMENTED BLOCK OF CODE YET. STILL TESTIG OCCT. 07/02/2024
-    # def perpendicular_plane_intersection(self, plane3d):
-    #     """
-    #     Cone plane intersections when plane's normal is parallel with the cone axis.
-    #
-    #     :param plane3d: Intersecting plane.
-    #     :return: List of intersecting curves.
-    #     """
-    #     center3d_plane = plane3d.point_projection(self.frame.origin)
-    #     radius = self.frame.origin.point_distance(center3d_plane) * math.tan(self.semi_angle) + self.ref_radius
-    #     circle3d = curves.Circle3D(volmdlr.Frame3D(center3d_plane, plane3d.frame.u,
-    #                                                plane3d.frame.v, plane3d.frame.w), radius)
-    #     return [circle3d]
+    def perpendicular_plane_intersection(self, plane3d):
+        """
+        Cone plane intersections when plane's normal is parallel with the cone axis.
+
+        :param plane3d: Intersecting plane.
+        :return: List of intersecting curves.
+        """
+        center3d_plane = plane3d.point_projection(self.frame.origin)
+        radius = self.frame.origin.point_distance(center3d_plane) * math.tan(self.semi_angle) + self.ref_radius
+        circle3d = curves.Circle3D(volmdlr.Frame3D(center3d_plane, plane3d.frame.u,
+                                                   plane3d.frame.v, plane3d.frame.w), radius)
+        return [circle3d]
 
     # todo DO NOT DELETE THIS COMENTED BLOCK OF CODE YET. STILL TESTIG OCCT. 07/02/2024
     # def _concurrent_plane_intersection_parabola(self, plane3d, parabola_vertex):

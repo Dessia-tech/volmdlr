@@ -965,6 +965,8 @@ class Face3D(volmdlr.core.Primitive3D):
             if primitive.periodic:
                 points_on_primitive = points_on_primitive + [points_on_primitive[0]]
             for point1, point2 in zip(points_on_primitive[:-1], points_on_primitive[1:]):
+                if point1 == point2:
+                    continue
                 edge = primitive.trim(point1, point2)
                 if self.edge3d_inside(edge, 1e-3) and generic_face.edge3d_inside(edge, 1e-3):
                     face_intersections.append(volmdlr.wires.Wire3D([edge]))
