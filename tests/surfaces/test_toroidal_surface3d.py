@@ -55,14 +55,14 @@ class TestToroidalSurface3D(unittest.TestCase):
                                          volmdlr.Point3D(-0.169169279223, 0.064939567779, 0.628073066814),
                                          volmdlr.Point3D(-0.169258691383, 0.064597504793, 0.628219515715))
 
-        surface2 = surfaces.ToroidalSurface3D.load_from_file(os.path.join(folder, "surface.json"))
+        surface2 = surfaces.ToroidalSurface3D.from_json(os.path.join(folder, "surface.json"))
         test2 = surface2.arc3d_to_2d(arc3d=arc2)[0]
         self.assertTrue(test2.start.is_close(volmdlr.Point2D(-0.2868131934235978, -math.pi)))
         self.assertTrue(test2.end.is_close(volmdlr.Point2D(-0.28681319342359773, -0.5 * math.pi)))
 
-        surface = surfaces.ToroidalSurface3D.load_from_file(
+        surface = surfaces.ToroidalSurface3D.from_json(
             os.path.join(folder, "degenerated_toroidalsurface.json"))
-        arc3d = edges.Arc3D.load_from_file(
+        arc3d = edges.Arc3D.from_json(
             os.path.join(folder, "degenerated_toroidalsurface_arc3d_undefined_end.json"))
         brep_primitive = surface.arc3d_to_2d(arc3d)[0]
         inverse_prof = surface.linesegment2d_to_3d(brep_primitive)[0]
@@ -72,15 +72,15 @@ class TestToroidalSurface3D(unittest.TestCase):
         self.assertTrue(arc3d.start.is_close(inverse_prof.start))
         self.assertTrue(arc3d.end.is_close(inverse_prof.end))
 
-        surface = surfaces.ToroidalSurface3D.load_from_file(
+        surface = surfaces.ToroidalSurface3D.from_json(
             os.path.join(folder, "degenerated_toroidalsurface_2.json"))
-        arc3d = edges.Arc3D.load_from_file(
+        arc3d = edges.Arc3D.from_json(
             os.path.join(folder, "degenerated_toroidalsurface_2_arc3d_undefined_end.json"))
         brep_primitive = surface.arc3d_to_2d(arc3d)[0]
         inverse_prof = surface.linesegment2d_to_3d(brep_primitive)[0]
         self.assertAlmostEqual(brep_primitive.length(), 0.5 * math.pi, 3)
         self.assertEqual(brep_primitive.end.y, math.pi)
-        self.assertAlmostEqual(arc3d.length(), inverse_prof.length(), 4)
+        self.assertAlmostEqual(arc3d.length(), inverse_prof.length())
         self.assertTrue(arc3d.start.is_close(inverse_prof.start, 5e-5))
         self.assertTrue(arc3d.end.is_close(inverse_prof.end))
 
@@ -106,9 +106,9 @@ class TestToroidalSurface3D(unittest.TestCase):
 
         self.assertTrue(inv_prof.end.is_close(bspline_curve3d.end))
 
-        surface = surfaces.ToroidalSurface3D.load_from_file(
+        surface = surfaces.ToroidalSurface3D.from_json(
             os.path.join(folder, "toroidalsurface_bsplinecurve3d_to_2d.json"))
-        bspline_curve3d = edges.BSplineCurve3D.load_from_file(
+        bspline_curve3d = edges.BSplineCurve3D.from_json(
             os.path.join(folder, "toroidalsurface_bsplinecurve3d_to_2d_curve.json"))
         brep_primitive = surface.bsplinecurve3d_to_2d(bspline_curve3d)[0]
         inverse_prof = surface.bsplinecurve2d_to_3d(brep_primitive)[0]
@@ -138,31 +138,31 @@ class TestToroidalSurface3D(unittest.TestCase):
             self.assertTrue(self.toroidal_surface.point_projection(point).is_close(expected_points[i]))
 
     def test_contour3d_to_2d(self):
-        surface = surfaces.ToroidalSurface3D.load_from_file(os.path.join(folder, "toroidal_surface_bug_2.json"))
-        contour = wires.Contour3D.load_from_file(os.path.join(folder, "toroidal_surface_bug_2_contour_0.json"))
+        surface = surfaces.ToroidalSurface3D.from_json(os.path.join(folder, "toroidal_surface_bug_2.json"))
+        contour = wires.Contour3D.from_json(os.path.join(folder, "toroidal_surface_bug_2_contour_0.json"))
         contour2d = surface.contour3d_to_2d(contour)
 
         self.assertTrue(contour2d.is_ordered())
         self.assertAlmostEqual(contour2d.area(), 1.3773892114076673, 2)
 
-        surface = surfaces.ToroidalSurface3D.load_from_file(os.path.join(folder, "buggy_toroidalface_surface.json"))
-        contour = wires.Contour3D.load_from_file(os.path.join(folder, "buggy_toroidalface_contour.json"))
+        surface = surfaces.ToroidalSurface3D.from_json(os.path.join(folder, "buggy_toroidalface_surface.json"))
+        contour = wires.Contour3D.from_json(os.path.join(folder, "buggy_toroidalface_contour.json"))
         contour2d = surface.contour3d_to_2d(contour)
 
         self.assertTrue(contour2d.is_ordered())
         self.assertAlmostEqual(contour2d.area(), 1.0990644259885822, 2)
 
-        surface = surfaces.ToroidalSurface3D.load_from_file(
+        surface = surfaces.ToroidalSurface3D.from_json(
             os.path.join(folder, "toroidalsurface_small_bsplinecurve.json"))
-        contour = wires.Contour3D.load_from_file(
+        contour = wires.Contour3D.from_json(
             os.path.join(folder, "toroidalsurface_small_bsplinecurve_contour.json"))
         contour2d = surface.contour3d_to_2d(contour)
 
         self.assertTrue(contour2d.is_ordered())
         self.assertAlmostEqual(contour2d.area(), 0.12142017346476651, 4)
 
-        surface = surfaces.ToroidalSurface3D.load_from_file(os.path.join(folder, "toroidalsurface_small_arc3d.json"))
-        contour = wires.Contour3D.load_from_file(os.path.join(folder, "toroidalsurface_small_arc3d_contour.json"))
+        surface = surfaces.ToroidalSurface3D.from_json(os.path.join(folder, "toroidalsurface_small_arc3d.json"))
+        contour = wires.Contour3D.from_json(os.path.join(folder, "toroidalsurface_small_arc3d_contour.json"))
         contour2d = surface.contour3d_to_2d(contour)
 
         self.assertTrue(contour2d.is_ordered())
@@ -192,11 +192,11 @@ class TestToroidalSurface3D(unittest.TestCase):
                             [volmdlr.Point3D(1.3426661840222276, -1.6569652433720718, -0.9911601091085722),
                              volmdlr.Point3D(2.6785064972435375, -1.252458418216524, -0.2905337359307829)],
                             []]
-        surface1, lineseg1 = DessiaObject.load_from_file(os.path.join(folder, "test_torus_line_intersections.json")).primitives
-        surface2, line2 = DessiaObject.load_from_file(os.path.join(folder, "test_torus_line_itnersections_08_11_2023.json")).primitives
-        surface3, lineseg3 = DessiaObject.load_from_file(os.path.join(folder, "test_torus_lineseg141223.json")).primitives
-        surface4, lineseg4 = DessiaObject.load_from_file(os.path.join(folder, "test_toroidal_surface_lineseg_intersections201223.json")).primitives
-        surface5, lineseg5 = DessiaObject.load_from_file(os.path.join(folder, "test_toroidal_surface_line_intersections.json")).primitives
+        surface1, lineseg1 = DessiaObject.from_json(os.path.join(folder, "test_torus_line_intersections.json")).primitives
+        surface2, line2 = DessiaObject.from_json(os.path.join(folder, "test_torus_line_itnersections_08_11_2023.json")).primitives
+        surface3, lineseg3 = DessiaObject.from_json(os.path.join(folder, "test_torus_lineseg141223.json")).primitives
+        surface4, lineseg4 = DessiaObject.from_json(os.path.join(folder, "test_toroidal_surface_lineseg_intersections201223.json")).primitives
+        surface5, lineseg5 = DessiaObject.from_json(os.path.join(folder, "test_toroidal_surface_line_intersections.json")).primitives
         for i, (surface, line) in enumerate([[surface1, lineseg1.line], [surface2, line2], [surface3, lineseg3.line],
                                              [surface4, lineseg4.line], [surface5, lineseg5.line]]):
             line_intersections = surface.line_intersections(line)
@@ -263,7 +263,7 @@ class TestToroidalSurface3D(unittest.TestCase):
                             w=volmdlr.Vector3D(0.7071067811865475, 0.0, 0.7071067811865476)))
         plane_intersections = toroidal_surface.plane_intersections(plane6)
         self.assertFalse(plane_intersections)
-        toroidalsurface, plane = DessiaObject.load_from_file(
+        toroidalsurface, plane = DessiaObject.from_json(
             os.path.join(folder, 'test_toroidalsurface_plane3d_intersections_211223.json')).primitives
         intersections = toroidalsurface.surface_intersections(plane)
         self.assertEqual(len(intersections), 2)

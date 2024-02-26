@@ -8,7 +8,7 @@ Module containing grid and relative objects.
 
 from typing import List
 
-import numpy as npy
+import numpy as np
 
 from dessia_common.core import DessiaObject  # isort: skip
 
@@ -47,7 +47,7 @@ class Grid2D(DessiaObject):
         points_2d_deformed = self.points
 
         # Grid2D points displacement
-        displacement = npy.ones(shape=(len(points_2d), 2))
+        displacement = np.ones(shape=(len(points_2d), 2))
         for i, displacement_i in enumerate(displacement):
             displacement_i[0] = points_2d_deformed[i][0] - points_2d[i][0]
             displacement_i[1] = points_2d_deformed[i][1] - points_2d[i][1]
@@ -131,8 +131,8 @@ class Grid2D(DessiaObject):
         points = []
 
         xmin, xmax, ymin, ymax = directions_properties[tuple(direction)]
-        x = npy.linspace(xmin, xmax, points_x)
-        y = npy.linspace(ymin, ymax, points_y)
+        x = np.linspace(xmin, xmax, points_x)
+        y = np.linspace(ymin, ymax, points_y)
 
         if direction in [['+x', '+y'], ['-x', '+y'], ['+x', '-y'], ['-x', '-y']]:
             for yi in y:
