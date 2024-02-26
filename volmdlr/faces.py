@@ -3137,6 +3137,11 @@ class SphericalFace3D(PeriodicalFaceMixin, Face3D):
         return cls(surface3d, surface2d=surface2d, name=name)
 
     def get_bounding_box(self):
+        """
+        Calculates the bounding box of a spherical face.
+
+        :return: Bounding Box.
+        """
         brect = self.surface2d.outer_contour.bounding_rectangle
         point = self.surface3d.frame.origin + self.surface3d.radius * math.cos(brect[0]) * self.surface3d.frame.u
         points = [point.rotation(self.surface3d.frame.origin, self.surface3d.frame.w, angle)
