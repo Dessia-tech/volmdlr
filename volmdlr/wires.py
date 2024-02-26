@@ -1056,8 +1056,6 @@ class Wire2D(WireMixin, PhysicalObject):
         self_primitives_to_test = [prim for prim in self.primitives if prim.is_point_edge_extremity(crossing)]
         if len(self_primitives_to_test) < 2:
             self_primitive = [prim for prim in self.primitives if prim.point_belongs(crossing)]
-            if not self_primitive:
-                print(True)
             self_primitive = self_primitive[0]
             crossing_abscissa = self_primitive.abscissa(crossing)
             vector_crossing = self_primitive.direction_vector(crossing_abscissa)
@@ -2118,8 +2116,6 @@ class Contour2D(ContourMixin, Wire2D):
         """
         # TODO: This is incomplete!!!
         x_min, x_max, y_min, y_max = self.bounding_rectangle
-        # if isinstance(point, np.ndarray):
-        #     print(True)
         if point.x < x_min - tol or point.x > x_max + tol or point.y < y_min - tol or point.y > y_max + tol:
             return False
         if include_edge_points:
