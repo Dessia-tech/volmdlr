@@ -819,6 +819,8 @@ class Wire2D(WireMixin, PhysicalObject):
         primitives3d = []
         for edge in self.primitives:
             primitives3d.append(edge.to_3d(plane_origin, x, y))
+        for prim1, prim2 in zip(primitives3d[:-1], primitives3d[1:]):
+            prim2.start = prim1.end
         return Wire3D(primitives3d, reference_path=self.reference_path)
         # TODO: method to check if it is a wire
 
@@ -1444,6 +1446,8 @@ class Wire3D(WireMixin, PhysicalObject):
             primitive2d = plane3d.point3d_to_2d(primitive)
             if primitive2d:
                 primitives2d.append(primitive2d)
+        for prim1, prim2 in zip(primitives2d, primitives2d[1:] + [primitives2d[0]]):
+            prim2.start = prim1.end
         return primitives2d
 
     def to_2d(self, plane_origin, x, y):
@@ -2111,11 +2115,12 @@ class Contour2D(ContourMixin, Wire2D):
         :param y: plane v vector.
         :return: Contour3D.
         """
-        p3d = []
+        primitives3d = []
         for edge in self.primitives:
-            p3d.append(edge.to_3d(plane_origin, x, y))
-
-        return Contour3D(p3d)
+            primitives3d.append(edge.to_3d(plane_origin, x, y))
+        for prim1, prim2 in zip(primitives3d, primitives3d[1:] + [primitives3d[0]]):
+            prim2.start = prim1.end
+        return Contour3D(primitives3d)
 
     def point_inside(self, point, include_edge_points: bool = False, tol: float = 1e-6):
         """
