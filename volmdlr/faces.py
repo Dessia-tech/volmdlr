@@ -3142,13 +3142,9 @@ class SphericalFace3D(PeriodicalFaceMixin, Face3D):
 
         :return: Bounding Box.
         """
-        brect = self.surface2d.outer_contour.bounding_rectangle
-        point = self.surface3d.frame.origin + self.surface3d.radius * math.cos(brect[0]) * self.surface3d.frame.u
-        points = [point.rotation(self.surface3d.frame.origin, self.surface3d.frame.w, angle)
-                  for angle in np.linspace(brect[0], brect[1], 25)]
-        points += [self.surface3d.frame.origin + self.surface3d.radius * math.sin(brect[2])*self.surface3d.frame.w,
-                   self.surface3d.frame.origin + self.surface3d.radius * math.sin(brect[3])*self.surface3d.frame.w]
-        return volmdlr.core.BoundingBox.from_points(points)
+        mesh = self.triangulation()
+
+        return volmdlr.core.BoundingBox.from_points(mesh.vertices)
 
 
 class RuledFace3D(Face3D):
