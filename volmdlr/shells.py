@@ -1217,8 +1217,8 @@ class ClosedShell3D(Shell3D):
                     continue
                 break
             else:
-                break
-            continue
+                continue
+            break
         is_inside = True
         if count % 2 == 0:
             is_inside = False
@@ -1485,7 +1485,7 @@ class ClosedShell3D(Shell3D):
             points = [center_of_mass]
 
         if face.surface2d.inner_contours:
-            normal_0 = face.surface2d.outer_contour.primitives[0].normal_vector()
+            normal_0 = face.surface2d.outer_contour.primitives[0].normal_vector(0.0)
             middle_point_0 = face.surface2d.outer_contour.primitives[0].middle_point()
             point1 = middle_point_0 + 0.0001 * normal_0
             point2 = middle_point_0 - 0.0001 * normal_0
@@ -1496,8 +1496,9 @@ class ClosedShell3D(Shell3D):
         for point in points:
             point3d = face.surface3d.point2d_to_3d(point)
             if face.point_belongs(point3d):
-                normal1 = point3d - 0.00001 * face.surface3d.frame.w
-                normal2 = point3d + 0.00001 * face.surface3d.frame.w
+                normal_at_point = face.normal_at_point(point3d)
+                normal1 = point3d - 0.00001 * normal_at_point
+                normal2 = point3d + 0.00001 * normal_at_point
                 if (self.point_inside(normal1) and
                     shell2.point_inside(normal2)) or \
                         (shell2.point_inside(normal1) and
@@ -1522,7 +1523,8 @@ class ClosedShell3D(Shell3D):
             inside_shell2 = shell2.point_inside(new_face.random_point_inside())
             face_on_shell2 = shell2.face_on_shell(new_face)
             if not inside_shell2 or face_on_shell2:
-                if list_coincident_faces:
+                if list_coincident_faces and any(new_face.surface3d.is_coincident(face.surface3d)
+                                                 for faces in list_coincident_faces for face in faces):
                     if self.is_face_between_shells(shell2, new_face):
                         return False
                 return True

@@ -206,6 +206,9 @@ class TestArcEllipse2D(unittest.TestCase):
         self.assertEqual(delete_shared_section[1].end, arc_ellipse2d.end)
         self.assertEqual(delete_shared_section[1].start, arc_ellipse2d_2.end)
 
+    def test_straight_line_center_of_mass(self):
+        straight_line_center_of_mass = self.arc_ellipse2d.straight_line_center_of_mass()
+        self.assertTrue(straight_line_center_of_mass, volmdlr.Point2D(-0.4100897136188068, -0.4100897136188069))
 
 if __name__ == '__main__':
     unittest.main()

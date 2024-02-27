@@ -372,7 +372,9 @@ class Edge(dc.DessiaObject):
             if force_sort:
                 intersections = self.sort_points_along_curve(intersections)
             return intersections
-        return self._generic_edge_intersections(edge2, abs_tol)
+        if hasattr(edge2, 'start') and hasattr(edge2, 'end'):
+            return self._generic_edge_intersections(edge2, abs_tol)
+        return vm_utils_intersections.get_bsplinecurve_intersections(edge2, self, abs_tol)
 
     def validate_crossings(self, edge, intersection):
         """Validates the intersections as crossings: edge not touching the other at one end, or in a tangent point."""
@@ -432,6 +434,8 @@ class Edge(dc.DessiaObject):
         :param point2: point 2.
         :return: edge trimmed.
         """
+        if point1 == point2:
+            return self
         if point1.is_close(self.start) or point1.is_close(self.end):
             split1 = [self, None]
         else:
@@ -1449,7 +1453,7 @@ class BSplineCurve(Edge):
         initial_condition_list = [u_min + index * (u_max - u_min) / (self.sample_size - 1) for index in indexes[:3]]
         for u0 in initial_condition_list:
             res = minimize(objective_function, np.array(u0), bounds=[(u_min, u_max)], jac=True)
-            if res.fun < 1e-6 or (res.success and abs(res.fun - distance) <= 1e-8):
+            if res.fun < 1e-6: # or (res.success and abs(res.fun - distance) <= 1e-8):
                 return float(res.x[0] * length)
 
         for patch, param in self.decompose(True):
@@ -2085,6 +2089,11 @@ class BSplineCurve(Edge):
             bspline_curve = self.reverse()
         abscissa1 = bspline_curve.abscissa(point1)
         abscissa2 = bspline_curve.abscissa(point2)
+
+        if (abscissa1 in (0.0, bspline_curve.length()) and abscissa2 in (0.0, bspline_curve.length()) or
+                bspline_curve.start.is_close(point1) and point1.is_close(point2)):
+            return bspline_curve
+
         if abscissa2 > abscissa1:
             if abscissa1 == 0.0:
                 return bspline_curve.split(point2)[0]
@@ -3202,7 +3211,8 @@ class Arc2D(ArcMixin, Edge):
     def arc_intersections(self, arc, abs_tol: float = 1e-6):
         """Intersections between two arc 2d."""
         circle_intersections = vm_utils_intersections.get_circle_intersections(self.circle, arc.circle)
-        arc_intersections = [inter for inter in circle_intersections if self.point_belongs(inter, abs_tol)]
+        arc_intersections = [inter for inter in circle_intersections
+                             if self.point_belongs(inter, abs_tol) and arc.point_belongs(inter, abs_tol)]
         return arc_intersections
 
     def arcellipse_intersections(self, arcellipse, abs_tol: float = 1e-6):
@@ -3980,6 +3990,7 @@ class ArcEllipse2D(ArcEllipseMixin, Edge):
                 aproximation_point = point1
                 break
             aproximation_abscissa += dist1
+            aproximation_point = point1
         initial_point = self.ellipse.frame.global_to_local_coordinates(aproximation_point)
         u1, u2 = initial_point.x / self.ellipse.major_axis, initial_point.y / self.ellipse.minor_axis
         initial_angle = volmdlr.geometry.sin_cos_angle(u1, u2)
@@ -4272,6 +4283,19 @@ class ArcEllipse2D(ArcEllipseMixin, Edge):
         """
         raise NotImplementedError(f'the straight_line_point_belongs method must be'
                                   f' overloaded by {self.__class__.__name__}')
+
+    def straight_line_center_of_mass(self):
+        """
+        Straight line center of mass.
+
+        PS.: This is an approximation.
+        """
+        center_of_mass = volmdlr.O2D
+        number_points = 100
+        for point in self.discretization_points(number_points=number_points):
+            center_of_mass += point
+        center_of_mass /= number_points
+        return center_of_mass
 
     def split(self, split_point, tol: float = 1e-6):
         """
@@ -5113,8 +5137,10 @@ class BSplineCurve3D(BSplineCurve):
 
     def _bounding_box(self):
         """Creates a bounding box from the bspline points."""
-        xmin, ymin, zmin = self.ctrlpts.min(axis=0)
-        xmax, ymax, zmax = self.ctrlpts.max(axis=0)
+        if self._eval_points is None:
+            self.evaluate()
+        xmin, ymin, zmin = self._eval_points.min(axis=0)
+        xmax, ymax, zmax = self._eval_points.max(axis=0)
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
     def get_bounding_element(self):
@@ -6253,6 +6279,16 @@ class FullArc3D(FullArcMixin, Arc3D):
         if distance_center_lineseg > self.radius:
             return []
         return self.circle.linesegment_intersections(linesegment3d)
+
+    def fullarc_intersections(self, fullarc3d, abs_tol: float = 1e-6):
+        """
+        Calculates the intersections between two full arc 3d.
+
+        :param fullarc3d: linesegment 3d to verify intersections.
+        :param abs_tol: tolerance.
+        :return: list of points 3d, if there are any intersections, an empty list if otherwise.
+        """
+        return self.circle.circle_intersections(fullarc3d.circle, abs_tol)
 
     def get_reverse(self):
         """

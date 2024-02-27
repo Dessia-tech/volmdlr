@@ -10,7 +10,7 @@ import webbrowser
 from dataclasses import dataclass
 from datetime import datetime
 from functools import lru_cache
-from typing import List, Tuple
+from typing import List, Tuple, Union
 
 try:
     import gmsh
@@ -18,6 +18,7 @@ except (TypeError, OSError):
     pass
 import matplotlib.pyplot as plt
 import numpy as np
+from numpy.typing import NDArray
 
 import dessia_common.core as dc
 from dessia_common.errors import ConsistencyError
@@ -707,7 +708,7 @@ class BoundingBox(dc.DessiaObject):
         return cls(xmin, xmax, ymin, ymax, zmin, zmax, name=name)
 
     @classmethod
-    def from_points(cls, points: List[volmdlr.Point3D], name: str = '') -> "BoundingBox":
+    def from_points(cls, points: Union[List[volmdlr.Point3D], NDArray], name: str = '') -> "BoundingBox":
         """
         Initializes a bounding box from a list of points.
 
@@ -717,7 +718,7 @@ class BoundingBox(dc.DessiaObject):
         :return: The bounding box initialized from the list of points.
         :rtype: BoundingBox
         """
-        points_array = np.array(points)
+        points_array = np.asarray(points)
         # Compute min and max for each dimension
         xmin, ymin, zmin = points_array.min(axis=0)
         xmax, ymax, zmax = points_array.max(axis=0)

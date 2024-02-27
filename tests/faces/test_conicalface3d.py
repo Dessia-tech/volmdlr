@@ -132,6 +132,11 @@ class TestConicalFace3D(unittest.TestCase):
         mesh2d = face.triangulation()
         self.assertIsNotNone(mesh2d)
 
+    def test_normal_at_point(self):
+        face, point = DessiaObject.from_json(os.path.join(folder,'test_conicalface_normal_at_point.json')).primitives
+        normal = face.normal_at_point(point)
+        self.assertTrue(normal.is_close(volmdlr.Vector3D(0.4736709994871299, 0.7250074373721028, -0.4999999999999999)))
+
 
 if __name__ == '__main__':
     unittest.main()
