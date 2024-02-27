@@ -33,6 +33,13 @@ class TestFullArc3D(unittest.TestCase):
         self.assertAlmostEqual(fullarc3d.circle.normal.cross(volmdlr.X3D).norm(), 0)
         self.assertEqual(fullarc3d.angle, volmdlr.TWO_PI)
 
+    def test_fullarc_intersections(self):
+        fullarc3d_ = self.fullarc3d.rotation(self.center, volmdlr.X3D, 1.4)
+        fullarc_intersections = fullarc3d_.fullarc_intersections(self.fullarc3d)
+        self.assertEqual(len(fullarc_intersections), 2)
+        self.assertTrue(fullarc_intersections[0], volmdlr.Point3D(0.1499999999999999, 0.0, -0.25))
+        self.assertTrue(fullarc_intersections[1], volmdlr.Point3D(-0.1499999999999999, 0.0, -0.25))
+
 
 if __name__ == '__main__':
     unittest.main()

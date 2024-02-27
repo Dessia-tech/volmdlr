@@ -1202,7 +1202,7 @@ class Surface3D(DessiaObject):
             return []
         intersections = []
         for curve_plane_intersection in curve_plane_intersections:
-            inters = curve_plane_intersection.curve_intersections(curve)
+            inters = curve_plane_intersection.intersections(curve)
             for intersection in inters:
 
                 if not intersection.in_list(intersections):
@@ -1828,6 +1828,17 @@ class Plane3D(Surface3D):
         point_at_v = self.point2d_to_3d(volmdlr.Point2D(0.0, v))
 
         return curves.Line3D.from_point_and_vector(point_at_v, self.frame.u)
+
+    def normal_at_point(self, point):
+        """
+        Gets Normal vector at a given point on the surface.
+
+        :param point: point on the surface.
+        :return:
+        """
+        if not self.point_belongs(point):
+            raise ValueError(f'Point {point} not on this surface.')
+        return self.frame.w
 
 
 PLANE3D_OXY = Plane3D(volmdlr.OXYZ)
@@ -3030,6 +3041,19 @@ class CylindricalSurface3D(UPeriodicalSurface):
         frame = self.frame.translation(self.frame.w * v)
         return curves.Circle3D(frame, self.radius)
 
+    def normal_at_point(self, point: volmdlr.Point3D):
+        """
+        Gets normal vector at given point on the surface.
+
+        :param point: point to be verified.
+        :return: normal
+        """
+        if not self.point_belongs(point):
+            raise ValueError('Point given not on surface.')
+        theta, _ = self.point3d_to_2d(point)
+        normal = math.cos(theta) * self.frame.u + math.sin(theta) * self.frame.v
+        return normal
+
 
 class ToroidalSurface3D(UVPeriodicalSurface):
     """
@@ -4170,6 +4194,20 @@ class ToroidalSurface3D(UVPeriodicalSurface):
         radius = abs(self.major_radius + self.minor_radius * math.cos(v))
         return curves.Circle3D(frame, radius)
 
+    def normal_at_point(self, point: volmdlr.Point3D):
+        """
+        Gets normal vector at given point on the surface.
+
+        :param point: point to be verified.
+        :return: normal
+        """
+        if not self.point_belongs(point):
+            raise ValueError('Point given not on surface.')
+        theta, phi = self.point3d_to_2d(point)
+        normal = math.cos(phi) * (math.cos(theta) * self.frame.u +
+                                  math.sin(theta) * self.frame.v) + math.sin(phi) * self.frame.w
+        return normal
+
 
 class ConicalSurface3D(UPeriodicalSurface):
     """
@@ -4914,6 +4952,23 @@ class ConicalSurface3D(UPeriodicalSurface):
         frame = self.frame.translation(self.frame.w * v)
         return curves.Circle3D(frame, radius)
 
+    def normal_at_point(self, point: volmdlr.Point3D):
+        """
+        Gets normal vector at given point on the surface.
+
+        :param point: point to be verified.
+        :return: normal
+        """
+        if not self.point_belongs(point):
+            raise ValueError('Point given not on surface.')
+        theta, z_apex = self.point3d_to_2d(point)
+
+        normal = (math.cos(theta) * self.frame.u + math.sin(theta) * self.frame.v -
+                  math.tan(self.semi_angle) * self.frame.w) / (math.sqrt(1 + math.tan(self.semi_angle)**2))
+        if self.ref_radius + z_apex * math.tan(self.semi_angle) < 0:
+            return - normal
+        return normal
+
 
 class SphericalSurface3D(UVPeriodicalSurface):
     """
@@ -5009,6 +5064,20 @@ class SphericalSurface3D(UVPeriodicalSurface):
         circle_radius = math.sqrt(self.radius ** 2 - center1.point_distance(self.frame.origin) ** 2)
         circle = curves.Circle3D(volmdlr.Frame3D(center1, self.frame.u, self.frame.v, self.frame.w), circle_radius)
         return circle
+
+    def is_coincident(self, surface3d, abs_tol: float = 1e-6):
+        """
+        Verifies if two SphericalSurface are coincident.
+
+        :param surface3d: surface to verify.
+        :param abs_tol: tolerance.
+        :return: True if they are coincident, False otherwise.
+        """
+        if not isinstance(self, surface3d.__class__):
+            return False
+        if self.frame.is_close(surface3d.frame, abs_tol) and abs(self.radius - surface3d.radius) < abs_tol:
+            return True
+        return False
 
     def contour2d_to_3d(self, contour2d, return_primitives_mapping: bool = False):
         """
@@ -5942,6 +6011,21 @@ class SphericalSurface3D(UVPeriodicalSurface):
         z = self.radius * math.sin(v)
         frame = self.frame.translation(self.frame.w * z)
         return curves.Circle3D(frame, radius)
+
+    def normal_at_point(self, point: volmdlr.Point3D):
+        """
+        Gets normal vector at given point on the surface.
+
+        :param point: point to be verified.
+        :return: normal
+        """
+        if not self.point_belongs(point):
+            raise ValueError('Point given not on surface.')
+        theta, phi = self.point3d_to_2d(point)
+        normal = math.cos(phi) * (math.cos(theta) * self.frame.u +
+                                  math.sin(theta) * self.frame.v) + math.sin(theta) * self.frame.w
+        return normal
+
 
 
 class RuledSurface3D(Surface3D):
@@ -7276,7 +7360,7 @@ class BSplineSurface3D(Surface3D):
     @property
     def weights(self):
         """
-        Gets BSpline surface weights.
+        Gets the weights of the BSpline surface.
         """
         if self._weights is None:
             return self._weights
@@ -7389,52 +7473,68 @@ class BSplineSurface3D(Surface3D):
         :rtype: dict
         """
         umin, umax, vmin, vmax = self.domain
-        # v-direction
-        crvlist_v = []
 
         def extract_from_surface_boundary_u(u_pos):
             weights = None
             control_points = [self.control_points[j + (self.nb_v * u_pos)] for j in range(self.nb_v)]
             if self.rational:
                 weights = [self.weights[j + (self.nb_v * u_pos)] for j in range(self.nb_v)]
-            return edges.BSplineCurve3D(self.degree_u, control_points, self.u_multiplicities, self.u_knots, weights)
+            return edges.BSplineCurve3D(self.degree_v, control_points, self.v_multiplicities, self.v_knots, weights)
 
         def extract_from_surface_boundary_v(v_pos):
             weights = None
             control_points = [self.control_points[v_pos + (self.nb_v * i)] for i in range(self.nb_u)]
             if self.rational:
                 weights = [self.weights[v_pos + (self.nb_v * i)] for i in range(self.nb_u)]
-            return edges.BSplineCurve3D(self.degree_v, control_points, self.v_multiplicities, self.v_knots, weights)
-
+            return edges.BSplineCurve3D(self.degree_u, control_points, self.u_multiplicities, self.u_knots, weights)
+        # v-direction
+        crvlist_v = []
         if v:
-            if v[0] == vmin:
-                crvlist_v.append(extract_from_surface_boundary_v(0))
-            else:
-                crvlist_v.append(extract_surface_curve_v(self, v[0], edges.BSplineCurve3D))
-            for param in v[1:-1]:
-                crvlist_v.append(extract_surface_curve_v(self, param, edges.BSplineCurve3D))
-            if v[-1] == vmax:
-                crvlist_v.append(extract_from_surface_boundary_v(self.nb_v - 1))
-            else:
-                crvlist_v.append(extract_surface_curve_v(self, v[-1], edges.BSplineCurve3D))
+            for param in v:
+                if abs(param - vmin) < 1e-6:
+                    crvlist_v.append(extract_from_surface_boundary_v(0))
+                elif abs(param - vmax) < 1e-6:
+                    crvlist_v.append(extract_from_surface_boundary_v(self.nb_v - 1))
+                else:
+                    curve = extract_surface_curve_v(self, param, edges.BSplineCurve3D)
+                    crvlist_v.append(curve)
+
         # u-direction
         crvlist_u = []
         if u:
-            if u[0] == umin:
-                crvlist_u.append(extract_from_surface_boundary_u(0))
-            else:
-                crvlist_u.append(extract_surface_curve_u(self, u[0], edges.BSplineCurve3D))
-
-            for param in u[1:-1]:
-                crvlist_u.append(extract_surface_curve_u(self, param, edges.BSplineCurve3D))
-
-            if u[-1] == umax:
-                crvlist_u.append(extract_from_surface_boundary_u(self.nb_u - 1))
-            else:
-                crvlist_u.append(extract_surface_curve_u(self, u[-1], edges.BSplineCurve3D))
+            for param in u:
+                if abs(param - umin) < 1e-6:
+                    crvlist_u.append(extract_from_surface_boundary_u(0))
+                elif abs(param - umax) < 1e-6:
+                    crvlist_u.append(extract_from_surface_boundary_u(self.nb_u - 1))
+                else:
+                    curve = extract_surface_curve_u(self, param, edges.BSplineCurve3D)
+                    crvlist_u.append(curve)
 
         # Return shapes as a dict object
         return {"u": crvlist_u, "v": crvlist_v}
+
+    def u_iso(self, u: float) -> edges.BSplineCurve3D:
+        """
+        Returns the u-iso curve of the surface.
+
+        :param u: The value of u where to extract the curve.
+        :type u: float
+        :return: A line 3D
+        :rtype: :class:`curves.Line3D`
+        """
+        return self.extract_curves(u=[u])["u"][0]
+
+    def v_iso(self, v: float) -> edges.BSplineCurve3D:
+        """
+        Returns the v-iso curve of the surface.
+
+        :param v: The value of v where to extract the curve.
+        :type u: float
+        :return: A BSpline curve 3D
+        :rtype: :class:`edges.BSplineCurve3D`
+        """
+        return self.extract_curves(v=[v])["v"][0]
 
     def evaluate(self, **kwargs):
         """
@@ -7549,6 +7649,16 @@ class BSplineSurface3D(Surface3D):
             surface.delta = 0.05
             self._surface = surface
         return self._surface
+
+    def is_coincident(self, surface3d, abs_tol: float = 1e-6):
+        """
+        Verifies if two BSplineSurface are coincident.
+
+        :param surface3d: surface to verify.
+        :param abs_tol: tolerance.
+        :return: True if they are coincident, False otherwise.
+        """
+        return self == surface3d
 
     def to_dict(self, *args, **kwargs):
         """Avoids storing points in memo that makes serialization slow."""
@@ -8173,12 +8283,19 @@ class BSplineSurface3D(Surface3D):
         """Evaluates the Euclidean form for the parametric line segment."""
         points = []
         direction_vector = linesegment2d.unit_direction_vector(0.0)
+        start3d = self.point2d_to_3d(linesegment2d.start)
+        end3d = self.point2d_to_3d(linesegment2d.end)
         if direction_vector.is_colinear_to(volmdlr.X2D):
-            n = self.nb_u
-        elif direction_vector.is_colinear_to(volmdlr.Y2D):
-            n = self.nb_v
-        else:
-            n = 20
+            curve = self.v_iso(linesegment2d.start.y)
+            if linesegment2d.start.x > linesegment2d.end.x:
+                curve = curve.reverse()
+            return [curve.trim(start3d, end3d)]
+        if direction_vector.is_colinear_to(volmdlr.Y2D):
+            curve = self.u_iso(linesegment2d.start.x)
+            if linesegment2d.start.y > linesegment2d.end.y:
+                curve = curve.reverse()
+            return [curve.trim(start3d, end3d)]
+        n = 20
         for point in linesegment2d.discretization_points(number_points=n):
             point3d = self.point2d_to_3d(point)
             if not point3d.in_list(points):

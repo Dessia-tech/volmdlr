@@ -229,16 +229,17 @@ class WireMixin:
             return self.primitives[-1].end  # point_at_abscissa(primitive_length)
         raise ValueError('abscissa out of contour length')
 
-    def split_with_two_points(self, point1, point2):
+    def split_with_two_points(self, point1, point2, abs_tol: float = 1e-6):
         """
         Split a wire or contour in two points.
 
         :param point1: splitting point1.
         :param point2: splitting point2.
+        :param abs_tol: tolerance used.
         :return: List of primitives in between these two points, and another list with the remaining primitives.
         """
-        abscissa1 = self.abscissa(point1)
-        abscissa2 = self.abscissa(point2)
+        abscissa1 = self.abscissa(point1, abs_tol)
+        abscissa2 = self.abscissa(point2, abs_tol)
         if abscissa1 > abscissa2:
             point1, point2 = point2, point1
             abscissa1, abscissa2 = abscissa2, abscissa1
@@ -491,6 +492,8 @@ class WireMixin:
         :param sorted_points: sorted list of points.
         :return: list of Contour sections.
         """
+        if not sorted_points:
+            return []
         self_start_equal_to_end = True
         if not self.primitives[0].start.is_close(self.primitives[-1].end):
             self_start_equal_to_end = False
@@ -637,14 +640,13 @@ class WireMixin:
         """
         return self.point_at_abscissa(self.length() / 2)
 
-    def is_superposing(self, contour2):
+    def is_superposing(self, contour2, abs_tol: float = 1e-6):
         """
         Check if the contours are superposing (one on the other without necessarily having an absolute equality).
-
         """
 
         for primitive_2 in contour2.primitives:
-            if not self.primitive_over_wire(primitive_2):
+            if not self.primitive_over_wire(primitive_2, abs_tol):
                 return False
         return True
 
@@ -2209,18 +2211,19 @@ class Contour2D(ContourMixin, Wire2D):
                                    reference_path=self.reference_path,
                                    name=self.name)
 
-    def is_edge_inside(self, edge):
+    def is_edge_inside(self, edge, abs_tol: float = 1e-6):
         """
         Verifies if given edge is inside self contour perimeter, including its edges.
 
         :param edge: other edge to verify if inside contour.
+        :param abs_tol: tolerance used.
         :returns: True or False.
         """
         points = edge.discretization_points(number_points=5)
         points.extend([edge.point_at_abscissa(edge.length() * 0.001),
                        edge.point_at_abscissa(edge.length() * 0.999)])
         for point in points:
-            if not self.point_inside(point, include_edge_points=True):
+            if not self.point_inside(point, include_edge_points=True, tol=abs_tol):
                 return False
         return True
 
@@ -2468,7 +2471,7 @@ class Contour2D(ContourMixin, Wire2D):
         intersecting_points = []
         for primitive1 in self.primitives:
             for primitive2 in contour2d.primitives:
-                line_intersection = primitive1.linesegment_intersections(primitive2)
+                line_intersection = primitive1.intersections(primitive2)
                 if line_intersection:
                     if not line_intersection[0].in_list(intersecting_points):
                         intersecting_points.extend(line_intersection)
@@ -2482,41 +2485,42 @@ class Contour2D(ContourMixin, Wire2D):
         return intersecting_points
 
     def get_divided_contours(self, cutting_point1: volmdlr.Point2D, cutting_point2: volmdlr.Point2D,
-                             closing_contour):
-        """Get divided contours."""
+                             closing_contour, abs_tol: float = 1e-6):
+        """
+        Get divided contours.
+        """
         extracted_innerpoints_contour1_prims, extracted_outerpoints_contour1_prims = self.split_with_two_points(
-            cutting_point1, cutting_point2)
+            cutting_point1, cutting_point2, abs_tol)
         extracted_outerpoints_contour1 = Contour2D(extracted_outerpoints_contour1_prims)
         extracted_innerpoints_contour1 = Contour2D(extracted_innerpoints_contour1_prims)
         primitives1 = extracted_outerpoints_contour1.primitives + closing_contour.primitives
         primitives2 = extracted_innerpoints_contour1.primitives + closing_contour.primitives
-        if extracted_outerpoints_contour1.primitives[0].start.is_close(closing_contour.primitives[0].start):
+        if extracted_outerpoints_contour1.primitives[0].start.is_close(closing_contour.primitives[0].start, abs_tol):
             cutting_contour_new = closing_contour.invert()
-            primitives1 = cutting_contour_new.primitives + \
-                extracted_outerpoints_contour1.primitives
-        elif extracted_outerpoints_contour1.primitives[0].start.is_close(closing_contour.primitives[-1].end):
-            primitives1 = closing_contour.primitives + \
-                          extracted_outerpoints_contour1.primitives
-
-        if extracted_innerpoints_contour1.primitives[0].start.is_close(closing_contour.primitives[0].start):
-            cutting_contour_new = \
-                closing_contour.invert()
-            primitives2 = cutting_contour_new.primitives + \
-                extracted_innerpoints_contour1.primitives
-        elif extracted_innerpoints_contour1.primitives[0].start.is_close(closing_contour.primitives[-1].end):
-            primitives2 = closing_contour.primitives + \
-                          extracted_innerpoints_contour1.primitives
+            primitives1 = cutting_contour_new.primitives + extracted_outerpoints_contour1.primitives
+        elif extracted_outerpoints_contour1.primitives[0].start.is_close(closing_contour.primitives[-1].end, abs_tol):
+            primitives1 = closing_contour.primitives + extracted_outerpoints_contour1.primitives
+        if extracted_innerpoints_contour1.primitives[0].start.is_close(closing_contour.primitives[0].start, abs_tol):
+            cutting_contour_new = closing_contour.invert()
+            primitives2 = cutting_contour_new.primitives + extracted_innerpoints_contour1.primitives
+        elif extracted_innerpoints_contour1.primitives[0].start.is_close(closing_contour.primitives[-1].end, abs_tol):
+            primitives2 = closing_contour.primitives + extracted_innerpoints_contour1.primitives
         contour1 = Contour2D(primitives1)
         contour1.order_contour()
         contour2 = Contour2D(primitives2)
         contour2.order_contour()
         return contour1, contour2
 
-    def divide(self, contours):
+    def divide(self, contours, abs_tol: float = 1e-6):
         """Divide contour with other contours."""
         new_base_contours = [self]
         finished = False
-        list_cutting_contours = contours[:]
+
+        def helper_f(c):
+            pt1, pt2 = [c.primitives[0].start, c.primitives[-1].end]
+            return self.point_belongs(pt1, abs_tol) and self.point_belongs(pt2, abs_tol)
+
+        list_cutting_contours = sorted(contours, key=helper_f, reverse=True)
         list_valid_contours = []
         while not finished:
             if not new_base_contours:
@@ -2524,7 +2528,7 @@ class Contour2D(ContourMixin, Wire2D):
             list_cutting_contours_modified = False
             for i, base_contour in enumerate(new_base_contours):
                 for j, cutting_contour in enumerate(list_cutting_contours):
-                    if base_contour.is_superposing(cutting_contour):
+                    if base_contour.is_superposing(cutting_contour, abs_tol):
                         list_cutting_contours.pop(j)
                         list_cutting_contours_modified = True
                         break
@@ -2533,20 +2537,21 @@ class Contour2D(ContourMixin, Wire2D):
                         sorted_points = cutting_contour.sort_points_along_wire(contour_crossings)
                         split_wires = cutting_contour.split_with_sorted_points(sorted_points)
                         list_cutting_contours.pop(j)
-                        list_cutting_contours.extend(split_wires)
+                        list_cutting_contours = split_wires + list_cutting_contours
                         list_cutting_contours_modified = True
                         break
                     point1, point2 = [cutting_contour.primitives[0].start,
                                       cutting_contour.primitives[-1].end]
                     cutting_points = []
-                    if base_contour.point_inside(cutting_contour.middle_point()) and\
-                            base_contour.point_belongs(point1) and base_contour.point_belongs(point2):
+                    if base_contour.point_inside(cutting_contour.middle_point()) and \
+                            base_contour.point_belongs(point1, abs_tol) and \
+                            base_contour.point_belongs(point2, abs_tol):
                         cutting_points = [point1, point2]
                     if cutting_points:
                         contour1, contour2 = base_contour.get_divided_contours(
-                            cutting_points[0], cutting_points[1], cutting_contour)
+                            cutting_points[0], cutting_points[1], cutting_contour, abs_tol)
                         new_base_contours.pop(i)
-                        new_base_contours.extend([contour1, contour2])
+                        new_base_contours = [contour1, contour2] + new_base_contours
                         break
                 else:
                     list_valid_contours.append(base_contour)
@@ -4528,6 +4533,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         return equal
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
+        """Arc 3D plot using Matplotlib."""
         for line_segment in self.line_segments:
             ax = line_segment.plot(ax=ax, edge_style=edge_style)
         return ax
