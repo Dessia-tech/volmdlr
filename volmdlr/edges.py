@@ -434,6 +434,8 @@ class Edge(dc.DessiaObject):
         :param point2: point 2.
         :return: edge trimmed.
         """
+        if point1 == point2:
+            return self
         if point1.is_close(self.start) or point1.is_close(self.end):
             split1 = [self, None]
         else:
