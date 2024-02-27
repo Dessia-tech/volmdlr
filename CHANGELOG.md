@@ -32,7 +32,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### surfaces.py
 - 
 #### faces.py
-- 
+- SphericalFace3D: get_bounding_box
+
 #### shells.py
 - 
 
