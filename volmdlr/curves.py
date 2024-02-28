@@ -984,6 +984,11 @@ class CircleMixin:
     """Circle abstract class."""
 
     @property
+    def angle(self):
+        """Returns the circle angle."""
+        return volmdlr.TWO_PI
+
+    @property
     def center(self):
         """Gets circle's center point."""
         return self.frame.origin
@@ -1643,7 +1648,6 @@ class Circle3D(CircleMixin, ClosedCurve):
         self.radius = radius
         self.frame = frame
         self._bbox = None
-        self.angle = 2 * math.pi
         ClosedCurve.__init__(self, name=name)
 
     def __hash__(self):
