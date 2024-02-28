@@ -10,8 +10,6 @@ from itertools import product
 from typing import List, Union
 from functools import cached_property
 
-from copy import deepcopy, copy
-
 import numpy as np
 
 import dessia_common.core as dc

@@ -101,7 +101,7 @@ class TestContour3D(unittest.TestCase):
             self.assertIs(prim2.start, prim1.end)
 
     def test_copy(self):
-        contour = Contour2D.from_bounding_rectangle(-0.5, 0.5, -0.5, 0.5).to_3d(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D)
+        contour = Contour2D.rectangle(-0.5, 0.5, -0.5, 0.5).to_3d(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D)
         new_contour = contour.copy(deep=True, memo={})
         for prim1, prim2 in zip(new_contour.primitives, new_contour.primitives[1:] + [new_contour.primitives[0]]):
             self.assertIs(prim2.start, prim1.end)
