@@ -4366,7 +4366,8 @@ class Contour3D(ContourMixin, Wire3D):
         :param offset: translation vector.
         :return: A new translated Contour3D.
         """
-        new_edges = [edge.translation(offset) for edge in
+        memo = {}
+        new_edges = [edge.translation(offset, memo=memo) for edge in
                      self.primitives]
         return Contour3D(new_edges, self.name)
 
@@ -4716,6 +4717,20 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         return triangles_points
 
     def check_sewing(self, polygon2, sewing_faces):
+        """
+        Checks the consistency of sewing between two polygons.
+
+        This method verifies the consistency of the sewing process between the current polygon
+        and another specified polygon. It compares the total number of line segments from both
+        polygons with the length of the list of sewing faces to ensure they match.
+
+        :param polygon2: The other polygon to check sewing consistency with.
+        :type polygon2: ClosedPolygon3D
+        :param sewing_faces: The list of sewing faces representing the sewn polygons.
+        :type sewing_faces: list[list[Point3D]]
+        :return: True if the sewing is consistent, False otherwise.
+        :rtype: bool
+        """
         if not len(self.line_segments) + len(polygon2.line_segments) == len(sewing_faces):
             return False
         return True
