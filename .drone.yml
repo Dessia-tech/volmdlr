@@ -46,7 +46,7 @@ steps:
     event: pull_request
 
   commands:
-#    - git fetch origin "$DRONE_TARGET_BRANCH"
+    - git fetch origin "$DRONE_TARGET_BRANCH"
 #    - git remote add fork https://github.com/${DRONE_REPO_OWNER}/${DRONE_REPO_NAME}.git
 #    - git fetch fork "$DRONE_SOURCE_BRANCH"
     - git fetch origin +refs/pull/${DRONE_PULL_REQUEST}/head:${DRONE_SOURCE_BRANCH}
