@@ -1448,6 +1448,7 @@ class Wire3D(WireMixin, PhysicalObject):
                 primitives2d.append(primitive2d)
         for prim1, prim2 in zip(primitives2d, primitives2d[1:] + [primitives2d[0]]):
             prim2.start = prim1.end
+
         return primitives2d
 
     def to_2d(self, plane_origin, x, y):
@@ -2819,7 +2820,7 @@ class Contour2D(ContourMixin, Wire2D):
         xmax = xmin + x_length
         ymin = y_center - 0.5 * y_length
         ymax = ymin + y_length
-        return cls.rectangle(xmin, xmax, ymin, ymax, is_trigo, name=name)
+        return cls.rectangle(xmin, xmax, ymin, ymax, is_trigo=is_trigo, name=name)
 
 
 class ClosedPolygonMixin:

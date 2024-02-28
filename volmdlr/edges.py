@@ -4193,7 +4193,7 @@ class ArcEllipse2D(ArcEllipseMixin, Edge):
         ellipse = self.ellipse.__class__(self.ellipse.major_axis, self.ellipse.minor_axis,
                                          volmdlr.Frame2D(self.ellipse.center, self.ellipse.frame.u,
                                                          -self.ellipse.frame.v))
-        return self.__class__(ellipse, self.end, self.start, self.name + '_reverse')
+        return self.__class__(ellipse, self.end, self.start, name=self.name + '_reverse')
 
     def line_intersections(self, line2d: volmdlr_curves.Line2D, tol: float = 1e-6):
         """
