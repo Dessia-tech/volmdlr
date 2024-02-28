@@ -47,7 +47,8 @@ steps:
 
   commands:
     - git fetch origin "$DRONE_TARGET_BRANCH"
-    - git fetch origin ${DRONE_PULL_REQUEST}:refs/pull/${DRONE_PULL_REQUEST}/head
+    - git remote add fork https://github.com/${DRONE_REPO_OWNER}/${DRONE_REPO_NAME}.git
+    - git fetch fork "$DRONE_SOURCE_BRANCH"
     - bash code_changelog.sh
 
 
