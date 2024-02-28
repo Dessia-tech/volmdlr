@@ -443,8 +443,8 @@ class Edge(dc.DessiaObject):
         if split1[0] and split1[0].point_belongs(point2, abs_tol=1e-6):
             split2 = split1[0].split(point2)
         else:
-            if split1[1] is None:
-                print(True)
+            # if split1[1] is None:
+            #     print(True)
             split2 = split1[1].split(point2)
         new_split_edge = None
         for split_edge in split2:
@@ -3055,6 +3055,15 @@ class FullArcMixin(ArcMixin):
         """Creates A full arc, 2d or 3d, from circle."""
         return cls(circle, circle.center + circle.frame.u * circle.radius, name=name)
 
+    def trim(self, point1, point2, *args, **kwargs):
+        """
+        Trims fullarc between two points.
+
+        :param point1: point 1.
+        :param point2: point 2.
+        :return: edge trimmed.
+        """
+        return self.circle.trim(point1, point2)
 
 class Arc2D(ArcMixin, Edge):
     """

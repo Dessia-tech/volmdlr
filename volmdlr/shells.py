@@ -1252,8 +1252,8 @@ class ClosedShell3D(Shell3D):
         """
         face_combinations1 = {face: [] for face in self.faces}
         face_combinations2 = {face: [] for face in shell2.faces}
-        for i, face1 in enumerate(self.faces):
-            for j, face2 in enumerate(shell2.faces):
+        for face1 in self.faces:
+            for face2 in shell2.faces:
                 if face1.surface3d.is_coincident(face2.surface3d, abs_tol=tol):
                     contours1, contours2 = face1.get_coincident_face_intersections(face2)
                     face_combinations1[face1].extend(contours1)

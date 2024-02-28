@@ -2515,9 +2515,9 @@ class Contour2D(ContourMixin, Wire2D):
         elif extracted_innerpoints_contour1.primitives[0].start.is_close(closing_contour.primitives[-1].end, abs_tol):
             primitives2 = closing_contour.primitives + extracted_innerpoints_contour1.primitives
         contour1 = Contour2D(primitives1)
-        contour1.order_contour()
+        contour1.order_contour(abs_tol)
         contour2 = Contour2D(primitives2)
-        contour2.order_contour()
+        contour2.order_contour(abs_tol)
         return contour1, contour2
 
     def divide(self, contours, abs_tol: float = 1e-6):
