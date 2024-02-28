@@ -85,6 +85,18 @@ class TestSphericalFace3D(unittest.TestCase):
         self.assertAlmostEqual(spherical_face.bounding_box.volume(),
                                0.5 * (2 * spherical_surface.radius * math.cos(phi1)) ** 2, delta=0.1)
 
+    def test_planeface_intersections(self):
+        planeface, sphericalface = DessiaObject.from_json(
+            os.path.join(folder, "test_planeface_sphericalface_intersections.json")).primitives
+        intersections = planeface.face_intersections(sphericalface)
+        self.assertEqual(len(intersections), 1)
+        self.assertAlmostEqual(intersections[0].length(), 2.8957237263187805)
+        planeface, sphericalface = DessiaObject.from_json(
+            os.path.join(folder, "test_planeface_sphericalface_intersections_2.json")).primitives
+        intersections = planeface.face_intersections(sphericalface)
+        self.assertEqual(len(intersections), 1)
+        self.assertAlmostEqual(intersections[0].length(), 2.8957237263187805)
+
 
 if __name__ == '__main__':
     unittest.main()
