@@ -815,6 +815,8 @@ class Wire2D(WireMixin, PhysicalObject):
         primitives3d = []
         for edge in self.primitives:
             primitives3d.append(edge.to_3d(plane_origin, x, y))
+        for prim1, prim2 in zip(primitives3d[:-1], primitives3d[1:]):
+            prim2.start = prim1.end
         return Wire3D(primitives3d, reference_path=self.reference_path)
         # TODO: method to check if it is a wire
 
@@ -1440,6 +1442,10 @@ class Wire3D(WireMixin, PhysicalObject):
             primitive2d = plane3d.point3d_to_2d(primitive)
             if primitive2d:
                 primitives2d.append(primitive2d)
+        for prim1, prim2 in zip(primitives2d, primitives2d[1:] + [primitives2d[0]]):
+            prim2.start = prim1.end
+        for prim1, prim2 in zip(primitives2d, primitives2d[1:] + [primitives2d[0]]):
+            prim2.start = prim1.end
         return primitives2d
 
     def to_2d(self, plane_origin, x, y):
@@ -2098,11 +2104,12 @@ class Contour2D(ContourMixin, Wire2D):
         :param y: plane v vector.
         :return: Contour3D.
         """
-        p3d = []
+        primitives3d = []
         for edge in self.primitives:
-            p3d.append(edge.to_3d(plane_origin, x, y))
-
-        return Contour3D(p3d)
+            primitives3d.append(edge.to_3d(plane_origin, x, y))
+        for prim1, prim2 in zip(primitives3d, primitives3d[1:] + [primitives3d[0]]):
+            prim2.start = prim1.end
+        return Contour3D(primitives3d)
 
     def point_inside(self, point, include_edge_points: bool = False, tol: float = 1e-6):
         """
@@ -2577,13 +2584,8 @@ class Contour2D(ContourMixin, Wire2D):
         Create a contour 2d with bounding_box parameters, using line segments 2d.
 
         """
-
-        edge0 = volmdlr.edges.LineSegment2D(volmdlr.Point2D(x_min, y_min), volmdlr.Point2D(x_max, y_min))
-        edge1 = volmdlr.edges.LineSegment2D(volmdlr.Point2D(x_max, y_min), volmdlr.Point2D(x_max, y_max))
-        edge2 = volmdlr.edges.LineSegment2D(volmdlr.Point2D(x_max, y_max), volmdlr.Point2D(x_min, y_max))
-        edge3 = volmdlr.edges.LineSegment2D(volmdlr.Point2D(x_min, y_max), volmdlr.Point2D(x_min, y_min))
-
-        return Contour2D([edge0, edge1, edge2, edge3], name=name)
+        warnings.warn("from_bounding_rectangle is deprecated use rectangle instead.")
+        return Contour2D.rectangle(xmin=x_min, xmax=x_max, ymin=y_min, ymax=y_max, name=name)
 
     def cut_by_bspline_curve(self, bspline_curve2d: volmdlr.edges.BSplineCurve2D):
         """
@@ -2770,7 +2772,7 @@ class Contour2D(ContourMixin, Wire2D):
         return new_contour
 
     @classmethod
-    def rectangle(cls, xmin: float, xmax: float, ymin: float, ymax: float, is_trigo: bool = True):
+    def rectangle(cls, xmin: float, xmax: float, ymin: float, ymax: float, is_trigo: bool = True, name: str = ""):
         """
         Creates a rectangular contour.
 
@@ -2784,6 +2786,8 @@ class Contour2D(ContourMixin, Wire2D):
         :type ymax: float
         :param is_trigo: (Optional) If True, triangle is drawn in counterclockwise direction.
         :type is_trigo: bool
+        :param name: (Optional) Allows to assign a name to the object.
+        :type name: str
         :return: Contour2D
         """
         point1 = volmdlr.Point2D(xmin, ymin)
@@ -2791,11 +2795,11 @@ class Contour2D(ContourMixin, Wire2D):
         point3 = volmdlr.Point2D(xmax, ymax)
         point4 = volmdlr.Point2D(xmin, ymax)
         if is_trigo:
-            return cls.from_points([point1, point2, point3, point4])
-        return cls.from_points([point1, point4, point3, point2])
+            return cls.from_points([point1, point2, point3, point4], name=name)
+        return cls.from_points([point1, point4, point3, point2], name=name)
 
     @classmethod
-    def rectangle_from_center_and_sides(cls, center, x_length, y_length, is_trigo: bool = True):
+    def rectangle_from_center_and_sides(cls, center, x_length, y_length, is_trigo: bool = True, name: str = ""):
         """
         Creates a rectangular contour given a center and a side.
         """
@@ -2804,8 +2808,7 @@ class Contour2D(ContourMixin, Wire2D):
         xmax = xmin + x_length
         ymin = y_center - 0.5 * y_length
         ymax = ymin + y_length
-        return cls.rectangle(xmin, xmax, ymin, ymax, is_trigo)
-
+        return cls.rectangle(xmin, xmax, ymin, ymax, is_trigo=is_trigo, name=name)
 
 
 class ClosedPolygonMixin:
@@ -4680,6 +4683,21 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         return triangles
 
     def get_valid_concave_sewing_polygon(self, polygon1_2d, polygon2_2d):
+        """
+        Determines a valid concave sewing polygon based on the 2D projections of two polygons.
+
+        This method calculates a valid concave sewing polygon for further sewing operations,
+        based on the provided 2D projections of two polygons. It identifies the valid primitive segment
+        from the first polygon (`polygon1_2d`) with respect to the second polygon (`polygon2_2d`),
+        and rearranges the segments of the current polygon accordingly.
+
+        :param polygon1_2d: The 2D projection of the first polygon.
+        :type polygon1_2d: ClosedPolygon2D
+        :param polygon2_2d: The 2D projection of the second polygon.
+        :type polygon2_2d: ClosedPolygon2D
+        :return: A valid concave sewing polygon for further operations.
+        :rtype: ClosedPolygon3D
+        """
         polygon1_2d_valid__primitive = \
             polygon1_2d.get_valid_sewing_polygon_primitive(polygon2_2d)
         if polygon1_2d_valid__primitive == polygon1_2d.line_segments[0]:
@@ -4739,6 +4757,25 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
                                          passed_by_zero_index,
                                          closing_point_index,
                                          previous_closing_point_index):
+        """
+        Redefines the points of triangles based on specific conditions during sewing.
+
+        This method adjusts the points of triangles based on certain conditions encountered
+        during the sewing process. It iterates through the list of triangles and modifies
+        their points if they meet the specified criteria related to the closing point index,
+        previous closing point index, and the direction of traversal.
+
+        :param triangles_points: The list of triangles' points representing the sewn polygons.
+        :type triangles_points: list[list[Point3D]]
+        :param passed_by_zero_index: A flag indicating whether the sewing has passed by the zero index.
+        :type passed_by_zero_index: bool
+        :param closing_point_index: The index of the closing point on the polygon.
+        :type closing_point_index: int
+        :param previous_closing_point_index: The index of the previous closing point on the polygon.
+        :type previous_closing_point_index: int
+        :return: The adjusted list of triangles' points after redefinition.
+        :rtype: list[list[Point3D]]
+        """
         for n, triangle_points in enumerate(triangles_points[::-1]):
             if (not passed_by_zero_index and
                 self.points.index(
@@ -4785,12 +4822,44 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
 
     @staticmethod
     def is_sewing_forward(closing_point_index, list_closing_point_indexes) -> bool:
+        """
+        Checks if the sewing process is moving forward based on the closing point index.
+
+        This static method determines whether the sewing process is moving forward
+        based on the closing point index and the list of closing point indexes.
+        It compares the current closing point index with the last index in the list
+        to ascertain the direction of sewing.
+
+        :param closing_point_index: The index of the current closing point.
+        :type closing_point_index: int
+        :param list_closing_point_indexes: The list of closing point indexes.
+        :type list_closing_point_indexes: list[int]
+        :return: True if the sewing process is moving forward, False otherwise.
+        :rtype: bool
+        """
         if closing_point_index < list_closing_point_indexes[-1]:
             return False
         return True
 
     @staticmethod
     def sewing_closing_points_to_remove(closing_point_index, list_closing_point_indexes, passed_by_zero_index):
+        """
+        Determines the closing points to remove during the sewing process.
+
+        This static method identifies the closing points that need to be removed
+        during the sewing process based on the current closing point index, the list
+        of closing point indexes, and the flag indicating whether the sewing process
+        has passed by zero index.
+
+        :param closing_point_index: The index of the current closing point.
+        :type closing_point_index: int
+        :param list_closing_point_indexes: The list of closing point indexes.
+        :type list_closing_point_indexes: list[int]
+        :param passed_by_zero_index: A flag indicating if the sewing has passed by the zero index.
+        :type passed_by_zero_index: bool
+        :return: The list of closing points to be removed.
+        :rtype: list[int]
+        """
         list_remove_closing_points = []
         for idx in list_closing_point_indexes[::-1]:
             if not passed_by_zero_index:
@@ -5059,7 +5128,4 @@ class Triangle3D(Triangle):
 
     def __init__(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D,
                  point3: volmdlr.Point3D, name: str = ''):
-        Triangle.__init__(self, point1,
-                          point2,
-                          point3,
-                          name)
+        Triangle.__init__(self, point1, point2, point3, name)
