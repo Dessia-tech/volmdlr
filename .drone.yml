@@ -46,9 +46,7 @@ steps:
     event: pull_request
 
   commands:
-    - git fetch origin "$DRONE_TARGET_BRANCH"
-    - git checkout pr-${DRONE_PULL_REQUEST}
-    - git fetch origin "${DRONE_TARGET_BRANCH}":target-branch
+    - git fetch --tags
     - bash code_changelog.sh
 
 
