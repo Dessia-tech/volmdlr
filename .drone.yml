@@ -3,20 +3,6 @@ type: docker
 name: default
 
 steps:
-- name: clone forked repository
-  image: plugins/git
-  when:
-    event: pull_request
-  commands:
-    - cd /tmp
-    - FORKED_REPO_URL="https://github.com/${DRONE_REPO_OWNER}/${DRONE_REPO_NAME}.git"
-    - git clone $FORKED_REPO_URL
-    - cd volmdlr
-    - git fetch origin $DRONE_TARGET_BRANCH
-    - git checkout $DRONE_SOURCE_BRANCH
-    - git checkout $DRONE_TARGET_BRANCH
-    - git merge $DRONE_SOURCE_BRANCH
-
 - name: merge master on testing
   image: alpine/git
   when:
