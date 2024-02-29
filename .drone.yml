@@ -129,22 +129,28 @@ steps:
       - ne: $DRONE_PULL_REQUEST_REPO_OWNER, $DRONE_REPO_OWNER
 
   commands:
-  - git fetch --tags
-  - pip install .[doc,test]
-  - python setup.py build_ext --inplace
-  - cd tests
-  - coverage run --rcfile=../.coveragerc --data-file=../.coverage --source volmdlr -m unittest discover -v
-  - cd ../scripts
-  - coverage run --rcfile=../.coveragerc --data-file=../.coverage --source volmdlr -a ci_scripts.py
-  - cd ../tutorials
-  - coverage run --rcfile=../.coveragerc --data-file=../.coverage --source volmdlr -a ci_tutorials.py
-  - cd ../doc
-  - make html
-  - cd ..
-  - coverage json
-  - coverage report
-  - coverage html
-  - python coverage.py
+    - >
+      if [ "$DRONE_PULL_REQUEST_REPO_OWNER" != "$DRONE_REPO_OWNER" ]; then
+        echo "This is a fork. Running scripts...";
+        git fetch --tags;
+        pip install .[doc,test];
+        python setup.py build_ext --inplace;
+        cd tests;
+        coverage run --rcfile=../.coveragerc --data-file=../.coverage --source volmdlr -m unittest discover -v;
+        cd ../scripts;
+        coverage run --rcfile=../.coveragerc --data-file=../.coverage --source volmdlr -a ci_scripts.py;
+        cd ../tutorials;
+        coverage run --rcfile=../.coveragerc --data-file=../.coverage --source volmdlr -a ci_tutorials.py;
+        cd ../doc;
+        make html;
+        cd ..;
+        coverage json;
+        coverage report;
+        coverage html;
+        python coverage.py;
+      else
+        echo "This is not a fork. Skipping step.";
+      fi
 
   volumes:
     # Mount pip cache from host
