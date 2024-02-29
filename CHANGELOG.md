@@ -28,7 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### edges.py
 - 
 #### wires.py
-- 
+- Fix some constructors: connected edges must share vertices.
+
 #### surfaces.py
 - 
 #### faces.py
