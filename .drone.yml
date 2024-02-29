@@ -120,7 +120,7 @@ steps:
 
 
 # Special step for fork pull request
-- name: FORK install, build doc run scripts and tutorials
+- name: Fork only; install, build doc run scripts and tutorials
   image: python:3.9
   when:
     event:
