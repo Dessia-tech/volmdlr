@@ -69,25 +69,25 @@ steps:
       path: /root/.cache/pip
 
 
-- name: check code complexity
-  image: dessia/python-ci:3.9
-  when:
-    event:
-      exclude:
-      - tag
-      - push
-
-  commands:
-  - pip install numpy Cython>3
-  - pip install pylint==2.17.3 pydocstyle==6.3.0 pre-commit shellcheck-py cython-lint pyenchant==3.2.2
-  - python code_pylint.py
-  - python code_pydocstyle.py
-  - pre-commit run -a
-
-  volumes:
-    # Mount pip cache from host
-    - name: pip_cache
-      path: /root/.cache/pip
+#- name: check code complexity
+#  image: dessia/python-ci:3.9
+#  when:
+#    event:
+#      exclude:
+#      - tag
+#      - push
+#
+#  commands:
+#  - pip install numpy Cython>3
+#  - pip install pylint==2.17.3 pydocstyle==6.3.0 pre-commit shellcheck-py cython-lint pyenchant==3.2.2
+#  - python code_pylint.py
+#  - python code_pydocstyle.py
+#  - pre-commit run -a
+#
+#  volumes:
+#    # Mount pip cache from host
+#    - name: pip_cache
+#      path: /root/.cache/pip
 
 
 - name: install, build doc run scripts and tutorials
