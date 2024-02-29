@@ -131,7 +131,7 @@ steps:
   commands:
     - >
       if [ "$DRONE_PULL_REQUEST_REPO_OWNER" != "$DRONE_REPO_OWNER" ]; then
-        echo "This is a fork. Running scripts...";
+        echo "This is a fork. Running step...";
         git fetch --tags;
         pip install .[doc,test];
         python setup.py build_ext --inplace;
