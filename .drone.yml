@@ -130,9 +130,9 @@ steps:
 
   commands:
     - >
-      if [ "$DRONE_PULL_REQUEST_REPO_OWNER" != "$DRONE_REPO_OWNER" ]; then
-        echo "$DRONE_PULL_REQUEST_REPO_OWNER";
-        echo "$DRONE_REPO_OWNER";
+      if [ "$DRONE_SOURCE_REPOSITORY" != "$DRONE_TARGET_REPOSITORY" ]; then
+        echo "$DRONE_SOURCE_REPOSITORY";
+        echo "$DRONE_TARGET_REPOSITORY";
         echo "This is a fork. Running scripts...";
         git fetch --tags;
         pip install .[doc,test];
