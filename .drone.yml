@@ -123,10 +123,10 @@ steps:
 - name: FORK install, build doc run scripts and tutorials
   image: python:3.9
   when:
-    event: pull_request
-    repo:
-      exclude:
-        - Dessia-tech/volmdlr
+    event:
+    - pull_request
+    condition:
+      - ne: $DRONE_PULL_REQUEST_REPO_OWNER, $DRONE_REPO_OWNER
 
   commands:
   - git fetch --tags
