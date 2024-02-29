@@ -57,7 +57,7 @@ steps:
     event:
       exclude:
       - tag
-      - pull_request
+      - push
 
   commands:
     - pip3 install -U pip autopep8==2.0.0
@@ -75,7 +75,7 @@ steps:
     event:
       exclude:
       - tag
-      - pull_request
+      - push
 
   commands:
   - pip install numpy Cython>3
@@ -93,7 +93,40 @@ steps:
 - name: install, build doc run scripts and tutorials
   image: python:3.9
   when:
+    event: push
+
+  commands:
+  - git fetch --tags
+  - pip install .[doc,test]
+  - python setup.py build_ext --inplace
+  - cd tests
+  - coverage run --rcfile=../.coveragerc --data-file=../.coverage --source volmdlr -m unittest discover -v
+  - cd ../scripts
+  - coverage run --rcfile=../.coveragerc --data-file=../.coverage --source volmdlr -a ci_scripts.py
+  - cd ../tutorials
+  - coverage run --rcfile=../.coveragerc --data-file=../.coverage --source volmdlr -a ci_tutorials.py
+  - cd ../doc
+  - make html
+  - cd ..
+  - coverage json
+  - coverage report
+  - coverage html
+  - python coverage.py
+
+  volumes:
+    # Mount pip cache from host
+    - name: pip_cache
+      path: /root/.cache/pip
+
+
+# Special step for fork pull request
+- name: FORK install, build doc run scripts and tutorials
+  image: python:3.9
+  when:
     event: pull_request
+    repo:
+      exclude:
+        - Dessia-tech/volmdlr
 
   commands:
   - git fetch --tags
@@ -182,7 +215,7 @@ steps:
 - name: upload coverage
   image: appleboy/drone-scp
   when:
-    event: pull_request
+    event: push
   failure: ignore
   settings:
     host: magenta.dessia.tech
