@@ -151,6 +151,7 @@ steps:
         coverage html;
         python coverage.py;
       else
+        echo "$DRONE_SOURCE_BRANCH";
         echo "This is not a fork. Skipping step.";
       fi
 
