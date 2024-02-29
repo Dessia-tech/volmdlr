@@ -2541,9 +2541,9 @@ class Contour2D(ContourMixin, Wire2D):
                         list_cutting_contours.pop(j)
                         list_cutting_contours_modified = True
                         break
-                    contour_crossings = cutting_contour.wire_crossings(base_contour)
-                    if contour_crossings:
-                        sorted_points = cutting_contour.sort_points_along_wire(contour_crossings)
+                    contour_intersections = cutting_contour.wire_intersections(base_contour)
+                    if len(contour_intersections) > 2:
+                        sorted_points = cutting_contour.sort_points_along_wire(contour_intersections)
                         split_wires = cutting_contour.split_with_sorted_points(sorted_points)
                         list_cutting_contours.pop(j)
                         list_cutting_contours = split_wires + list_cutting_contours

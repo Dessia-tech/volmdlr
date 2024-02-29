@@ -223,6 +223,16 @@ class TestCylindricalFace3D(unittest.TestCase):
             os.path.join(folder, "test_cylindricalface_face_inside.json")).primitives
         self.assertTrue(face1.face_inside(face2))
 
+    def test_set_operations_new_faces(self):
+        face, intersections = DessiaObject.from_json(
+            os.path.join(folder, 'test_set_operations_newfaces_290224_3.json')).primitives
+        new_faces = face.set_operations_new_faces({face: intersections})
+        self.assertEqual(len(new_faces), 5)
+        expected_areas = [0.005812103536328831, 0.005812206548041761, 0.009068627125512702,
+                          0.00906862712551361, 0.03348981924655232]
+        for i, area in enumerate(sorted([face.area() for face in new_faces])):
+            self.assertAlmostEqual(area, expected_areas[i])
+
 
 
 if __name__ == '__main__':

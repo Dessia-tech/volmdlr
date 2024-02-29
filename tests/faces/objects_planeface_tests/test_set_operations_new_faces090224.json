@@ -168,7 +168,8 @@
                   "object_class": "volmdlr.Point2D",
                   "x": 0.006964387991513998,
                   "y": -0.006000000000000002
-                }
+                },
+                "reference_path": ""
               }
             ]
           }

@@ -2784,9 +2784,9 @@ class CylindricalSurface3D(UPeriodicalSurface):
         """
         line = curves.Line3D(self.frame.origin, self.frame.origin + self.frame.w)
         center3d_plane = plane3d.line_intersections(line)[0]
-        circle3d = curves.Circle3D(volmdlr.Frame3D(center3d_plane, plane3d.frame.u,
-                                                   plane3d.frame.v, plane3d.frame.w), self.radius)
-        return [circle3d]
+        fullarc3d = edges.FullArc3D.from_curve(curves.Circle3D(
+            volmdlr.Frame3D(center3d_plane, plane3d.frame.u, plane3d.frame.v, plane3d.frame.w), self.radius))
+        return [fullarc3d]
 
     def concurrent_plane_intersection(self, plane3d: Plane3D):
         """
@@ -2811,9 +2811,9 @@ class CylindricalSurface3D(UPeriodicalSurface):
         if minor_axis > major_axis:
             major_axis, minor_axis = minor_axis, major_axis
             major_dir, minor_dir = minor_dir, major_dir
-        ellipse = curves.Ellipse3D(major_axis, minor_axis,
-                                   volmdlr.Frame3D(ellipse_center, major_dir,
-                                                   minor_dir, plane3d.frame.w))
+        ellipse = edges.FullArcEllipse3D.from_curve(
+            curves.Ellipse3D(major_axis, minor_axis, volmdlr.Frame3D(ellipse_center, major_dir,
+                                                                     minor_dir, plane3d.frame.w)))
         return [ellipse]
 
     def plane_intersections(self, plane3d):

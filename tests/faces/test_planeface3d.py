@@ -126,6 +126,17 @@ class TestPlaneFace3D(unittest.TestCase):
         for area, expected_area in zip(areas, expected_areas):
             self.assertAlmostEqual(area, expected_area, 6)
 
+        # test3
+        face, intersections = dessia_common.core.DessiaObject.from_json(os.path.join(folder, 'test_set_operations_newfaces_290224_2.json')).primitives
+        new_faces = face.set_operations_new_faces({face: intersections})
+        self.assertEqual(len(new_faces), 16)
+        expected_areas = [5.692133753646387e-07, 2.639031298571561e-06, 2.869293706737433e-05, 3.041199297715e-05,
+                          4.68736095968316e-05, 4.876453663771958e-05, 6.3664710650421e-05, 7.169378338336739e-05,
+                          7.207171438446568e-05, 7.842103391230007e-05, 0.00011346658204524696, 0.00020694461203175557,
+                          0.00021496341151687183, 0.0004146105438472248, 0.0004924264511497069, 0.0011945127676743147]
+        for i, area in enumerate(sorted([face.area() for face in new_faces])):
+            self.assertAlmostEqual(area, expected_areas[i])
+
     def test_cylindricalface_intersections(self):
         R = 0.15
         cylindricalsurface = surfaces.CylindricalSurface3D(volmdlr.OXYZ, R)
@@ -188,6 +199,14 @@ class TestPlaneFace3D(unittest.TestCase):
         planeface, cylface = dessia_common.core.DessiaObject.from_json(
             os.path.join(folder, 'test_planeface_cylindricalface_intersections_none.json')).primitives
         self.assertFalse(planeface.face_intersections(cylface))
+
+        planeface, cylface = dessia_common.core.DessiaObject.from_json(
+            os.path.join(folder, 'test_planeface_cylface_intersections_280224_3.json')).primitives
+        intersections = planeface.face_intersections(cylface)
+        self.assertEqual(len(intersections), 1)
+        self.assertAlmostEqual(intersections[0].length(), 0.0014548006826744287)
+
+
 
     def test_conical_face_intersections(self):
         def get_face(plane, x1=-1, x2=1, y1=-1, y2=1):

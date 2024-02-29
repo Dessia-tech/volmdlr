@@ -443,8 +443,6 @@ class Edge(dc.DessiaObject):
         if split1[0] and split1[0].point_belongs(point2, abs_tol=1e-6):
             split2 = split1[0].split(point2)
         else:
-            # if split1[1] is None:
-            #     print(True)
             split2 = split1[1].split(point2)
         new_split_edge = None
         for split_edge in split2:
@@ -3064,6 +3062,7 @@ class FullArcMixin(ArcMixin):
         :return: edge trimmed.
         """
         return self.circle.trim(point1, point2)
+
 
 class Arc2D(ArcMixin, Edge):
     """
@@ -6881,3 +6880,13 @@ class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
         :return: A list of points, containing all intersections between the Line 3D and the Ellipse3D.
         """
         return self.ellipse.line_intersections(line, abs_tol)
+
+    def trim(self, point1, point2, *args, **kwargs):
+        """
+        Trims fullarcellipse between two points.
+
+        :param point1: point 1.
+        :param point2: point 2.
+        :return: edge trimmed.
+        """
+        return self.ellipse.trim(point1, point2)

@@ -3258,8 +3258,6 @@ class ParabolaMixin(Curve):
         lineseg1 = _line_class(point1, point1 + tangent_vector1)
         lineseg2 = _line_class(point2, point2 + tangent_vector2)
         line_inters = lineseg1.line_intersections(lineseg2)
-        if not line_inters:
-            print(True)
         bezier_parabola = _bspline_class(2, [point1, line_inters[0], point2])
         return bezier_parabola
 
