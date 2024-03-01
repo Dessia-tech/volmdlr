@@ -1921,12 +1921,16 @@ class PlaneFace3D(Face3D):
             if not points_on_primitive:
                 continue
             points_on_primitive = primitive.sort_points_along_curve(points_on_primitive)
-            if primitive.periodic:
-                points_on_primitive = points_on_primitive + [points_on_primitive[0]]
-            for point1, point2 in zip(points_on_primitive[:-1], points_on_primitive[1:]):
-                edge = primitive.trim(point1, point2)
+            # if primitive.periodic:
+            #     points_on_primitive = points_on_primitive + [points_on_primitive[0]]
+            split_edges = primitive.split_with_sorted_points(points_on_primitive)
+            for edge in split_edges:
                 if self.edge3d_inside(edge) and toroidal_face.edge3d_inside(edge, 1e-4):
                     face_intersections.append(volmdlr.wires.Wire3D([edge]))
+            # for point1, point2 in zip(points_on_primitive[:-1], points_on_primitive[1:]):
+            #     edge = primitive.trim(point1, point2)
+            #     if self.edge3d_inside(edge) and toroidal_face.edge3d_inside(edge, 1e-4):
+            #         face_intersections.append(volmdlr.wires.Wire3D([edge]))
         return face_intersections
 
     def planeface_minimum_distance(self, planeface: "PlaneFace3D", return_points: bool = False):

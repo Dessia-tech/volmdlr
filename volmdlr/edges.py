@@ -89,6 +89,24 @@ class Edge(dc.DessiaObject):
         """
         raise NotImplementedError(f'split method not implemented by {self.__class__.__name__}')
 
+    def split_with_sorted_points(self, sorted_points, abs_tol: float = 1e-6):
+        """
+        Split edge in various sections using a list of sorted points along the edge.
+
+        :param sorted_points: sorted list of points.
+        :return: list of edge sections.
+        """
+        split_edges = []
+        edge_to_split = self
+        for point in sorted_points:
+            split_edge = edge_to_split.split(point)
+            if split_edge[0] is not None:
+                split_edges.append(split_edge[0])
+            edge_to_split = split_edge[1]
+        if edge_to_split is not None:
+            split_edges.append(edge_to_split)
+        return split_edges
+
     def reverse(self):
         """Gets the edge in the reverse direction."""
         if self._reverse is None:
@@ -3045,6 +3063,15 @@ class FullArcMixin(ArcMixin):
         """Creates A full arc, 2d or 3d, from circle."""
         return cls(circle, circle.center + circle.frame.u * circle.radius, name=name)
 
+    def trim(self, point1, point2, *args, **kwargs):
+        """
+        Trims fullarc between two points.
+
+        :param point1: point 1.
+        :param point2: point 2.
+        :return: edge trimmed.
+        """
+        return self.circle.trim(point1, point2)
 
 class Arc2D(ArcMixin, Edge):
     """
@@ -6737,7 +6764,7 @@ class ArcEllipse3D(ArcEllipseMixin, Edge):
 
 class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
     """
-    Defines a FullArcEllipse3D.
+    Defines a FullArcEllipse3D.f
     """
 
     def __init__(self, ellipse: volmdlr_curves.Ellipse3D, start_end: volmdlr.Point3D, name: str = ''):
@@ -6862,3 +6889,13 @@ class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
         :return: A list of points, containing all intersections between the Line 3D and the Ellipse3D.
         """
         return self.ellipse.line_intersections(line, abs_tol)
+
+    def trim(self, point1, point2, *args, **kwargs):
+        """
+        Trims fullarcellipse between two points.
+
+        :param point1: point 1.
+        :param point2: point 2.
+        :return: edge trimmed.
+        """
+        return self.ellipse.trim(point1, point2)
