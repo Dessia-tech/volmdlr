@@ -41,6 +41,9 @@ class TestContour2D(unittest.TestCase):
         point4 = volmdlr.Point2D(0.745, 0.0685)
         self.assertTrue(contour2d_2.point_belongs(point4))
 
+        contour, point = DessiaObject.from_json(os.path.join(folder, "test_contour_point_belongs.json")).primitives
+        self.assertTrue(contour.point_belongs(point, False))
+
     def test_is_ordered(self):
         # self.assertTrue(self.ordered_contour.is_ordered())
         self.assertFalse(self.not_ordered_contour.is_ordered())
