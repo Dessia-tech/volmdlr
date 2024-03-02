@@ -260,6 +260,7 @@ class Block(shells.ClosedShell3D):
                 volmdlr.edges.LineSegment3D(point4.copy(), point8.copy())]
 
     def face_contours3d(self):
+        """Get face contours."""
         edges = self.edges()
         switched_edges = [edge.reverse() for edge in edges[4:]]
         contours = [
@@ -334,6 +335,7 @@ class Block(shells.ClosedShell3D):
                      alpha=self.alpha, name=self.name)
 
     def cut_by_orthogonal_plane(self, plane_3d: surfaces.Plane3D):
+        """Cuts Block with an orthogonal plane."""
         bouding_box = self.bounding_box
         if plane_3d.frame.w.dot(volmdlr.Vector3D(1, 0, 0)) == 0:
             pass
