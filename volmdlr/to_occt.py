@@ -1,14 +1,13 @@
-from OCP.Geom import Geom_Plane, Geom_Line
-from OCP.gp import gp_Pnt, gp_Ax3, gp_Dir, gp_Pnt2d, gp_Dir2d
-from OCP.TColStd import TColStd_Array1OfReal, TColStd_Array1OfInteger
-from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeEdge
-from OCP.Precision import Precision
-from OCP.GeomAPI import GeomAPI_IntSS
-# from OCP.TColStd import TColStd_Array1OfReal, TColStd_Array1OfInteger
-from OCP.TColgp import TColgp_Array2OfPnt, TColgp_Array1OfPnt, TColgp_Array1OfPnt2d
+"""
+Module to translate objects in Volmdlr to OCP
+"""
 from OCP.Geom import (Geom_BSplineSurface, Geom_CylindricalSurface, Geom_ConicalSurface, Geom_ToroidalSurface,
                       Geom_SphericalSurface, Geom_Plane, Geom_BSplineCurve, Geom_Line)
 from OCP.Geom2d import Geom2d_BSplineCurve
+from OCP.TColStd import TColStd_Array1OfReal, TColStd_Array1OfInteger
+# from OCP.TColStd import TColStd_Array1OfReal, TColStd_Array1OfInteger
+from OCP.TColgp import TColgp_Array2OfPnt, TColgp_Array1OfPnt, TColgp_Array1OfPnt2d
+from OCP.gp import gp_Pnt, gp_Ax3, gp_Dir, gp_Pnt2d, gp_Dir2d
 
 
 def list_to_tcolstd_array1ofinteger(list_of_int):

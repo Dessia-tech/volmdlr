@@ -1,13 +1,14 @@
+"""
+Module to translate objects in OCP to Volmdlr.
+"""
+from OCP.Geom import Geom_BSplineSurface, Geom_Circle, Geom_Line, Geom_BSplineCurve, Geom_Ellipse
+from OCP.TColStd import TColStd_Array1OfInteger
+from OCP.TColStd import TColStd_Array2OfReal, TColStd_Array1OfReal
+from OCP.TColgp import TColgp_Array2OfPnt
+from OCP.gp import gp_Pnt
+
 import volmdlr
 from volmdlr import curves, edges, surfaces
-from OCP.Geom import Geom_BSplineSurface, Geom_Circle, Geom_Line, Geom_BSplineCurve, Geom_Ellipse, Geom_Hyperbola, Geom_Parabola
-from OCP.gp import gp_Pnt
-from OCP.TColgp import TColgp_Array2OfPnt
-from OCP.TColStd import TColStd_Array1OfReal, TColStd_Array1OfInteger
-from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeFace, BRepBuilderAPI_MakeEdge
-from OCP.Precision import Precision
-from OCP.GeomAPI import GeomAPI_IntSS
-from OCP.TColStd import TColStd_Array2OfReal, TColStd_Array1OfReal
 
 
 def point2d_from_occt(occt_point):
@@ -74,6 +75,7 @@ def frame2d_from_occt_ax22d(ax22d):
     u = vector2d_from_occt(ax22d.XDirection())
     v = vector2d_from_occt(ax22d.YDirection())
     return volmdlr.Frame2D(origin, u, v)
+
 
 # Curves
 
@@ -168,6 +170,7 @@ def parabola3d_from_occt(curve):
     frame = volmdlr.Frame3D(frame.origin, frame.v, frame.u, frame.w)
     return curves.Parabola3D(frame, curve.Focal())
 
+
 # Edges
 
 
@@ -179,12 +182,12 @@ def bsplinecurve2d_from_occt(curve):
     :return: volmdlr BSplineCurve2D.
     """
     control_points = [volmdlr.Point2D(point.X(), point.Y()) for point in curve.Poles()]
-    knots = [knot for knot in curve.Knots()]
-    multiplicities = [mult for mult in curve.Multiplicities()]
+    knots = list(curve.Knots())
+    multiplicities = list(curve.Multiplicities())
     weigths = None
     if curve.IsRational():
         curve.Weights(weights_array := TColStd_Array1OfReal(1, len(control_points)))
-        weigths = [w for w in weights_array]
+        weigths = list(weights_array)
     return edges.BSplineCurve2D(curve.Degree(), control_points, multiplicities, knots, weigths)
 
 
@@ -196,11 +199,11 @@ def bsplinecurve3d_from_occt(curve):
     :return: volmdlr BSplineCurve3D.
     """
     control_points = [volmdlr.Point3D(point.X(), point.Y(), point.Z()) for point in curve.Poles()]
-    knots = [knot for knot in curve.Knots()]
-    multiplicities = [mult for mult in curve.Multiplicities()]
+    knots = list(curve.Knots())
+    multiplicities = list(curve.Multiplicities())
     weigths = None
     if curve.Weights() is not None:
-        weigths = [w for w in curve.Weights()]
+        weigths = list(curve.Weights())
     return edges.BSplineCurve3D(curve.Degree(), control_points, multiplicities, knots, weigths)
 
 
@@ -225,7 +228,8 @@ def trimmedcurve3d_from_occt(occt_curve):
     volmdlr_curve = OCCT_TO_VOLMDLR[occt_basis_curve.__class__](occt_basis_curve)
     return volmdlr_curve.trim(start_point, end_point)
 
-#Surfaces
+
+# Surfaces
 
 
 def sphericalsurface_from_occt(occt_surface):
@@ -299,10 +303,10 @@ def bsplinesurface_from_occt(occt_surface):
     nb_u = occt_surface.NbUPoles()
 
     control_points = [point3d_from_occt(array.Value(i + 1, j + 1)) for i in range(nb_u) for j in range(nb_v)]
-    u_knots = [knot for knot in occt_surface.UKnots()]
-    u_multiplicities = [mult for mult in occt_surface.UMultiplicities()]
-    v_knots = [knot for knot in occt_surface.VKnots()]
-    v_multiplicities = [mult for mult in occt_surface.VMultiplicities()]
+    u_knots = list(occt_surface.UKnots())
+    u_multiplicities = list(occt_surface.UMultiplicities())
+    v_knots = list(occt_surface.VKnots())
+    v_multiplicities = list(occt_surface.VMultiplicities())
     weights = None
     if occt_surface.IsURational() or occt_surface.IsVRational():
         occt_surface.Weights(weights_array := TColStd_Array2OfReal(1, nb_u, 1, nb_v))
@@ -312,27 +316,26 @@ def bsplinesurface_from_occt(occt_surface):
                                      u_multiplicities, v_multiplicities, u_knots, v_knots, weights)
 
 
-
 def construct_bsplinesurface(points, knots_u, u_multiplicities, knots_v, v_multiplicities, udeg, vdeg):
     poles = TColgp_Array2OfPnt(1, len(points), 1, len(points[0]))
-    for i in range(len(points)):
+    for i, point in enumerate(points):
         for j in range(len(points[0])):
-            poles.SetValue(i + 1, j + 1, gp_Pnt(*points[i][j]))
+            poles.SetValue(i + 1, j + 1, gp_Pnt(*point[j]))
 
     uknots = TColStd_Array1OfReal(1, len(knots_u))
-    for i in range(len(knots_u)):
-        uknots.SetValue(i + 1, knots_u[i])
+    for i, knot in enumerate(knots_u):
+        uknots.SetValue(i + 1, knot)
 
     vknots = TColStd_Array1OfReal(1, len(knots_v))
-    for i in range(len(knots_v)):
-        vknots.SetValue(i + 1, knots_v[i])
+    for i, knot in enumerate(knots_v):
+        vknots.SetValue(i + 1, knot)
 
     umult = TColStd_Array1OfInteger(1, len(u_multiplicities))
-    for i in range(len(u_multiplicities)):
-        umult.SetValue(i + 1, u_multiplicities[i])
+    for i, u_multiplicitie in enumerate(u_multiplicities):
+        umult.SetValue(i + 1, u_multiplicitie)
 
     vmult = TColStd_Array1OfInteger(1, len(v_multiplicities))
-    for i in range(len(v_multiplicities)):
-        vmult.SetValue(i + 1, v_multiplicities[i])
+    for i, v_multiplicitie in enumerate(v_multiplicities):
+        vmult.SetValue(i + 1, v_multiplicitie)
 
     return Geom_BSplineSurface(poles, uknots, vknots, umult, vmult, udeg, vdeg, False, False)

@@ -3078,15 +3078,15 @@ class FullArcMixin(ArcMixin):
         """
         return self.circle.trim(point1, point2)
 
-    def line_intersections(self, line3d: volmdlr_curves.Line3D, tol: float = 1e-6):
+    def line_intersections(self, line: volmdlr_curves.Line3D, tol: float = 1e-6):
         """
         Calculates intersections between an FullArc3D and a Line3D.
 
-        :param line3d: line to verify intersections.
+        :param line: line to verify intersections.
         :param tol: maximum tolerance.
         :return: list with intersections points between line and FullArc3D.
         """
-        circle3d_lineseg_inters = vm_utils_intersections.circle_3d_line_intersections(self.circle, line3d, tol)
+        circle3d_lineseg_inters = vm_utils_intersections.circle_3d_line_intersections(self.circle, line, tol)
         return circle3d_lineseg_inters
 
 
@@ -3797,9 +3797,9 @@ class FullArc2D(FullArcMixin, Arc2D):
         """Plots a fullarc using Matplotlib."""
         return vm_common_operations.plot_circle(self.circle, ax, edge_style)
 
-    def line_intersections(self, line2d: volmdlr_curves.Line2D, tol=1e-9):
+    def line_intersections(self, line: volmdlr_curves.Line2D, tol=1e-9):
         """Full Arc 2D intersections with a Line 2D."""
-        return self.circle.line_intersections(line2d, tol)
+        return self.circle.line_intersections(line, tol)
 
     def linesegment_intersections(self, linesegment2d: LineSegment2D, abs_tol=1e-9):
         """Full arc 2D intersections with a line segment."""
@@ -6421,18 +6421,18 @@ class ArcEllipse3D(ArcEllipseMixin, Edge):
         return self.ellipse == other_arcellipse.ellipse and \
             self.start == other_arcellipse.start and self.end == other_arcellipse.end
 
-    def is_close(self, other_arcellipse, abs_tol: float = 1e-6):
+    def is_close(self, other_arcellipse, tol: float = 1e-6):
         """
         Verifies if two arc ellipses are the same, considereing given tolerance.
 
         :param other_arcellipse: other arc ellipse.
-        :param abs_tol: tolerance.
+        :param tol: tolerance.
         :return: True or False.
         """
         if self.__class__.__name__ != other_arcellipse.__class__.__name__:
             return False
-        return self.ellipse.is_close(other_arcellipse.ellipse, abs_tol) and \
-            self.start.is_close(other_arcellipse.start, abs_tol) and self.end.is_close(other_arcellipse.end, abs_tol)
+        return self.ellipse.is_close(other_arcellipse.ellipse, tol) and \
+            self.start.is_close(other_arcellipse.start, tol) and self.end.is_close(other_arcellipse.end, tol)
 
     @property
     def center(self):

@@ -25,7 +25,7 @@ import volmdlr.geometry
 import volmdlr.utils.common_operations as vm_common_operations
 import volmdlr.utils.intersections as vm_utils_intersections
 import volmdlr.utils.parametric as vm_parametric
-from volmdlr import display, edges, grid, wires, curves, to_occt, from_occt
+from volmdlr import display, edges, grid, wires, curves, to_occt
 from volmdlr.core import EdgeStyle
 from volmdlr.nurbs.core import evaluate_surface, derivatives_surface, point_inversion
 from volmdlr.nurbs.fitting import approximate_surface, interpolate_surface
@@ -1337,8 +1337,9 @@ class Surface3D(DessiaObject):
         api_intss = GeomAPI_IntSS(occt_self_surface, occt_other_surface, Precision.Confusion_s())
         intersections = [api_intss.Line(i + 1) for i in range(api_intss.NbLines())]
         surface_intersections = []
+        from volmdlr import from_occt
         for intersection in intersections:
-            function = getattr(from_occt, intersection.__class__.__name__.lower()[5:] + '3d_from_occt')
+            function = getattr(volmdlr.from_occt, intersection.__class__.__name__.lower()[5:] + '3d_from_occt')
             surface_intersections.append(function(intersection))
         return surface_intersections
 
@@ -2851,7 +2852,8 @@ class CylindricalSurface3D(UPeriodicalSurface):
         #                 intersections_points[0].append(point)
         # elif not all_cone_generatrices_intersecting_cylinder:
         #     intersections_points = [[]]
-        #     for point in (cylinder_generatrices_point_intersections[0] + cylinder_generatrices_point_intersections[1] +
+        #     for point in (cylinder_generatrices_point_intersections[0] +\
+        #     cylinder_generatrices_point_intersections[1] +
         #                   cone_generatrices_point_intersections[0] + cone_generatrices_point_intersections[1]):
         #         if not point.in_list(intersections_points[0]):
         #             intersections_points[0].append(point)
@@ -5909,15 +5911,15 @@ class SphericalSurface3D(UVPeriodicalSurface):
         intersections = circle_plane_intersections[0].circle.circle_intersections(circle)
         return intersections
 
-    def arc_intersections(self, arc: edges.Arc3D):
+    def arc_intersections(self, arc3d: edges.Arc3D):
         """
         Gets intersections between an arc 3D and a SphericalSurface3D.
 
-        :param arc: other arc to search intersections with.
+        :param arc3d: other arc to search intersections with.
         :return: list containing the intersection points.
         """
-        circle_intersections = self.circle_intersections(arc.circle)
-        intersections = [intersection for intersection in circle_intersections if arc.point_belongs(intersection)]
+        circle_intersections = self.circle_intersections(arc3d.circle)
+        intersections = [intersection for intersection in circle_intersections if arc3d.point_belongs(intersection)]
         return intersections
 
     def fullarc_intersections(self, fullarc: edges.Arc3D):

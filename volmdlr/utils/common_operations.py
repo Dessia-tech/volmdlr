@@ -427,22 +427,3 @@ def get_center_of_mass(list_points):
         center_mass += point
     center_mass /= len(list_points)
     return center_mass
-
-
-def split_with_sorted_points(edge_to_split, sorted_points, abs_tol: float = 1e-6):
-    """
-    Split edge in various sections using a list of sorted points along the edge.
-
-    :param edge_to_split: primitive to be split.
-    :param sorted_points: sorted list of points.
-    :return: list of edge sections.
-    """
-    split_edges = []
-    for point in sorted_points:
-        split_edge = edge_to_split.split(point)
-        if split_edge[0] is not None:
-            split_edges.append(split_edge[0])
-        edge_to_split = split_edge[1]
-    if edge_to_split is not None:
-        split_edges.append(edge_to_split)
-    return split_edges
