@@ -192,11 +192,15 @@ class TestToroidalSurface3D(unittest.TestCase):
                             [volmdlr.Point3D(1.3426661840222276, -1.6569652433720718, -0.9911601091085722),
                              volmdlr.Point3D(2.6785064972435375, -1.252458418216524, -0.2905337359307829)],
                             []]
-        surface1, lineseg1 = DessiaObject.from_json(os.path.join(folder, "test_torus_line_intersections.json")).primitives
-        surface2, line2 = DessiaObject.from_json(os.path.join(folder, "test_torus_line_itnersections_08_11_2023.json")).primitives
+        surface1, lineseg1 = DessiaObject.from_json(
+            os.path.join(folder, "test_torus_line_intersections.json")).primitives
+        surface2, line2 = DessiaObject.from_json(
+            os.path.join(folder, "test_torus_line_itnersections_08_11_2023.json")).primitives
         surface3, lineseg3 = DessiaObject.from_json(os.path.join(folder, "test_torus_lineseg141223.json")).primitives
-        surface4, lineseg4 = DessiaObject.from_json(os.path.join(folder, "test_toroidal_surface_lineseg_intersections201223.json")).primitives
-        surface5, lineseg5 = DessiaObject.from_json(os.path.join(folder, "test_toroidal_surface_line_intersections.json")).primitives
+        surface4, lineseg4 = DessiaObject.from_json(
+            os.path.join(folder, "test_toroidal_surface_lineseg_intersections201223.json")).primitives
+        surface5, lineseg5 = DessiaObject.from_json(
+            os.path.join(folder, "test_toroidal_surface_line_intersections.json")).primitives
         for i, (surface, line) in enumerate([[surface1, lineseg1.line], [surface2, line2], [surface3, lineseg3.line],
                                              [surface4, lineseg4.line], [surface5, lineseg5.line]]):
             line_intersections = surface.line_intersections(line)
@@ -211,7 +215,7 @@ class TestToroidalSurface3D(unittest.TestCase):
         # Test 1
         plane1 = surfaces.Plane3D(volmdlr.OXYZ)
         plane1 = plane1.rotation(volmdlr.O3D, volmdlr.Z3D, math.pi / 4)
-        for i, n in enumerate(np.linspace(0, math.pi / 4, 10)):
+        for n in np.linspace(0, math.pi / 4, 10):
             plane = plane1.rotation(plane1.frame.origin, volmdlr.X3D, n)
             plane_intersections = toroidal_surface.plane_intersections(plane)
             for intersection in plane_intersections:
@@ -228,7 +232,7 @@ class TestToroidalSurface3D(unittest.TestCase):
 
         # Test 3
         plane3 = surfaces.Plane3D(volmdlr.OYZX)
-        for i, n in enumerate(np.linspace(0, 2, 20)):
+        for n in np.linspace(0, 2, 20):
             plane = plane3.translation(n * volmdlr.X3D)
             plane_intersections = toroidal_surface.plane_intersections(plane)
             for intersection in plane_intersections:
@@ -291,7 +295,7 @@ class TestToroidalSurface3D(unittest.TestCase):
             for sol, expected_result in zip(inters, expected_results[i]):
                 self.assertAlmostEqual(sol.length(), expected_result)
 
-        #Test3
+        # Test3
         # expected_results = [[17.15507502094234], [17.44854519606042], [8.189776671441997, 11.901135669170262],
         #                     [9.342188106943269, 6.783371061263169, 6.6266277842571295],
         #                     [8.454952065863425, 11.776550916194452], [18.761719845054934],
@@ -321,12 +325,14 @@ class TestToroidalSurface3D(unittest.TestCase):
         expected_point2 = volmdlr.Point3D(0.161552737537, 1.544982741074, -0.894736842105)
         self.assertTrue(circle_intersections[0].is_close(expected_point1))
         self.assertTrue(circle_intersections[1].is_close(expected_point2))
-        torus, circle = DessiaObject.from_json(os.path.join(folder,
-            'test_toroidalsurface_circle_intersections211223_2.json')).primitives
+        torus, circle = DessiaObject.from_json(os.path.join(
+            folder, 'test_toroidalsurface_circle_intersections211223_2.json')).primitives
         circle_intersections = torus.circle_intersections(circle)
         self.assertEqual(len(circle_intersections), 2)
-        self.assertTrue(circle_intersections[0].is_close(volmdlr.Point3D(2.000000305371329, -0.5135127991414857, 0.997893589555742)))
-        self.assertTrue(circle_intersections[1].is_close(volmdlr.Point3D(2.000000612269891, -0.5135128779396435, -0.9978935689573913)))
+        self.assertTrue(circle_intersections[0].is_close(
+            volmdlr.Point3D(2.000000305371329, -0.5135127991414857, 0.997893589555742)))
+        self.assertTrue(circle_intersections[1].is_close(
+            volmdlr.Point3D(2.000000612269891, -0.5135128779396435, -0.9978935689573913)))
 
     def test_ellipse_intersections(self):
         toroidal_surface = surfaces.ToroidalSurface3D(volmdlr.Frame3D(origin=volmdlr.Point3D(1.0, 1.0, 0.0),
@@ -475,8 +481,8 @@ class TestToroidalSurface3D(unittest.TestCase):
         toroidal_surface3_1 = toroidal_surface2_1.translation(volmdlr.X3D * (-0.1))
         expected_number_sol = [2, 2, 1]
         for i, (sf1, sf2) in enumerate([(toroidal_surface1, toroidal_surface2),
-                         (toroidal_surface1_1, toroidal_surface2_1),
-                         (toroidal_surface1_1, toroidal_surface3_1)]):
+                                        (toroidal_surface1_1, toroidal_surface2_1),
+                                        (toroidal_surface1_1, toroidal_surface3_1)]):
             inters = sf1.surface_intersections(sf2)
             for inter in inters:
                 for p in inter.discretization_points(number_points=50):
@@ -492,13 +498,7 @@ class TestToroidalSurface3D(unittest.TestCase):
         toroidal_surface2_3 = toroidal_surface1.translation(volmdlr.X3D * 1.1)
         toroidal_surface2_4 = toroidal_surface1.translation(volmdlr.X3D * 1.8)
         toroidal_surface2_5 = toroidal_surface1.translation(volmdlr.X3D * 0.8)
-        expected_number_sol = [4, 4, 3, 3, 4]
-        expected_sols_lengths = [[3.4902240711559385, 3.4902240711559585, 2.8025110017478196, 2.802511001747819],
-                                 [6.283185307179586, 6.283185307179586, 3.707738420898486, 3.707738420898486],
-                                 [6.907653689757426, 5.0272056418053115, 5.027217971367434],
-                                 [5.82219814019078, 3.3338714185008955, 3.3338735379661655],
-                                 [3.351031375990407, 3.351031375990407, 6.088038294280911, 6.088038257995996]]
-        for i, toroidal_surface2 in enumerate([toroidal_surface2_1,  toroidal_surface2_2, toroidal_surface2_3,
+        for i, toroidal_surface2 in enumerate([toroidal_surface2_1, toroidal_surface2_2, toroidal_surface2_3,
                                                toroidal_surface2_4, toroidal_surface2_5]):
             inters = toroidal_surface1.surface_intersections(toroidal_surface2)
             for inter in inters:

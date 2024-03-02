@@ -46,24 +46,17 @@ class TestToroidalFace3D(unittest.TestCase):
         self.assertAlmostEqual(face.surface2d.area(), 36.56961010698211, 2)
 
     def test_planeface_intersections(self):
-        expected_results = [2, 1, 1, 1, 1, 1, 2, 2, 2, 2]
-
         ts = surfaces.ToroidalSurface3D(volmdlr.OXYZ, 2, 1)
         tf = faces.ToroidalFace3D.from_surface_rectangular_cut(ts, -1.4, 3.5, 0., 2.5)
 
-        # list_expected_lenghts1 = []
         plane1 = surfaces.Plane3D(volmdlr.OXYZ)
         plane1 = plane1.rotation(volmdlr.O3D, volmdlr.Z3D, math.pi / 4)
         for i, n in enumerate(npy.linspace(0, math.pi / 4, 10)):
             plane = plane1.rotation(plane1.frame.origin, volmdlr.X3D, n)
             plane_face = faces.PlaneFace3D.from_surface_rectangular_cut(plane, 4, -4, 4, -4)
             planeface_intersections = tf.face_intersections(plane_face)
-            # list_expected_lenghts1.append([i.length() for i in planeface_intersections])
-            # self.assertEqual(len(planeface_intersections), expected_results[i])
             self.assertTrue(all(tf.point_belongs(p, 1e-6) and plane_face.point_belongs(p, 1e-6)
                                 for i in planeface_intersections for p in i.primitives[0].points))
-            # for result, expected_result in zip(planeface_intersections, expected_results[i]):
-            #     self.assertAlmostEqual(result.length(), expected_result, 5)
 
         planeface, toroidalface = DessiaObject.from_json(
             os.path.join(folder, "test_planeface_toroidialface_intersections301123.json")).primitives

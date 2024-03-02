@@ -961,15 +961,6 @@ class Face3D(volmdlr.core.Primitive3D):
         for point in generic_face.face_border_intersections(self):
             if not point.in_list(intersections_points):
                 intersections_points.append(point)
-        # intersections_points = self.face_intersections_outer_contour(generic_face)
-        # for point in generic_face.face_intersections_outer_contour(self):
-        #     if not point.in_list(intersections_points):
-        #         intersections_points.append(point)
-        # face_intersections = []
-        # if not intersections_points:
-        #     for edge in surface_intersections:
-        #         if self.edge3d_inside(edge, 1e-3) and generic_face.edge3d_inside(edge, 1e-3):
-        #             face_intersections.append(volmdlr.wires.Wire3D([edge]))
         for primitive in surface_intersections:
             points_on_primitive = []
             for point in intersections_points:
@@ -982,12 +973,6 @@ class Face3D(volmdlr.core.Primitive3D):
             for edge in split_edges:
                 if self.edge3d_inside(edge) and generic_face.edge3d_inside(edge, 1e-4):
                     face_intersections.append(volmdlr.wires.Wire3D([edge]))
-            # if primitive.periodic:
-            #     points_on_primitive = points_on_primitive + [points_on_primitive[0]]
-            # for point1, point2 in zip(points_on_primitive[:-1], points_on_primitive[1:]):
-            #     edge = primitive.trim(point1, point2)
-            #     if self.edge3d_inside(edge, 1e-3) and generic_face.edge3d_inside(edge, 1e-3):
-            #         face_intersections.append(volmdlr.wires.Wire3D([edge]))
         return face_intersections
 
     def get_face_intersections(self, face2):
@@ -1937,16 +1922,10 @@ class PlaneFace3D(Face3D):
             if not points_on_primitive:
                 continue
             points_on_primitive = primitive.sort_points_along_curve(points_on_primitive)
-            # if primitive.periodic:
-            #     points_on_primitive = points_on_primitive + [points_on_primitive[0]]
             split_edges = primitive.split_with_sorted_points(points_on_primitive)
             for edge in split_edges:
                 if self.edge3d_inside(edge) and toroidal_face.edge3d_inside(edge, 1e-4):
                     face_intersections.append(volmdlr.wires.Wire3D([edge]))
-            # for point1, point2 in zip(points_on_primitive[:-1], points_on_primitive[1:]):
-            #     edge = primitive.trim(point1, point2)
-            #     if self.edge3d_inside(edge) and toroidal_face.edge3d_inside(edge, 1e-4):
-            #         face_intersections.append(volmdlr.wires.Wire3D([edge]))
         return face_intersections
 
     def planeface_minimum_distance(self, planeface: "PlaneFace3D", return_points: bool = False):
