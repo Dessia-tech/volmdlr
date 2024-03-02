@@ -1,11 +1,8 @@
 """
 Module to translate objects in OCP to Volmdlr.
 """
-from OCP.Geom import Geom_BSplineSurface, Geom_Circle, Geom_Line, Geom_BSplineCurve, Geom_Ellipse
-from OCP.TColStd import TColStd_Array1OfInteger
+from OCP.Geom import Geom_Circle, Geom_Line, Geom_BSplineCurve, Geom_Ellipse
 from OCP.TColStd import TColStd_Array2OfReal, TColStd_Array1OfReal
-from OCP.TColgp import TColgp_Array2OfPnt
-from OCP.gp import gp_Pnt
 
 import volmdlr
 from volmdlr import curves, edges, surfaces
