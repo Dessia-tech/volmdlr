@@ -18,6 +18,8 @@ from scipy.optimize import least_squares, minimize
 
 from dessia_common.core import DessiaObject, PhysicalObject
 from dessia_common.typings import JsonSerializable
+from OCP.GeomAPI import GeomAPI_IntSS
+from OCP.Precision import Precision
 import volmdlr.nurbs.helpers as nurbs_helpers
 from volmdlr.nurbs.helpers import generate_knot_vector
 import volmdlr.core
@@ -34,8 +36,6 @@ from volmdlr.nurbs.operations import (split_surface_u, split_surface_v, decompos
 from volmdlr.utils.parametric import (array_range_search, repair_start_end_angle_periodicity, angle_discontinuity,
                                       find_parametric_point_at_singularity, is_isocurve,
                                       verify_repeated_parametric_points, repair_undefined_brep)
-from OCP.GeomAPI import GeomAPI_IntSS, GeomAPI_IntCS
-from OCP.Precision import Precision
 
 
 def knots_vector_inv(knots_vector):
@@ -1337,7 +1337,7 @@ class Surface3D(DessiaObject):
         api_intss = GeomAPI_IntSS(occt_self_surface, occt_other_surface, Precision.Confusion_s())
         intersections = [api_intss.Line(i + 1) for i in range(api_intss.NbLines())]
         surface_intersections = []
-        from volmdlr import from_occt
+        # from volmdlr import from_occt
         for intersection in intersections:
             function = getattr(volmdlr.from_occt, intersection.__class__.__name__.lower()[5:] + '3d_from_occt')
             surface_intersections.append(function(intersection))
