@@ -141,7 +141,7 @@ setup(
         "gmsh",
         "pyfqmr",
         "CGAL",
-        "cadquery"
+        "cadquery-ocp"
     ],
     extras_require={"test": ["coverage"],
                     "doc": ["sphinx", "nbsphinx", "pydata_sphinx_theme", "nbformat", "nbconvert",
