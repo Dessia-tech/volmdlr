@@ -6781,7 +6781,7 @@ class ArcEllipse3D(ArcEllipseMixin, Edge):
 
 class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
     """
-    Defines a FullArcEllipse3D.f
+    Defines a FullArcEllipse3D.
     """
 
     def __init__(self, ellipse: volmdlr_curves.Ellipse3D, start_end: volmdlr.Point3D, name: str = ''):

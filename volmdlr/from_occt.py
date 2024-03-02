@@ -214,6 +214,15 @@ OCCT_TO_VOLMDLR = {Geom_Line: line3d_from_occt,
 
 
 def volmdlr_edge_from_occt_curve(occt_curve, first, last, orientation):
+    """
+    Instanciate a volmdlr edge form an occt curve.
+
+    :param occt_curve: occt curve.
+    :param first: first point.
+    :param last: last point.
+    :param orientation: orientation of the curve to be considered.
+    :return: Volmdlr trimmed edge.
+    """
     start = point3d_from_occt(occt_curve.Value(first))
     end = point3d_from_occt(occt_curve.Value(last))
     function = OCCT_TO_VOLMDLR[occt_curve.__class__]
@@ -222,6 +231,12 @@ def volmdlr_edge_from_occt_curve(occt_curve, first, last, orientation):
 
 
 def trimmedcurve3d_from_occt(occt_curve):
+    """
+    Intanciate an edge from a trimmed curve in OCCT.
+
+    :param occt_curve: occt trimmed curve.
+    :return: Volmdlr trimmed edge.
+    """
     start_point = point3d_from_occt(occt_curve.StartPoint())
     end_point = point3d_from_occt(occt_curve.EndPoint())
     occt_basis_curve = occt_curve.BasisCurve()
@@ -314,28 +329,3 @@ def bsplinesurface_from_occt(occt_surface):
         weights = [weights_array.Value(i + 1, j + 1) for i in range(nb_u) for j in range(nb_v)]
     return surfaces.BSplineSurface3D(occt_surface.UDegree(), occt_surface.VDegree(), control_points, nb_u, nb_v,
                                      u_multiplicities, v_multiplicities, u_knots, v_knots, weights)
-
-
-def construct_bsplinesurface(points, knots_u, u_multiplicities, knots_v, v_multiplicities, udeg, vdeg):
-    poles = TColgp_Array2OfPnt(1, len(points), 1, len(points[0]))
-    for i, point in enumerate(points):
-        for j in range(len(points[0])):
-            poles.SetValue(i + 1, j + 1, gp_Pnt(*point[j]))
-
-    uknots = TColStd_Array1OfReal(1, len(knots_u))
-    for i, knot in enumerate(knots_u):
-        uknots.SetValue(i + 1, knot)
-
-    vknots = TColStd_Array1OfReal(1, len(knots_v))
-    for i, knot in enumerate(knots_v):
-        vknots.SetValue(i + 1, knot)
-
-    umult = TColStd_Array1OfInteger(1, len(u_multiplicities))
-    for i, u_multiplicitie in enumerate(u_multiplicities):
-        umult.SetValue(i + 1, u_multiplicitie)
-
-    vmult = TColStd_Array1OfInteger(1, len(v_multiplicities))
-    for i, v_multiplicitie in enumerate(v_multiplicities):
-        vmult.SetValue(i + 1, v_multiplicitie)
-
-    return Geom_BSplineSurface(poles, uknots, vknots, umult, vmult, udeg, vdeg, False, False)
