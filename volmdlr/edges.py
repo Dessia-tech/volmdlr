@@ -99,6 +99,9 @@ class Edge(dc.DessiaObject):
         split_edges = []
         edge_to_split = self
         for point in sorted_points:
+            if point.is_close(edge_to_split.start, abs_tol) or \
+                    point.is_close(edge_to_split.end, abs_tol):
+                continue
             split_edge = edge_to_split.split(point)
             if split_edge[0] is not None:
                 split_edges.append(split_edge[0])
@@ -2826,6 +2829,8 @@ class ArcMixin:
     def _arc_point_angle(self, point):
         """Helper function to calculate the angle of point on a trigonometric arc."""
         local_start_point = self.circle.frame.global_to_local_coordinates(point)
+        if self.radius == 0.0:
+            print(True)
         u1, u2 = local_start_point.x / self.radius, local_start_point.y / self.radius
         point_angle = volmdlr.geometry.sin_cos_angle(u1, u2)
         return point_angle
@@ -3072,6 +3077,18 @@ class FullArcMixin(ArcMixin):
         :return: edge trimmed.
         """
         return self.circle.trim(point1, point2)
+
+    def line_intersections(self, line3d: volmdlr_curves.Line3D, tol: float = 1e-6):
+        """
+        Calculates intersections between an FullArc3D and a Line3D.
+
+        :param line3d: line to verify intersections.
+        :param tol: maximum tolerance.
+        :return: list with intersections points between line and FullArc3D.
+        """
+        circle3d_lineseg_inters = vm_utils_intersections.circle_3d_line_intersections(self.circle, line3d, tol)
+        return circle3d_lineseg_inters
+
 
 class Arc2D(ArcMixin, Edge):
     """

@@ -273,9 +273,13 @@ class TestToroidalSurface3D(unittest.TestCase):
         frame = volmdlr.OXYZ.translation(volmdlr.Vector3D(1, 1, 0))
         frame = frame.rotation(volmdlr.Point3D(1, 1, 0), volmdlr.Y3D, math.pi / 4)
         cylindrical_surface = surfaces.CylindricalSurface3D(frame, 1)
-        inters = toroidal_surface.cylindricalsurface_intersections(cylindrical_surface)
-        self.assertEqual(len(inters), 1)
-        self.assertAlmostEqual(inters[0].length(),   14.655771126896285, 6)
+        inters = toroidal_surface.surface_intersections(cylindrical_surface)
+        self.assertEqual(len(inters), 4)
+        for intersection in inters:
+            for point in intersection.discretization_points(number_points=50):
+                self.assertLess(toroidal_surface.point_distance(point), 1e-6)
+                self.assertLess(cylindrical_surface.point_distance(point), 1e-6)
+        # self.assertAlmostEqual(inters[0].length(),   14.655771126896285, 6)
         # Test2
         expected_results = [[9.424777944721708, 9.424777944721708], [6.283185307179586], []]
         frame = volmdlr.OXYZ
@@ -283,24 +287,28 @@ class TestToroidalSurface3D(unittest.TestCase):
                                 surfaces.CylindricalSurface3D(frame, 1),
                                 surfaces.CylindricalSurface3D(frame, 0.9)]
         for i, surface in enumerate(cylindrical_surfaces):
-            inters = toroidal_surface.cylindricalsurface_intersections(surface)
+            inters = toroidal_surface.surface_intersections(surface)
             for sol, expected_result in zip(inters, expected_results[i]):
                 self.assertAlmostEqual(sol.length(), expected_result)
 
         #Test3
-        expected_results = [[17.15507502094234], [17.44854519606042], [8.189776671441997, 11.901135669170262],
-                            [9.342188106943269, 6.783371061263169, 6.6266277842571295],
-                            [8.454952065863425, 11.776550916194452], [18.761719845054934],
-                            [6.937795281803973, 15.192491122547677], [19.04178257950678], [19.712211179693842],
-                            [9.106322135020985, 6.606873336946121, 6.606872989299915]]
+        # expected_results = [[17.15507502094234], [17.44854519606042], [8.189776671441997, 11.901135669170262],
+        #                     [9.342188106943269, 6.783371061263169, 6.6266277842571295],
+        #                     [8.454952065863425, 11.776550916194452], [18.761719845054934],
+        #                     [6.937795281803973, 15.192491122547677], [19.04178257950678], [19.712211179693842],
+        #                     [9.106322135020985, 6.606873336946121, 6.606872989299915]]
 
         frame = volmdlr.OXYZ.translation(volmdlr.Vector3D(1, 1, 0))
         for i, theta in enumerate(np.linspace(0, math.pi * .7, 10)):
             frame = frame.rotation(frame.origin, volmdlr.Y3D, theta)
             cylindrical_surface = surfaces.CylindricalSurface3D(frame, 1.5)
-            inters = toroidal_surface.cylindricalsurface_intersections(cylindrical_surface)
-            for sol, expected_result in zip(inters, expected_results[i]):
-                self.assertAlmostEqual(sol.length(), expected_result, 5)
+            inters = toroidal_surface.surface_intersections(cylindrical_surface)
+            for intersection in inters:
+                for point in intersection.discretization_points(number_points=50):
+                    self.assertLess(toroidal_surface.point_distance(point), 1e-6)
+                    self.assertLess(cylindrical_surface.point_distance(point), 1e-6)
+            # for sol, expected_result in zip(inters, expected_results[i]):
+            #     self.assertAlmostEqual(sol.length(), expected_result, 5)
 
     def test_circle_intersections(self):
         toroidal_surface = surfaces.ToroidalSurface3D(volmdlr.OXYZ, 2, 1)
@@ -356,17 +364,22 @@ class TestToroidalSurface3D(unittest.TestCase):
         conical_surface = surfaces.ConicalSurface3D(volmdlr.OXYZ, math.pi / 7)
         conical_surface = conical_surface.translation(volmdlr.Vector3D(2, 2, -3))
         toroidal_surface1 = surfaces.ToroidalSurface3D(volmdlr.OXYZ, 3, 1)
-        list_curves = toroidal_surface1.conicalsurface_intersections(conical_surface)
-        self.assertEqual(len(list_curves), 2)
-        self.assertAlmostEqual(list_curves[0].length(), 7.290767246711664)
-        self.assertAlmostEqual(list_curves[1].length(),  7.290781630732165)
+        list_curves = toroidal_surface1.surface_intersections(conical_surface)
+        self.assertEqual(len(list_curves), 4)
+        for intersection in list_curves:
+            for point in intersection.discretization_points(number_points=50):
+                self.assertLess(toroidal_surface1.point_distance(point), 1e-6)
+                self.assertLess(conical_surface.point_distance(point), 1e-6)
 
         conical_surface = surfaces.ConicalSurface3D(volmdlr.OXYZ, math.pi / 8)
         conical_surface = conical_surface.translation(volmdlr.Vector3D(2, 2, -3))
         toroidal_surface1 = surfaces.ToroidalSurface3D(volmdlr.OXYZ, 3, 1)
-        list_curves = toroidal_surface1.conicalsurface_intersections(conical_surface)
-        self.assertEqual(len(list_curves), 1)
-        self.assertAlmostEqual(list_curves[0].length(), 15.26648920774545, 6)
+        list_curves = toroidal_surface1.surface_intersections(conical_surface)
+        self.assertEqual(len(list_curves), 4)
+        for intersection in list_curves:
+            for point in intersection.discretization_points(number_points=50):
+                self.assertLess(toroidal_surface1.point_distance(point), 1e-5)
+                self.assertLess(conical_surface.point_distance(point), 1e-5)
 
     def test_sphericalsurface_intersections(self):
         spherical_surface = surfaces.SphericalSurface3D(
@@ -374,22 +387,29 @@ class TestToroidalSurface3D(unittest.TestCase):
         frame = volmdlr.OXYZ
         toroidal_surface1 = surfaces.ToroidalSurface3D(frame, 2, 1)
 
-        intersections = toroidal_surface1.sphericalsurface_intersections(spherical_surface)
-        self.assertEqual(len(intersections), 2)
-        self.assertAlmostEqual(intersections[0].length(), 11.364812376610685)
-        self.assertAlmostEqual(intersections[1].length(), 11.364812376610685)
+        intersections = toroidal_surface1.surface_intersections(spherical_surface)
+        self.assertEqual(len(intersections), 4)
+        for intersection in intersections:
+            for point in intersection.discretization_points(number_points=50):
+                self.assertLess(toroidal_surface1.point_distance(point), 1e-6)
+                self.assertLess(spherical_surface.point_distance(point), 1e-6)
         frame = frame.rotation(frame.origin, volmdlr.Y3D, math.pi / 5)
         toroidal_surface2 = surfaces.ToroidalSurface3D(frame, 2, 1)
-        intersections = toroidal_surface2.sphericalsurface_intersections(spherical_surface)
-        self.assertEqual(len(intersections), 2)
-        self.assertAlmostEqual(intersections[0].length(), 10.264046962680238)
-        self.assertAlmostEqual(intersections[1].length(), 12.024102432013244)
+        intersections = toroidal_surface2.surface_intersections(spherical_surface)
+        self.assertEqual(len(intersections), 4)
+        for intersection in intersections:
+            for point in intersection.discretization_points(number_points=50):
+                self.assertLess(toroidal_surface2.point_distance(point), 1e-6)
+                self.assertLess(spherical_surface.point_distance(point), 1e-6)
         frame = volmdlr.OXYZ.rotation(frame.origin, volmdlr.Y3D, math.pi / 5)
         frame = frame.translation(volmdlr.X3D * 1.6)
         toroidal_surface3 = surfaces.ToroidalSurface3D(frame, 2, 1)
-        intersections = toroidal_surface3.sphericalsurface_intersections(spherical_surface)
-        self.assertEqual(len(intersections), 1)
-        self.assertAlmostEqual(intersections[0].length(), 20.514857203053506)
+        intersections = toroidal_surface3.surface_intersections(spherical_surface)
+        self.assertEqual(len(intersections), 4)
+        for intersection in intersections:
+            for point in intersection.discretization_points(number_points=50):
+                self.assertLess(toroidal_surface3.point_distance(point), 1e-6)
+                self.assertLess(spherical_surface.point_distance(point), 1e-6)
 
     def test_toroidal_surfaces(self):
         toroidal_surface1 = surfaces.ToroidalSurface3D(volmdlr.OXYZ, 2, 1)

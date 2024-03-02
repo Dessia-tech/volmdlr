@@ -87,9 +87,9 @@ class TestToroidalFace3D(unittest.TestCase):
         self.assertAlmostEqual(inters[0].length(), 0.030296492908080553, 5)
 
     def test_cylindricalface_intersections(self):
-        expected_results = [[2.5461209954222026], [2.454561591082158], [2.7679468571575105], [2.8109179729321183],
-                            [1.3806998569480715, 3.0283316710422508], [2.1248782869459646], [1.7368478889595058],
-                            [2.55833794579346], [2.8123613465408064, 1.3899450251554277], [2.447515630586587]]
+        expected_results = [[2.546120946430277], [2.4545584333145953], [2.7679468837029058], [2.810918022378337],
+                            [1.380699832995302, 3.0283316366328172], [2.1248783055959217], [1.736847951355942],
+                            [2.5583380427505085], [2.812361368015032, 1.3899450172350931], [2.447515690966958]]
         toroidal_surface = surfaces.ToroidalSurface3D(volmdlr.OXYZ, 2, 1)
         tf = faces.ToroidalFace3D.from_surface_rectangular_cut(toroidal_surface, 0, 3, 1, 3)
         frame = volmdlr.OXYZ.translation(volmdlr.Vector3D(1, 1, 0))

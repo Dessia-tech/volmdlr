@@ -4707,6 +4707,8 @@ class ConicalSurface3D(UPeriodicalSurface):
         """
         center3d_plane = plane3d.point_projection(self.frame.origin)
         radius = self.frame.origin.point_distance(center3d_plane) * math.tan(self.semi_angle) + self.ref_radius
+        if radius == 0.0:
+            return []
         circle3d = edges.FullArc3D.from_curve(curves.Circle3D(volmdlr.Frame3D(
             center3d_plane, plane3d.frame.u, plane3d.frame.v, plane3d.frame.w), radius))
         return [circle3d]
@@ -4851,22 +4853,22 @@ class ConicalSurface3D(UPeriodicalSurface):
     #         curves_.append(bspline)
     #     return curves_
 
-    # def _conical_intersection_points(self, conical_surface: 'ConicalSurface3D', length: float):
-    #     """
-    #     Gets the points of intersections between the spherical surface and the toroidal surface.
-    #
-    #     :param conical_surface: other Spherical Surface 3d.
-    #     :return: points of intersections.
-    #     """
-    #     cone_generatrices = self.get_generatrices(max(100, int((length / 2) * 10)), length) + \
-    #                         self.get_circle_generatrices(max(200, int((length / 2) * 20)), 0, length)
-    #     intersection_points = []
-    #     for gene in cone_generatrices:
-    #         intersections = conical_surface.edge_intersections(gene)
-    #         for intersection in intersections:
-    #             if not intersection.in_list(intersection_points):
-    #                 intersection_points.append(intersection)
-    #     return intersection_points
+    def _conical_intersection_points(self, conical_surface: 'ConicalSurface3D', length: float):
+        """
+        Gets the points of intersections between the spherical surface and the toroidal surface.
+
+        :param conical_surface: other Spherical Surface 3d.
+        :return: points of intersections.
+        """
+        cone_generatrices = self.get_generatrices(max(100, int((length / 2) * 10)), length) + \
+                            self.get_circle_generatrices(max(200, int((length / 2) * 20)), 0, length)
+        intersection_points = []
+        for gene in cone_generatrices:
+            intersections = conical_surface.edge_intersections(gene)
+            for intersection in intersections:
+                if not intersection.in_list(intersection_points):
+                    intersection_points.append(intersection)
+        return intersection_points
 
     def parallel_conicalsurface_intersections(self, conical_surface):
         """
@@ -4917,30 +4919,29 @@ class ConicalSurface3D(UPeriodicalSurface):
             return self.parallel_conicalsurface_intersections(conical_surface)
         if self.apex.is_close(conical_surface.apex):
             return self.same_apex_conicalsurface_intersections(conical_surface)
-        return self.generic_surface_intersections_with_occt(conical_surface)
-        # if self.semi_angle + conical_surface.semi_angle > volmdlr.geometry.vectors3d_angle(
-        #         self.frame.w, conical_surface.frame.w):
-        #     intersection_points = self._conical_intersection_points(conical_surface, 5)
-        #     local_intersections = [self.frame.global_to_local_coordinates(point) for point in intersection_points]
-        #     max_z_point = volmdlr.O3D
-        #     for point in local_intersections:
-        #         if point.z > max_z_point.z:
-        #             max_z_point = point
-        #     point_index = local_intersections.index(max_z_point)
-        #     removed_point = intersection_points.pop(point_index)
-        #     intersection_points.insert(0, removed_point)
-        #     list_points = vm_common_operations.order_points_list_for_nearest_neighbor(intersection_points)
-        #     bspline = edges.BSplineCurve3D.from_points_interpolation(list_points, 3, centripetal=True)
-        #     return [bspline]
-        # intersection_points = self._conical_intersection_points(conical_surface, 5)
-        # if not intersection_points:
-        #     return []
-        # inters_points = vm_common_operations.separate_points_by_closeness(intersection_points)
-        # curves_ = []
-        # for list_points in inters_points:
-        #     bspline = edges.BSplineCurve3D.from_points_interpolation(list_points, 4, centripetal=False)
-        #     curves_.append(bspline)
-        # return curves_
+        if self.semi_angle + conical_surface.semi_angle > volmdlr.geometry.vectors3d_angle(
+                self.frame.w, conical_surface.frame.w):
+            intersection_points = self._conical_intersection_points(conical_surface, 5)
+            local_intersections = [self.frame.global_to_local_coordinates(point) for point in intersection_points]
+            max_z_point = volmdlr.O3D
+            for point in local_intersections:
+                if point.z > max_z_point.z:
+                    max_z_point = point
+            point_index = local_intersections.index(max_z_point)
+            removed_point = intersection_points.pop(point_index)
+            intersection_points.insert(0, removed_point)
+            list_points = vm_common_operations.order_points_list_for_nearest_neighbor(intersection_points)
+            bspline = edges.BSplineCurve3D.from_points_interpolation(list_points, 3, centripetal=True)
+            return [bspline]
+        intersection_points = self._conical_intersection_points(conical_surface, 5)
+        if not intersection_points:
+            return []
+        inters_points = vm_common_operations.separate_points_by_closeness(intersection_points)
+        curves_ = []
+        for list_points in inters_points:
+            bspline = edges.BSplineCurve3D.from_points_interpolation(list_points, 4, centripetal=False)
+            curves_.append(bspline)
+        return curves_
 
     def u_iso(self, u: float) -> curves.Line3D:
         """
