@@ -57,6 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - edges/curves.py cut_between_two_points -> trim
 - defines ordering of curve methods
 - npy -> np
+- made wires classes and shells classes iterables
 
 #### CI
 - Avoid calling babylonjs method in CI to reduce CI time
