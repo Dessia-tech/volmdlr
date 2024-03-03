@@ -10,7 +10,7 @@ from typing import List, Dict
 import matplotlib.patches
 
 import volmdlr
-from volmdlr import wires, edges, curves
+from volmdlr import wires, edges, curves, PATH_ROOT
 from volmdlr.core import EdgeStyle
 from volmdlr.primitives import RoundedLineSegments
 
@@ -36,10 +36,9 @@ class RoundedLineSegments2D(RoundedLineSegments):
     arc_class = volmdlr.edges.Arc2D
 
     def __init__(self, points: List[volmdlr.Point2D], radius: Dict[int, float],
-                 adapt_radius: bool = False, name: str = ''):
-        RoundedLineSegments.__init__(self, points, radius,
-                                     adapt_radius=adapt_radius,
-                                     name=name)
+                 adapt_radius: bool = False, reference_path: str = PATH_ROOT, name: str = ''):
+        RoundedLineSegments.__init__(self, points=points, radius=radius, adapt_radius=adapt_radius,
+                                     reference_path=reference_path, name=name)
 
     def arc_features(self, point_index: int):
         """
@@ -335,11 +334,12 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments2D, wires.Wire2D):
     :type radius: {position1(n): float which is the radius linked the n-1 and n+1 points, position2(n+1):...}.
     """
 
-    def __init__(self, points: List[volmdlr.Point2D], radius: Dict[int, float],
-                 adapt_radius: bool = False, name: str = ''):
-        RoundedLineSegments2D.__init__(self, points, radius, adapt_radius=adapt_radius, name='')
+    def __init__(self, points: List[volmdlr.Point2D], radius: Dict[int, float], adapt_radius: bool = False,
+                 reference_path: str = PATH_ROOT, name: str = ''):
+        RoundedLineSegments2D.__init__(self, points, radius, adapt_radius=adapt_radius,
+                                       reference_path=reference_path, name='')
         self.closed = False
-        wires.Wire2D.__init__(self, self._primitives(), name)
+        wires.Wire2D.__init__(self, self._primitives(), reference_path=reference_path, name=name)
 
 
 class ClosedRoundedLineSegments2D(RoundedLineSegments2D, wires.Contour2D):
@@ -353,11 +353,12 @@ class ClosedRoundedLineSegments2D(RoundedLineSegments2D, wires.Contour2D):
     """
 
     def __init__(self, points: List[volmdlr.Point2D], radius: Dict[int, float],
-                 adapt_radius: bool = False, name: str = ''):
-        RoundedLineSegments2D.__init__(self, points, radius, adapt_radius=adapt_radius, name='')
+                 adapt_radius: bool = False, reference_path: str = PATH_ROOT, name: str = ''):
+        RoundedLineSegments2D.__init__(self, points, radius, adapt_radius=adapt_radius,
+                                       reference_path=reference_path, name='')
         self.closed = True
         # RoundedLineSegments.__init__(self, points, radius, closed=True, adapt_radius=adapt_radius, name=name)
-        wires.Contour2D.__init__(self, self._primitives(), name)
+        wires.Contour2D.__init__(self, self._primitives(), reference_path=reference_path, name=name)
 
     def copy(self, deep=True, memo=None):
         """Returns a copy of the object."""

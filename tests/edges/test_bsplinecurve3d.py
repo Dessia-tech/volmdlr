@@ -27,9 +27,9 @@ class TestBSplineCurve3D(unittest.TestCase):
             volmdlr.Point3D(0.0, 0.0, 1.0),
             volmdlr.Point3D(-0.30901699437494734, -0.30901699437494734, 0.9510565162951533),
             volmdlr.Point3D(-0.8090169943749473, -0.8090169943749473, 0.587785252292473),
-            volmdlr.Point3D(-1.0, -1.0, 0.0)], 2)
+            volmdlr.Point3D(-1.0, -1.0, 0.0)], 2, centripetal=True)
         bbox = bspline.bounding_box
-        self.assertAlmostEqual(bbox.volume(), 4.029861202734341, 3)
+        self.assertAlmostEqual(bbox.volume(), 3.9998457739878495, 3)
 
     def test_trim(self):
         obj = vme.BSplineCurve3D.from_json(os.path.join(folder, "bspline_buggy_trim.json"))
@@ -63,6 +63,8 @@ class TestBSplineCurve3D(unittest.TestCase):
             trim = bspline.trim(pt1, pt2)
             self.assertTrue(trim.start.is_close(pt1))
             self.assertTrue(trim.end.is_close(pt2))
+        trim = bspline.trim(bspline.start, bspline.end)
+        self.assertEqual(bspline, trim)
 
         bspline = vme.BSplineCurve3D.from_json(os.path.join(folder, "bsplinecurve3d_split_test.json"))
         point1 = volmdlr.Point3D(0.0781678147963, -0.08091364816680001, 0.112275939295)
@@ -127,7 +129,7 @@ class TestBSplineCurve3D(unittest.TestCase):
                   volmdlr.Point3D(7.115095014105684, 0.40888620982702983, 1.1362954032756774),
                   volmdlr.Point3D(-3.0, 1.022248896290622, 0.5746069851843745),
                   volmdlr.Point3D(2.739350840642852, -5.869347626045908, -0.7880999427201254)]
-        bspline = vme.BSplineCurve3D.from_points_interpolation(points, 3)
+        bspline = vme.BSplineCurve3D.from_points_interpolation(points, 3, centripetal=True)
         linesegment = vme.LineSegment3D(volmdlr.Point3D(-3.0, 4.0, 1.0), volmdlr.Point3D(-3, -3, 0))
         intersections = bspline.linesegment_intersections(linesegment)
         self.assertEqual(len(intersections), 1)

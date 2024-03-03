@@ -63,9 +63,9 @@ class TestContour2D(unittest.TestCase):
     def test_cut_by_wire(self):
         results = contour1_cut_by_wire.cut_by_wire(contour2_cut_by_wire)
         results1 = contour2_cut_by_wire.cut_by_wire(contour1_cut_by_wire)
-        list_expected_contour_lengths = [0.735061566418825, 0.7350615482415725, 0.7350613283792926, 3.4786699386591753,
-                                         0.7350615900834909, 1.2716033189138256, 0.8996336040021796,
-                                         1.2716033047094752, 3.4786699386591753, 0.8996337337370333]
+        list_expected_contour_lengths = [0.735061566418825, 3.4786699386591753, 0.7350615900834909, 0.7350613283792926,
+                                         0.7350615482415725, 1.2716033189138256, 3.478669938659176, 0.8996337337370333,
+                                         1.2716033047094752, 0.8996336040021796]
         self.assertEqual(len(results) + len(results1), 10)
         for i, contour in enumerate(results + results1):
             self.assertAlmostEqual(contour.length(), list_expected_contour_lengths[i])
@@ -88,7 +88,7 @@ class TestContour2D(unittest.TestCase):
         contour_to_offset = DessiaObject.from_json(os.path.join(folder, "contour_to_offset.json"))
         stringer_contour_offset = contour_to_offset.offset(4)
         self.assertEqual(len(stringer_contour_offset.primitives), 10)
-        self.assertAlmostEqual(stringer_contour_offset.area(), 546.1486690034756)
+        self.assertAlmostEqual(stringer_contour_offset.area(), 546.1486677646164)
 
     def test_edge_crossings(self):
         points = [volmdlr.Point2D(-0.3, -0.2), volmdlr.Point2D(0.3, -0.2),
@@ -278,6 +278,27 @@ class TestContour2D(unittest.TestCase):
         cut_by_line = contour.cut_by_line(line)
         self.assertEqual(len(cut_by_line), 1)
         self.assertEqual(cut_by_line[0], contour)
+
+    def test_from_points(self):
+        contour = wires.Contour2D.from_points([volmdlr.Point2D(-0.5, -0.5), volmdlr.Point2D(0.5, -0.5),
+                                             volmdlr.Point2D(0.5, 0.5), volmdlr.Point2D(-0.5, 0.5)])
+        for prim1, prim2 in zip(contour.primitives, contour.primitives[1:] + [contour.primitives[0]]):
+            self.assertIs(prim1.end, prim2.start)
+
+    def test_rectangle(self):
+        contour = wires.Contour2D.rectangle(-0.5, 0.5, -0.5, 0.5)
+        for prim1, prim2 in zip(contour.primitives, contour.primitives[1:] + [contour.primitives[0]]):
+            self.assertIs(prim1.end, prim2.start)
+
+    def test_rectangle_from_center_and_sides(self):
+        contour = wires.Contour2D.rectangle_from_center_and_sides(volmdlr.O2D, 1.0, 1.0)
+        b_rectangle = contour.bounding_rectangle
+        for prim1, prim2 in zip(contour.primitives, contour.primitives[1:] + [contour.primitives[0]]):
+            self.assertIs(prim1.end, prim2.start)
+        self.assertEqual(b_rectangle.xmin, -0.5)
+        self.assertEqual(b_rectangle.xmax, 0.5)
+        self.assertEqual(b_rectangle.ymin, -0.5)
+        self.assertEqual(b_rectangle.ymax, 0.5)
 
 
 if __name__ == '__main__':

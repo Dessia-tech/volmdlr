@@ -5,46 +5,117 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-
-## v0.17.0 [Future]
+## v0.18.0 [Future]
 ### New Features
+#### curves.py
+- Ellipse2D point_distance_1 and tangent_points
+
 #### edges.py
--
+- 
+#### wires.py
+- 
+#### surfaces.py
+- SphericalSurface3D: is_coincident
+- BSplineSurface3D: is_coincident
 
 #### faces.py
--
+- 
+#### shells.py
+- 
+### Fixed
+
+#### curves.py
+- 
+#### edges.py
+- 
+#### wires.py
+- 
+#### surfaces.py
+- 
+#### faces.py
+- SphericalFace3D: get_bounding_box
+- planeface:Sphericalface intersections
+
+#### shells.py
+- 
+
+### Changed
+
+### Unittests
+
+## v0.17.0 [Unreleased]
+### New Features
+
+#### curves.py
+- Ellipse3D: to_step
+#### edges.py
+- ArcEllipse3D/FullArcEllipse3D: to_step
+
+#### faces.py
+- PlaneFace3D: get_normal_at_point
+- CylindricalFace3D: get_normal_at_point
+- add tolerance parameter to many methods
+- Face3D: normal_at_point
 
 #### edges.py
--
+- Fix FullArc2D generation from 3 points
 
 #### surfaces.py
--
+- u_iso/v_iso: Returns the u-iso/v-iso curve of the surface.
+- Plane3D/CylindricalSurface/ConicalSurface/SphericalSurface3D : normal_at_point
+
+#### global
+- Add reference_path to a handful of classes
 
 #### curves.py
 - Ellipse2D: point_distance_1 and tangent_points
 
 ### Fixed
+### curves.py
+- Circle2D: line_intersections
+
 #### edges.py
+- edge: intersections -> new parameter force_sort, to force sorting intersection points along curve.
 - BSplineCurve3D: move_frame_along
-- arc2d: start and end angle, and arc angle.
+- Arc2D: start and end angle, and arc angle.
+- Contour2D: merge_with (consider abs_tol in is_sharing_primitives_with checking)
+- BezierCurve: trim.
+
 
 #### faces.py
 - Toroidalface ConicalFace intersections.
 
-#### edges.py
--
+#### shells.py
+- ClosedShell3D.point_belongs
+
+#### step.py
+- Fix Step.create_connections with wireframe models
+
+#### core.py
+- Fix Compound step export for wireframe models.
+
 
 #### surfaces.py
--
+- BSplineSurface3D: improves _fix_start_end_singularity_point_at_parametric_domain
 
 #### wires.py
+- Fix some constructors: connected edges must share vertices.
+
+#### step.py
+- Fixes in step translator to VolumeModel.
 
 ### Refactor
+
+#### Global
+- Leverage Mesh3D class capabilities in simplification and voxelization
 
 #### surfaces.py
 - ToroidalSuface3D: toroidal_surface_intersections
 - Contour2D - point_belongs
 - edge: intersections -> new parameter force_sort, to force sorting intersection points along curve.
+- ConicalSurface3D: Refactoring of the conical surface definition in accordance with ISO 10303.
+- BSplineSurface3D: improves point_inversion_grid_search convergence.
+
 ### Changed
 - load_from_file -> from_json
 - Delete outdated_methods: bbox_intersections -> is_intersecting | b_rectangle_intersections -> is_intersecting
@@ -53,10 +124,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - edges/curves.py cut_between_two_points -> trim
 - defines ordering of curve methods
 - npy -> np
-- 
+- curves.py: curve_intersections -> intersections
+
+#### CI
+- Avoid calling babylonjs method in CI to reduce CI time
+- Avoid `pip install .` in drone as it is redundant with `python setup.py build_ext --inplace`
+- Re-order CI steps to build doc in the end / perform shortest test first
+- Avoid duplication of test between push and PR
+
+
+### Updates
+- Documentation
+
 ### Unittests
 - Toroidalface ConicalFace intersections.
-- Ellipse2D point_distance_1 and tangent_points
+- Avoid showing babylonjs in unit tests / ci_scripts
+
+
 ## v0.16.0
 
 ### New Features
@@ -65,6 +149,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ConicalSurface3D: conicalsurface_intersections.
 - cad_simplification: AlphaWrapSimplify
 - nurbs/operations: link_curves
+- FullArc3D: fullarc3d_intersections
+- ArcEllipse2D: straight_line_center_of_mass
 
 #### edges.py
 - BSplineCurve: decompose into béziers patches of same degree.
@@ -73,6 +159,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### faces.py
 - Add primitives_mapping property: returns a dictionary containing the correspondence between the parametric and 3D boundaries of the faces.
 - grid_points: returns a grid of points inside the surface2d of the face.
+- PeriodicalFaceMixin: face_inside
 
 #### surfaces.py
 - CylindricalSurface3D: parametric_points_to_3d
@@ -92,7 +179,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix pylint.
 - Add some missing docstrings.
 - Add _serializable_dict to points and vectors objects. This method is important to some platform checks, as they don't inherite from DessiaObject anymore.
-
+- Arc2D: arc_intersections
 #### curves.py
 - Ellipse2D/3D: mutualize length method.
 - Circle2D: abscissa method - consider frame direction during rotation.
@@ -106,7 +193,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Arc2D: plot_data
 - LineSegment3D: planar_revolution.
 - BSplineCurve: abscissa: use curve decomposition.
-- BSplineCurve: trim.
+- BSplineCurve: trim on periodic curves.
 
 #### faces.py
 - Face3D: enhance from_contours3d.
@@ -125,6 +212,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Surface3D: repeair_primitives_periodicity. Treat special case on surfaces with singularities.
 - ToroidalSurface3D: plane_intersections.
 - Remove duplicated attributes.
+- BSplineSurface3D: point_inversion_grid_search.
+- BSplineSurface3D: implements a more robust point3d_to_2d method.
 
 #### wires.py
 - Contour2D: cut_by_line.
