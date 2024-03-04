@@ -187,7 +187,7 @@ def volmdlr_conicalsurface_to_occt(volmdlr_surface):
     :return: OCCT ConicalSurface.
     """
     gp_ax3 = volmdlr_frame3d_to_occt(volmdlr_surface.frame)
-    return Geom_ConicalSurface(gp_ax3, volmdlr_surface.semi_angle, 0)
+    return Geom_ConicalSurface(gp_ax3, volmdlr_surface.semi_angle, volmdlr_surface.ref_radius)
 
 
 def volmdlr_sphericalsurface_to_occt(volmdlr_surface):

@@ -199,8 +199,9 @@ def bsplinecurve3d_from_occt(curve):
     knots = list(curve.Knots())
     multiplicities = list(curve.Multiplicities())
     weigths = None
-    if curve.Weights() is not None:
-        weigths = list(curve.Weights())
+    if curve.IsRational():
+        curve.Weights(weights_array := TColStd_Array1OfReal(1, len(control_points)))
+        weigths = list(weights_array)
     return edges.BSplineCurve3D(curve.Degree(), control_points, multiplicities, knots, weigths)
 
 
