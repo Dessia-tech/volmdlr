@@ -296,12 +296,6 @@ class TestToroidalSurface3D(unittest.TestCase):
                 self.assertAlmostEqual(sol.length(), expected_result)
 
         # Test3
-        # expected_results = [[17.15507502094234], [17.44854519606042], [8.189776671441997, 11.901135669170262],
-        #                     [9.342188106943269, 6.783371061263169, 6.6266277842571295],
-        #                     [8.454952065863425, 11.776550916194452], [18.761719845054934],
-        #                     [6.937795281803973, 15.192491122547677], [19.04178257950678], [19.712211179693842],
-        #                     [9.106322135020985, 6.606873336946121, 6.606872989299915]]
-
         frame = volmdlr.OXYZ.translation(volmdlr.Vector3D(1, 1, 0))
         for i, theta in enumerate(np.linspace(0, math.pi * .7, 10)):
             frame = frame.rotation(frame.origin, volmdlr.Y3D, theta)
@@ -311,8 +305,6 @@ class TestToroidalSurface3D(unittest.TestCase):
                 for point in intersection.discretization_points(number_points=50):
                     self.assertLess(toroidal_surface.point_distance(point), 1e-6)
                     self.assertLess(cylindrical_surface.point_distance(point), 1e-6)
-            # for sol, expected_result in zip(inters, expected_results[i]):
-            #     self.assertAlmostEqual(sol.length(), expected_result, 5)
 
     def test_circle_intersections(self):
         toroidal_surface = surfaces.ToroidalSurface3D(volmdlr.OXYZ, 2, 1)
