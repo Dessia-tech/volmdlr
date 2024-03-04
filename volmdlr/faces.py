@@ -961,11 +961,6 @@ class Face3D(volmdlr.core.Primitive3D):
         for point in generic_face.face_border_intersections(self):
             if not point.in_list(intersections_points):
                 intersections_points.append(point)
-        # face_intersections = []
-        # if not intersections_points:
-        #     for edge in surface_intersections:
-        #         if self.edge3d_inside(edge, 1e-3) and generic_face.edge3d_inside(edge, 1e-3):
-        #             face_intersections.append(volmdlr.wires.Wire3D([edge]))
         for primitive in surface_intersections:
             points_on_primitive = []
             for point in intersections_points:
@@ -3228,13 +3223,9 @@ class SphericalFace3D(PeriodicalFaceMixin, Face3D):
 
         :return: Bounding Box.
         """
-        brect = self.surface2d.outer_contour.bounding_rectangle
-        point = self.surface3d.frame.origin + self.surface3d.radius * math.cos(brect[0]) * self.surface3d.frame.u
-        points = [point.rotation(self.surface3d.frame.origin, self.surface3d.frame.w, angle)
-                  for angle in np.linspace(brect[0], brect[1], 25)]
-        points += [self.surface3d.frame.origin + self.surface3d.radius * math.sin(brect[2])*self.surface3d.frame.w,
-                   self.surface3d.frame.origin + self.surface3d.radius * math.sin(brect[3])*self.surface3d.frame.w]
-        return volmdlr.core.BoundingBox.from_points(points)
+        mesh = self.triangulation()
+
+        return volmdlr.core.BoundingBox.from_points(mesh.vertices)
 
 
 class RuledFace3D(Face3D):
