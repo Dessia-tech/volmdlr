@@ -1453,17 +1453,6 @@ class Face3D(volmdlr.core.Primitive3D):
             return False
         return True
 
-    # def _get_linesegment_intersections_approximation(self, linesegment: vme.LineSegment3D):
-    #     """Generator line segment intersections approximation."""
-    #     if self.__class__ == PlaneFace3D:
-    #         faces_triangulation = [self]
-    #     else:
-    #         triangulation = self.triangulation()
-    #         faces_triangulation = triangulation.triangular_faces()
-    #     for face in faces_triangulation:
-    #         inters = face.linesegment_intersections(linesegment)
-    #         yield inters
-
     def is_linesegment_crossing(self, linesegment):
         """
         Verify if a face 3d is being crossed by a line segment 3d.
