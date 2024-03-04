@@ -46,6 +46,41 @@ class TestClosedShell3D(unittest.TestCase):
         for i, area in enumerate(sorted([face.area() for face in intersection.faces])):
             self.assertAlmostEqual(area, expected_areas[i])
 
+    def test_consecutive_boolean_operations(self):
+        block = primitives3d.Block(volmdlr.OXYZ, color=(1, 0.3, 0.3), alpha=0.6)
+        sphere = primitives3d.Sphere(volmdlr.O3D, 0.68, color=(0.2, 1, 0.3), alpha=.6)
+        volmdlr.core.VolumeModel([block, sphere]).babylonjs()
+
+        block_inters_sphere = block.intersection(sphere)[0]
+        expected_areas1 = [0.6672300326944091, 0.6672300326944091, 0.6672300326944091, 0.6672300326944091,
+                           0.6672300326944091, 0.6672742796224723, 3.2330061945128783]
+        self.assertEqual(len(block_inters_sphere.faces), len(expected_areas1))
+        for i, face_area in enumerate(sorted([f.area() for f in block_inters_sphere.faces])):
+            self.assertAlmostEqual(face_area, expected_areas1[i])
+
+        cyl1 = primitives3d.Cylinder(volmdlr.OXYZ, 0.3, 2, color=(1, 0, 0))
+        cyl2 = primitives3d.Cylinder(volmdlr.OYZX, 0.3, 2, color=(1, 1, 0))
+        cyl3 = primitives3d.Cylinder(volmdlr.OZXY, 0.3, 2, color=(0, 1, 1))
+
+        cyl1_union_cyl2 = cyl1.union(cyl2)[0]
+        union_cyl3 = cyl1_union_cyl2.union(cyl3)[0]
+
+        expected_areas2 = [0.28272459012474943, 0.28272459012474943, 0.28272459012474943, 0.28272459012474943,
+                           0.28272459012474943, 0.28272459012474943, 4.586132621569709, 4.58613262156971,
+                           4.586135300242545, 4.586137982316728, 4.5861380209112195, 4.586140703735797]
+        self.assertEqual(len(union_cyl3.faces), len(expected_areas2))
+        for i, face_area in enumerate(sorted([f.area() for f in union_cyl3.faces])):
+            self.assertAlmostEqual(face_area, expected_areas2[i])
+
+        substraction = block_inters_sphere.subtract_to_closed_shell(union_cyl3)[0]
+        expected_areas3 = [0.38450544256965963, 0.38450544256965963, 0.38450544256965963, 0.38450544256965963,
+                           0.38450544256965963, 0.3845496894977229, 1.4445399679799156, 1.4445399679799158,
+                           1.4445426466527518, 1.444545328726934, 1.4445453673214272, 1.4445480501460044,
+                           3.2330061945128783]
+
+        self.assertEqual(len(substraction.faces), len(expected_areas3))
+        for i, face_area in enumerate(sorted([f.area() for f in substraction.faces])):
+            self.assertAlmostEqual(face_area, expected_areas3[i])
 
     def test_union_adjacent_blocks(self):
         frame1 = volmdlr.Frame3D(volmdlr.Point3D(0, 0, 0), volmdlr.X3D, volmdlr.Y3D, volmdlr.Z3D)

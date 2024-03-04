@@ -1183,7 +1183,7 @@ class Surface3D(DessiaObject):
 
     def plane_intersections(self, plane3d: 'Plane3D'):
         """Gets intersections between a line and a Surface 3D."""
-        raise NotImplementedError(f'line_intersections method not implemented by {self.__class__.__name__}')
+        raise NotImplementedError(f'plane_intersections method not implemented by {self.__class__.__name__}')
 
     def curve_intersections(self, curve):
         """
@@ -5858,20 +5858,21 @@ class SphericalSurface3D(UVPeriodicalSurface):
         :param plane3d: intersecting plane.
         :return: list of intersecting curves.
         """
-        dist = plane3d.point_distance(self.frame.origin)
-        if dist > self.radius:
-            return []
-        if dist == self.radius:
-            line = curves.Line3D(self.frame.origin, self.frame.origin + plane3d.frame.w)
-            return plane3d.line_intersections(line)
-        line = curves.Line3D(self.frame.origin, self.frame.origin + plane3d.frame.w)
-        circle_radius = math.sqrt(self.radius ** 2 - dist ** 2)
-        circle_center = plane3d.line_intersections(line)[0]
-        start_end = circle_center + plane3d.frame.u * circle_radius
-        circle = curves.Circle3D(volmdlr.Frame3D(circle_center, plane3d.frame.u,
-                                                 plane3d.frame.v, plane3d.frame.w),
-                                 circle_radius)
-        return [edges.FullArc3D(circle, start_end)]
+        return self.generic_surface_intersections_with_occt(plane3d)
+        # dist = plane3d.point_distance(self.frame.origin)
+        # if dist > self.radius:
+        #     return []
+        # if dist == self.radius:
+        #     line = curves.Line3D(self.frame.origin, self.frame.origin + plane3d.frame.w)
+        #     return plane3d.line_intersections(line)
+        # line = curves.Line3D(self.frame.origin, self.frame.origin + plane3d.frame.w)
+        # circle_radius = math.sqrt(self.radius ** 2 - dist ** 2)
+        # circle_center = plane3d.line_intersections(line)[0]
+        # start_end = circle_center + plane3d.frame.u * circle_radius
+        # circle = curves.Circle3D(volmdlr.Frame3D(circle_center, plane3d.frame.u,
+        #                                          plane3d.frame.v, plane3d.frame.w),
+        #                          circle_radius)
+        # return [edges.FullArc3D(circle, start_end)]
 
     def line_intersections(self, line: curves.Line3D):
         """

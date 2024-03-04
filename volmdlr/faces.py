@@ -939,6 +939,34 @@ class Face3D(volmdlr.core.Primitive3D):
         face_intersections = self.get_face_intersections(face2)
         return face_intersections
 
+    def _face_intersections_helper(self, generic_face, surface_intersections):
+        face_intersections = []
+        intersections_points = self.face_border_intersections(generic_face)
+        for point in generic_face.face_border_intersections(self):
+            if not point.in_list(intersections_points):
+                intersections_points.append(point)
+        for primitive in surface_intersections:
+            points_on_primitive = []
+            for point in intersections_points:
+                if primitive.point_belongs(point, 1e-5):
+                    points_on_primitive.append(point)
+            if not points_on_primitive:
+                continue
+            points_on_primitive = primitive.sort_points_along_curve(points_on_primitive)
+            if isinstance(primitive, (volmdlr_curves.Hyperbola3D, volmdlr_curves.Parabola3D, volmdlr_curves.Line3D)):
+                for point1, point2 in zip(points_on_primitive[:-1], points_on_primitive[1:]):
+                    if point1 == point2:
+                        continue
+                    edge = primitive.trim(point1, point2)
+                    if self.edge3d_inside(edge) and generic_face.edge3d_inside(edge):
+                        face_intersections.append(volmdlr.wires.Wire3D([edge]))
+            else:
+                split_edges = primitive.split_with_sorted_points(points_on_primitive)
+                for edge in split_edges:
+                    if self.edge3d_inside(edge, 1e-4) and generic_face.edge3d_inside(edge, 1e-4):
+                        face_intersections.append(volmdlr.wires.Wire3D([edge]))
+        return face_intersections
+
     def _generic_face_intersections(self, generic_face):
         """
         Calculates the intersections between two Faces 3D.
@@ -958,33 +986,7 @@ class Face3D(volmdlr.core.Primitive3D):
         if not surface_intersections:
             return face_intersections
 
-        intersections_points = self.face_border_intersections(generic_face)
-        for point in generic_face.face_border_intersections(self):
-            if not point.in_list(intersections_points):
-                intersections_points.append(point)
-        for primitive in surface_intersections:
-            points_on_primitive = []
-            for point in intersections_points:
-                if primitive.point_belongs(point, 1e-5):
-                    points_on_primitive.append(point)
-            if not points_on_primitive:
-                continue
-            points_on_primitive = primitive.sort_points_along_curve(points_on_primitive)
-            # if primitive.periodic:
-            #     points_on_primitive = points_on_primitive + [points_on_primitive[0]]
-            # if len(points_on_primitive) == 1:
-            #     for edge in primitive.split(points_on_primitive[0]):
-            #         if edge is None or isinstance(edge, volmdlr_curves.Line3D):
-            #             continue
-            #         if self.edge3d_inside(edge, 1e-5) and generic_face.edge3d_inside(edge, 1e-5):
-            #             face_intersections.append(volmdlr.wires.Wire3D([edge]))
-            # for point1, point2 in zip(points_on_primitive[:-1], points_on_primitive[1:]):
-            #     edge = primitive.trim(point1, point2)
-            #     if self.edge3d_inside(edge, 1e-3) and generic_face.edge3d_inside(edge, 1e-3):
-            split_edges = primitive.split_with_sorted_points(points_on_primitive)
-            for edge in split_edges:
-                if self.edge3d_inside(edge) and generic_face.edge3d_inside(edge, 1e-4):
-                    face_intersections.append(volmdlr.wires.Wire3D([edge]))
+        face_intersections.extend(self._face_intersections_helper(generic_face, surface_intersections))
         return face_intersections
 
     def get_face_intersections(self, face2):
