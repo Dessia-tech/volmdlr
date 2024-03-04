@@ -1,17 +1,20 @@
-from OCP.Geom import Geom_Plane, Geom_Line
-from OCP.gp import gp_Pnt, gp_Ax3, gp_Dir, gp_Pnt2d, gp_Dir2d
-from OCP.TColStd import TColStd_Array1OfReal, TColStd_Array1OfInteger
-from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeEdge
-from OCP.Precision import Precision
-from OCP.GeomAPI import GeomAPI_IntSS
-# from OCP.TColStd import TColStd_Array1OfReal, TColStd_Array1OfInteger
-from OCP.TColgp import TColgp_Array2OfPnt, TColgp_Array1OfPnt, TColgp_Array1OfPnt2d
+"""
+Module to translate objects in Volmdlr to OCP.
+"""
 from OCP.Geom import (Geom_BSplineSurface, Geom_CylindricalSurface, Geom_ConicalSurface, Geom_ToroidalSurface,
                       Geom_SphericalSurface, Geom_Plane, Geom_BSplineCurve, Geom_Line)
 from OCP.Geom2d import Geom2d_BSplineCurve
+from OCP.TColStd import TColStd_Array1OfReal, TColStd_Array1OfInteger
+# from OCP.TColStd import TColStd_Array1OfReal, TColStd_Array1OfInteger
+from OCP.TColgp import TColgp_Array2OfPnt, TColgp_Array1OfPnt, TColgp_Array1OfPnt2d
+from OCP.gp import gp_Pnt, gp_Ax3, gp_Dir, gp_Pnt2d, gp_Dir2d
 
 
 def list_to_tcolstd_array1ofinteger(list_of_int):
+    """
+    Helper function.
+
+    """
     array = TColStd_Array1OfInteger(1, len(list_of_int))
     for i, value in enumerate(list_of_int):
         array.SetValue(i + 1, value)
@@ -19,6 +22,10 @@ def list_to_tcolstd_array1ofinteger(list_of_int):
 
 
 def list_to_tcolstd_array1ofreal(list_of_real):
+    """
+    Helper function.
+
+    """
     array = TColStd_Array1OfReal(1, len(list_of_real))
     for i, value in enumerate(list_of_real):
         array.SetValue(i + 1, value)
@@ -26,6 +33,10 @@ def list_to_tcolstd_array1ofreal(list_of_real):
 
 
 def list_to_tcolgp_array10fpnt(list_of_points):
+    """
+    Helper function.
+
+    """
     array = TColgp_Array1OfPnt(1, len(list_of_points))
     for i, point in enumerate(list_of_points):
         array.SetValue(i + 1, volmdlr_point3d_to_occt(point))
@@ -33,6 +44,10 @@ def list_to_tcolgp_array10fpnt(list_of_points):
 
 
 def list_to_tcolgp_array10fpnt2d(list_of_points):
+    """
+    Helper function.
+
+    """
     array = TColgp_Array1OfPnt2d(1, len(list_of_points))
     for i, point in enumerate(list_of_points):
         array.SetValue(i + 1, volmdlr_point2d_to_occt(point))
@@ -42,7 +57,7 @@ def list_to_tcolgp_array10fpnt2d(list_of_points):
 def volmdlr_point2d_to_occt(volmdlr_point2d):
     """
     Create an OCCT Point2D from a voldmlr Point2D.
-    
+
     :param volmdlr_point2d: volmdlr Point2D.
     :return: OCCT Point2D
     """
@@ -105,6 +120,12 @@ def volmdlr_line3d_to_occt(volmdlr_line):
 
 
 def volmdlr_bsplinecurve3d_to_occt(volmdlr_bsplinecurve):
+    """
+    Creates a Bspline Curve 3D from a volmdlr object.
+
+    :param volmdlr_bsplinecurve: volmdlr BSpline Curve 3D.
+    :return:
+    """
     if volmdlr_bsplinecurve.weights is None:
         return Geom_BSplineCurve(list_to_tcolgp_array10fpnt(volmdlr_bsplinecurve.control_points),
                                  list_to_tcolstd_array1ofreal(volmdlr_bsplinecurve.knots),
@@ -118,6 +139,12 @@ def volmdlr_bsplinecurve3d_to_occt(volmdlr_bsplinecurve):
 
 
 def volmdlr_bsplinecurve2d_to_occt(volmdlr_bsplinecurve):
+    """
+    Creates a Bspline Curve 3D from a volmdlr object.
+
+    :param volmdlr_bsplinecurve: volmdlr BSpline Curve 2D.
+    :return:
+    """
     if not volmdlr_bsplinecurve.weights:
         return Geom2d_BSplineCurve(list_to_tcolgp_array10fpnt2d(volmdlr_bsplinecurve.control_points),
                                    list_to_tcolstd_array1ofreal(volmdlr_bsplinecurve.knots),

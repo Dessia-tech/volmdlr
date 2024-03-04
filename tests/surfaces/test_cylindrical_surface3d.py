@@ -1,15 +1,14 @@
 """
 Unit tests for CylindriSurface3D
 """
+import os
 import unittest
 import math
 import numpy as np
-import os
 import dessia_common.core
 import volmdlr
 from volmdlr import Point2D, Point3D, edges, wires, surfaces, curves
 from volmdlr.models import cylindrical_surfaces
-
 
 folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'objects_cylindrical_tests')
 
@@ -271,17 +270,17 @@ class TestCylindricalSurface3D(unittest.TestCase):
         surface = dessia_common.core.DessiaObject.from_json(
             os.path.join(folder, "cylindrical_surface_bspline_openned_contour.json"))
         contour = dessia_common.core.DessiaObject.from_json(
-            os.path.join(folder,"cylindrical_contour_bspline_openned_contour.json"))
+            os.path.join(folder, "cylindrical_contour_bspline_openned_contour.json"))
         contour2d = surface.contour3d_to_2d(contour)
         self.assertEqual(len(contour2d.primitives), 2)
         self.assertFalse(contour2d.is_ordered())
 
         surface = dessia_common.core.DessiaObject.from_json(
             os.path.join(folder, "test_contour3d_to_2d_surface.json"
-        ))
+                         ))
         contour = dessia_common.core.DessiaObject.from_json(
             os.path.join(folder, "test_contour3d_to_2d_contour.json"
-        ))
+                         ))
 
         surface = dessia_common.core.DessiaObject.from_json(
             os.path.join(folder, "test_contour3d_to_2d_surface.json"))
@@ -299,7 +298,6 @@ class TestCylindricalSurface3D(unittest.TestCase):
         contour2d = surface.contour3d_to_2d(contour)
         self.assertAlmostEqual(contour2d.area(), 0.0, 6)
         self.assertTrue(contour2d.is_ordered())
-
 
     def test_bsplinecurve3d_to_2d(self):
         surface = dessia_common.core.DessiaObject.from_json(os.path.join(folder, "cylindrical_surf_bug.json"))
@@ -397,47 +395,29 @@ class TestCylindricalSurface3D(unittest.TestCase):
         )
 
     def test_coinicalsurface_intersections(self):
-        expected_slutions = [
-            [3.710032833168665],
-            [2.754671034122705, 0.7935213452250598],
-            [2.07512669883945, 2.075126698839449],
-            [2.569944707187624, 2.569944707187624],
-        ]
+        expected_slutions = [[3.7099792099342372], [2.06629353435829, 0.6888788375190272, 0.7935213250176275],
+                             [0.5464208737829062, 1.037714279156249, 0.4913311852963991, 2.075126971224518],
+                             [0.2954786226570677, 2.279279700347046, 0.29547862265706776, 2.2792797003470455]]
         conical_surface = surfaces.ConicalSurface3D(volmdlr.OXYZ, math.pi / 6)
         cylindrical_surface1 = surfaces.CylindricalSurface3D(
             volmdlr.Frame3D(
-                volmdlr.Point3D(0.3, 0.3, 0.8), volmdlr.Y3D, volmdlr.Z3D, volmdlr.X3D
-            ),
-            0.3,
-        )
+                volmdlr.Point3D(0.3, 0.3, 0.8), volmdlr.Y3D, volmdlr.Z3D, volmdlr.X3D), 0.3)
         cylindrical_surface2 = surfaces.CylindricalSurface3D(
             volmdlr.Frame3D(
-                volmdlr.Point3D(0, 0, 0.5), volmdlr.Y3D, volmdlr.Z3D, volmdlr.X3D
-            ),
-            0.3,
-        )
+                volmdlr.Point3D(0, 0, 0.5), volmdlr.Y3D, volmdlr.Z3D, volmdlr.X3D), 0.3)
         cylindrical_surface3 = surfaces.CylindricalSurface3D(
             volmdlr.Frame3D(
-                volmdlr.Point3D(0, 0, 1), volmdlr.Y3D, volmdlr.Z3D, volmdlr.X3D
-            ),
-            0.3,
-        )
+                volmdlr.Point3D(0, 0, 1), volmdlr.Y3D, volmdlr.Z3D, volmdlr.X3D), 0.3)
         cylindrical_surface4 = surfaces.CylindricalSurface3D(
-            volmdlr.Frame3D(
-                volmdlr.Point3D(0.0, 0.41068360252295905, 1.2886751345948129),
-                volmdlr.Y3D,
-                volmdlr.Z3D,
-                volmdlr.X3D,
-            ),
-            math.tan(conical_surface.semi_angle) / 2,
-        )
+            volmdlr.Frame3D(volmdlr.Point3D(0.0, 0.41068360252295905, 1.2886751345948129),
+                            volmdlr.Y3D, volmdlr.Z3D, volmdlr.X3D), math.tan(conical_surface.semi_angle) / 2)
         for i, cylindrical_surface in enumerate(
-            [
-                cylindrical_surface1,
-                cylindrical_surface2,
-                cylindrical_surface3,
-                cylindrical_surface4,
-            ]
+                [
+                    cylindrical_surface1,
+                    cylindrical_surface2,
+                    cylindrical_surface3,
+                    cylindrical_surface4,
+                ]
         ):
             list_curves = cylindrical_surface.conicalsurface_intersections(
                 conical_surface
@@ -478,8 +458,7 @@ class TestCylindricalSurface3D(unittest.TestCase):
 
     def test_sphericalsurface_intersections(self):
         spherical_surface = surfaces.SphericalSurface3D(
-            volmdlr.OXYZ.translation(volmdlr.Vector3D(0.5, 0.5, 0)), 2
-        )
+            volmdlr.OXYZ.translation(volmdlr.Vector3D(0.5, 0.5, 0)), 2)
 
         # test 1
         cylindrical_surface = surfaces.CylindricalSurface3D(volmdlr.OXYZ, 1)
@@ -487,7 +466,7 @@ class TestCylindricalSurface3D(unittest.TestCase):
         self.assertEqual(len(inters), 2)
         self.assertAlmostEqual(inters[0].length(), 6.613411150146185)
         self.assertAlmostEqual(inters[1].length(), 6.613411150146188)
-      
+
         # test2
         cylindrical_surface = surfaces.CylindricalSurface3D(
             volmdlr.OXYZ.translation(volmdlr.X3D * 1.5), 1
@@ -552,8 +531,6 @@ class TestCylindricalSurface3D(unittest.TestCase):
         cylindrical_surface1 = surfaces.CylindricalSurface3D(volmdlr.OXYZ, 2)
         cylindrical_surface2 = surfaces.CylindricalSurface3D(volmdlr.OYZX, 1)
         inters = cylindrical_surface1.surface_intersections(cylindrical_surface2)
-        # expected_lengths1 = [6.393300778078848, 6.393300265079942]
-        # for intersection, expected_length in zip(inters, expected_lengths1):
         for intersection in inters:
             for point in intersection.points:
                 self.assertTrue(cylindrical_surface1.point_distance(point) < 1e-6)
@@ -563,13 +540,10 @@ class TestCylindricalSurface3D(unittest.TestCase):
 
         # test 2
         inters = cylindrical_surface1.surface_intersections(cylindrical_surface2)
-        # expected_lengths2 = [7.767042217039914, 7.767042239472898]
-        # for intersection, expected_length in zip(inters, expected_lengths2):
         for intersection in inters:
             for point in intersection.points:
                 self.assertTrue(cylindrical_surface1.point_distance(point) < 1e-6)
                 self.assertTrue(cylindrical_surface2.point_distance(point) < 1e-6)
-            # self.assertAlmostEqual(intersection.length(), expected_length, 6)
 
         # test 3
         cylindrical_surface2 = surfaces.CylindricalSurface3D(volmdlr.OXYZ.translation(volmdlr.X3D * .5), 2)
