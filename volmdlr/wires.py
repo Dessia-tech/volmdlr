@@ -1367,6 +1367,9 @@ class Wire3D(WireMixin, PhysicalObject):
         return Wire3D(new_wire)
 
     def minimum_distance(self, wire2):
+        """
+        Gets mininum distance beteween two wires.
+        """
         distance = []
         for element in self.primitives:
             for element2 in wire2.primitives:
