@@ -127,17 +127,26 @@ steps:
       - pull_request
 
   commands:
-    - echo $DRONE_SOURCE_BRANCH
-    - echo $DRONE_COMMIT_BRANCH
-    - echo $DRONE_REPO_BRANCH
-    - echo $DRONE_REPO_NAME
-    - echo $DRONE_REPO
-    - echo $DRONE_REPO_LINK
+    - |
+      #!/bin/sh
+      # Check if DRONE_PULL_REQUEST is available
+      if [ -z "${DRONE_PULL_REQUEST}" ]; then
+        echo "This step only runs for pull requests."
+        exit 1
+      fi
+      
+      # GitHub API URL for the PR
+      api_url="https://api.github.com/repos/${DRONE_REPO}/pulls/${DRONE_PULL_REQUEST}"
+      
+      # Use GitHub API to get the source repo information
+      # Use the "github_token" secret for authentication
+      source_repo=$(curl -s -H "Authorization: token ${GITHUB_TOKEN}" "$api_url" | jq -r .head.repo.full_name)
+      
+      echo "Source Repository: $source_repo"
 
-  volumes:
-    # Mount pip cache from host
-    - name: pip_cache
-      path: /root/.cache/pip
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
 
 
 - name: generate sdist
