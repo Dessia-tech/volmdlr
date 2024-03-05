@@ -10,7 +10,7 @@ from typing import List, Tuple, TypeVar, Union
 import numpy as np
 import pyfqmr
 from numpy.typing import NDArray
-from scipy.sparse import csr_matrix
+from scipy.sparse import lil_matrix
 from scipy.sparse.csgraph import connected_components
 from scipy.spatial import cKDTree
 
@@ -635,7 +635,7 @@ class Mesh3D(MeshMixin, Primitive3D):
         """
         # Building the adjacency matrix for triangles
         n_triangles = len(self.triangles)
-        adjacency_matrix = csr_matrix((n_triangles, n_triangles), dtype=int)
+        adjacency_matrix = lil_matrix((n_triangles, n_triangles), dtype=int)
 
         for i, triangle in enumerate(self.triangles):
             for j in range(i + 1, n_triangles):
