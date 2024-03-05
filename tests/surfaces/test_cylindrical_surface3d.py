@@ -100,7 +100,7 @@ class TestCylindricalSurface3D(unittest.TestCase):
             self.cylindrical_surface.plane_intersections(cylinder_concurrent_plane)
         )
         self.assertTrue(
-            isinstance(cylinder_surface_concurrent_plane_intersec[0], curves.Ellipse3D)
+            isinstance(cylinder_surface_concurrent_plane_intersec[0], volmdlr.edges.FullArcEllipse3D)
         )
 
         cylinder_surface_perpendicular_plane_intersec = (
@@ -108,7 +108,7 @@ class TestCylindricalSurface3D(unittest.TestCase):
         )
         self.assertTrue(
             isinstance(
-                cylinder_surface_perpendicular_plane_intersec[0], curves.Circle3D
+                cylinder_surface_perpendicular_plane_intersec[0], volmdlr.edges.FullArc3D
             )
         )
 
@@ -446,12 +446,12 @@ class TestCylindricalSurface3D(unittest.TestCase):
         )
         circle_intersections = cylindrical_surface.circle_intersections(circle)
         self.assertTrue(
-            circle_intersections[0].is_close(
+            circle_intersections[1].is_close(
                 volmdlr.Point3D(2.975410303031, 0.187196949158, 0.19251871881)
             )
         )
         self.assertTrue(
-            circle_intersections[1].is_close(
+            circle_intersections[0].is_close(
                 volmdlr.Point3D(1.740409914248, 0.10949731064, -0.966637220568)
             )
         )

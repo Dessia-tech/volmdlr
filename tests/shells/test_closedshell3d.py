@@ -20,7 +20,8 @@ class TestClosedShell3D(unittest.TestCase):
         closed_shell = volume1.primitives[0]
         closed_shell1 = closed_shell.rotation(volmdlr.O3D, volmdlr.Y3D, math.pi / 7)
         union = closed_shell.union(closed_shell1)[0]
-        expected_shell_faces_areas = dessia_common.core.DessiaObject.from_json(os.path.join(objects_folder, 'test_union_expected_faces_areas.json')).primitives
+        expected_shell_faces_areas = dessia_common.core.DessiaObject.from_json(os.path.join(
+            objects_folder, 'test_union_expected_faces_areas.json')).primitives
         self.assertEqual(len(union.faces), len(expected_shell_faces_areas))
         for i, area in enumerate(sorted([face.area() for face in union.faces])):
             self.assertAlmostEqual(area, expected_shell_faces_areas[i], 5)
@@ -49,7 +50,6 @@ class TestClosedShell3D(unittest.TestCase):
     def test_consecutive_boolean_operations(self):
         block = primitives3d.Block(volmdlr.OXYZ, color=(1, 0.3, 0.3), alpha=0.6)
         sphere = primitives3d.Sphere(volmdlr.O3D, 0.68, color=(0.2, 1, 0.3), alpha=.6)
-        volmdlr.core.VolumeModel([block, sphere]).babylonjs()
 
         block_inters_sphere = block.intersection(sphere)[0]
         expected_areas1 = [0.6672300326944091, 0.6672300326944091, 0.6672300326944091, 0.6672300326944091,
