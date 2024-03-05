@@ -10,7 +10,7 @@ from typing import List, Tuple, TypeVar, Union
 import numpy as np
 import pyfqmr
 from numpy.typing import NDArray
-from scipy.sparse import lil_matrix
+from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import connected_components
 from scipy.spatial import cKDTree
 
@@ -629,43 +629,46 @@ class Mesh3D(MeshMixin, Primitive3D):
 
     def extract_submeshes(self) -> List["Mesh3D"]:
         """
-        Extracts submeshes that are not connected together.
+        Extracts submeshes that are not connected together in a more performant way.
 
         :return: A list of Mesh3D instances representing each connected submesh.
         """
-        # Building the adjacency matrix for triangles
-        n_triangles = len(self.triangles)
-        adjacency_matrix = lil_matrix((n_triangles, n_triangles), dtype=int)
+        # Create an edge list from triangle vertices
+        edges = np.vstack([self.triangles[:, [0, 1]], self.triangles[:, [1, 2]], self.triangles[:, [2, 0]]])
 
-        for i, triangle in enumerate(self.triangles):
-            for j in range(i + 1, n_triangles):
-                # If triangles share a vertex, mark them as adjacent
-                if not set(triangle).isdisjoint(self.triangles[j]):
-                    adjacency_matrix[i, j] = 1
-                    adjacency_matrix[j, i] = 1
+        # Ensure unique edges and undirected graph representation
+        edges = np.sort(edges, axis=1)  # Sort each edge for consistency
+        edges = np.unique(edges, axis=0)  # Remove duplicate edges
 
-        # Finding connected components
-        n_components, labels = connected_components(csgraph=adjacency_matrix, directed=False)
+        # Build a sparse adjacency matrix directly from edges
+        n_vertices = len(self.vertices)
+        adjacency_matrix = csr_matrix(
+            (np.ones(edges.shape[0]), (edges[:, 0], edges[:, 1])), shape=(n_vertices, n_vertices)
+        )
+        adjacency_matrix += adjacency_matrix.T  # Make sure the graph is undirected
 
-        # Extracting submeshes
+        # Finding connected components among vertices
+        _, labels = connected_components(csgraph=adjacency_matrix, directed=False)
+
+        # Group triangles by connected components of their vertices
+        triangle_labels = labels[self.triangles].mean(axis=1).astype(int)
+
         submeshes = []
-        for i in range(n_components):
-            component_mask = labels == i
+        for i in np.unique(triangle_labels):
+            component_mask = triangle_labels == i
             component_triangles = self.triangles[component_mask]
 
-            # Extract vertices used in the component
-            unique_vertices_indices = np.unique(component_triangles)
-            new_vertices = self.vertices[unique_vertices_indices]
+            # Find unique vertices and create a mapping to new indices
+            unique_vertices, inverse_indices = np.unique(component_triangles, return_inverse=True)
+            new_triangles = inverse_indices.reshape(component_triangles.shape)
 
-            # Map old vertex indices to new ones
-            index_mapping = {old_index: new_index for new_index, old_index in enumerate(unique_vertices_indices)}
-            remapped_triangles = np.array(
-                [[index_mapping[idx] for idx in triangle] for triangle in component_triangles]
-            )
+            # Extract the vertices for this component
+            new_vertices = self.vertices[unique_vertices]
 
+            # Create a new Mesh3D object for the submesh
             submesh = Mesh3D(
                 vertices=new_vertices,
-                triangles=remapped_triangles,
+                triangles=new_triangles,
                 color=self.color,
                 alpha=self.alpha,
                 name=f"{self.name}_submesh{i}",
