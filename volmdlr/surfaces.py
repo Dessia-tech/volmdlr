@@ -1330,6 +1330,7 @@ class Surface3D(DessiaObject):
         return False
 
     def generic_surface_intersections_with_occt(self, other_surface):
+        """Generic method for calculating surface intersections with the help of occt."""
         occt_self_surface = getattr(to_occt, 'volmdlr_' + self.__class__.__name__.lower()[:-2] + '_to_occt')(
             self)
         occt_other_surface = getattr(
@@ -1337,7 +1338,7 @@ class Surface3D(DessiaObject):
         api_intss = GeomAPI_IntSS(occt_self_surface, occt_other_surface, Precision.Confusion_s())
         intersections = [api_intss.Line(i + 1) for i in range(api_intss.NbLines())]
         surface_intersections = []
-        # from volmdlr import from_occt
+        import volmdlr.from_occt
         for intersection in intersections:
             function = getattr(volmdlr.from_occt, intersection.__class__.__name__.lower()[5:] + '3d_from_occt')
             surface_intersections.append(function(intersection))
