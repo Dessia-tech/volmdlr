@@ -9,15 +9,17 @@ from typing import List, Tuple, TypeVar, Union
 
 import numpy as np
 import pyfqmr
+from numpy.typing import NDArray
+from scipy.sparse import csr_matrix
+from scipy.sparse.csgraph import connected_components
+from scipy.spatial import cKDTree
+
 import trimesh
+import volmdlr.edges
 from dessia_common.core import DessiaObject
 from dessia_common.serialization import BinaryFile
 from dessia_common.typings import JsonSerializable
-from numpy.typing import NDArray
-from scipy.spatial import cKDTree
 from trimesh import Trimesh
-
-import volmdlr.edges
 from volmdlr.core import Primitive3D
 
 # TODO: make this module "mesh" as it is not useful only for display
@@ -488,11 +490,10 @@ class Mesh3D(MeshMixin, Primitive3D):
             closest_point_other = other_mesh.vertices[min_distance_index]
 
         if return_points:
-
-            closest_point_self = volmdlr.Point3D(closest_point_self[0],
-                                                 closest_point_self[1], closest_point_self[2])
-            closest_point_other = volmdlr.Point3D(closest_point_other[0],
-                                                  closest_point_other[1], closest_point_other[2])
+            closest_point_self = volmdlr.Point3D(closest_point_self[0], closest_point_self[1], closest_point_self[2])
+            closest_point_other = volmdlr.Point3D(
+                closest_point_other[0], closest_point_other[1], closest_point_other[2]
+            )
             return min_distance, closest_point_self, closest_point_other
 
         return min_distance
@@ -625,6 +626,53 @@ class Mesh3D(MeshMixin, Primitive3D):
         vertices, triangles, _ = simplifier.getMesh()
 
         return self.__class__(vertices, triangles)
+
+    def extract_submeshes(self) -> List["Mesh3D"]:
+        """
+        Extracts submeshes that are not connected together.
+
+        :return: A list of Mesh3D instances representing each connected submesh.
+        """
+        # Building the adjacency matrix for triangles
+        n_triangles = len(self.triangles)
+        adjacency_matrix = csr_matrix((n_triangles, n_triangles), dtype=int)
+
+        for i, triangle in enumerate(self.triangles):
+            for j in range(i + 1, n_triangles):
+                # If triangles share a vertex, mark them as adjacent
+                if not set(triangle).isdisjoint(self.triangles[j]):
+                    adjacency_matrix[i, j] = 1
+                    adjacency_matrix[j, i] = 1
+
+        # Finding connected components
+        n_components, labels = connected_components(csgraph=adjacency_matrix, directed=False)
+
+        # Extracting submeshes
+        submeshes = []
+        for i in range(n_components):
+            component_mask = labels == i
+            component_triangles = self.triangles[component_mask]
+
+            # Extract vertices used in the component
+            unique_vertices_indices = np.unique(component_triangles)
+            new_vertices = self.vertices[unique_vertices_indices]
+
+            # Map old vertex indices to new ones
+            index_mapping = {old_index: new_index for new_index, old_index in enumerate(unique_vertices_indices)}
+            remapped_triangles = np.array(
+                [[index_mapping[idx] for idx in triangle] for triangle in component_triangles]
+            )
+
+            submesh = Mesh3D(
+                vertices=new_vertices,
+                triangles=remapped_triangles,
+                color=self.color,
+                alpha=self.alpha,
+                name=f"{self.name}_submesh{i}",
+            )
+            submeshes.append(submesh)
+
+        return submeshes
 
     @property
     def faces(self):
