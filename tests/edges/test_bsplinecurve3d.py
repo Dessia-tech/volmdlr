@@ -199,6 +199,37 @@ class TestBSplineCurve3D(unittest.TestCase):
         for result, expected_point in zip(discretized_points_between_1_2, expected_points):
             self.assertTrue(result.is_close(expected_point))
 
+    def test_move_frame_along(self):
+        degree = 5
+        control_points = [
+            volmdlr.Point3D(-1, 0, 0),
+            volmdlr.Point3D(0.3, 0.2, 0.1),
+            volmdlr.Point3D(0.5, -0.1, 0.4),
+            volmdlr.Point3D(0.5, -0.4, 0.0),
+            volmdlr.Point3D(-0.1, -0.2, -0.3),
+            volmdlr.Point3D(-0.3, 0.4, 0.1)]
+        knots = [0.0, 1.0]
+        knot_multiplicities = [6, 6]
+        weights = None  # [1, 2, 1, 2, 1, 2]
+        bspline_curve3d = vme.BSplineCurve3D(degree=degree,
+                                             control_points=control_points,
+                                             knot_multiplicities=knot_multiplicities,
+                                             knots=knots,
+                                             weights=weights,
+                                             name='B Spline Curve 3D 1')
+        frame = volmdlr.Frame3D(
+            origin=volmdlr.Point3D(-1.0, 0.0, 0.0),
+            u=volmdlr.Vector3D(0.16926811079722504, -0.8799271690658463, -0.44393297220065076),
+            v=volmdlr.Vector3D(1.3877787807814457e-17, 0.4504326973383234, -0.8928103858986645),
+            w=volmdlr.Vector3D(0.9855700414821559, 0.15112432732120784, 0.076243891719756))
+        self.assertEqual(bspline_curve3d.move_frame_along(frame),
+                         volmdlr.Frame3D(origin=volmdlr.Point3D(-0.3, 0.4, 0.1),
+                                         u=volmdlr.Vector3D(0.9632101019095523, 0.22376214189648538,
+                                                            0.14885161548766362),
+                                         v=volmdlr.Vector3D(2.7755575615628914e-17, 0.553867484333956,
+                                                            -0.8326048341185484),
+                                         w=volmdlr.Vector3D(-0.26874951084493176, 0.8019733871217126,
+                                                            0.5334907560296971)))
 
 if __name__ == '__main__':
     unittest.main()

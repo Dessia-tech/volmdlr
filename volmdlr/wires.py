@@ -1367,6 +1367,9 @@ class Wire3D(WireMixin, PhysicalObject):
         return Wire3D(new_wire)
 
     def minimum_distance(self, wire2):
+        """
+        Gets mininum distance beteween two wires.
+        """
         distance = []
         for element in self.primitives:
             for element2 in wire2.primitives:
@@ -2087,6 +2090,8 @@ class Contour2D(ContourMixin, Wire2D):
                     return True
         if not self._polygon_100_points:
             self._polygon_100_points = self.to_polygon(100)
+        if point.is_close(self.center_of_mass()) and self._polygon_100_points.is_convex():
+            return True
         if self._polygon_100_points.point_belongs(point):
             return True
         return False
@@ -3046,6 +3051,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
 
     @cached_property
     def is_trigo(self):
+        """Verifeis if a Closed Polygon is in the trigo direction or not."""
         if len(self.points) < 3:
             return True
 
@@ -3059,6 +3065,9 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         return angle > 0
 
     def delaunay_triangulation(self):
+        """
+        Triangulates a closed polygon 2d using delaunay triangulation.
+        """
         points = self.points
         new_points = []
         delaunay_triangles = []
@@ -3484,6 +3493,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(), point_numbering=False,
              fill=False, fill_color='w'):
+        """Plots a Closed Polygon 2D using matplotlib."""
         if ax is None:
             _, ax = plt.subplots()
             ax.set_aspect('equal')
