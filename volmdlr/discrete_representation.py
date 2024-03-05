@@ -1723,7 +1723,7 @@ class MatrixBasedVoxelization(Voxelization):
         :return: A numpy array of shape (N, 3), where N is the number of unique corners.
         :rtype: np.ndarray
         """
-        indices = np.argwhere(self.matrix)  # Find indices of all non-zero (true) elements
+        indices = np.indices(self.matrix.shape).transpose(1, 2, 3, 0).reshape(-1, 3)
         offsets = (
             np.array([[0, 0, 0], [0, 0, 1], [0, 1, 0], [0, 1, 1], [1, 0, 0], [1, 0, 1], [1, 1, 0], [1, 1, 1]]) - 0.5
         )
