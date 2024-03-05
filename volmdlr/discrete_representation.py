@@ -1723,13 +1723,14 @@ class MatrixBasedVoxelization(Voxelization):
         :return: A numpy array of shape (N, 3), where N is the number of unique corners.
         :rtype: np.ndarray
         """
+        indices = np.argwhere(self.matrix)  # Find indices of all non-zero (true) elements
         offsets = (
             np.array([[0, 0, 0], [0, 0, 1], [0, 1, 0], [0, 1, 1], [1, 0, 0], [1, 0, 1], [1, 1, 0], [1, 1, 1]]) - 0.5
         )
         corner_offsets = offsets * self.voxel_size
 
         # Calculate corners for all voxels
-        voxel_centers = np.array(self.get_voxel_centers())
+        voxel_centers = np.array(self._min_grid_center) + indices * self.voxel_size
         corners = voxel_centers[:, None, :] + corner_offsets  # Broadcast add
 
         # Reshape corners array to list all corners, then round and find unique rows
