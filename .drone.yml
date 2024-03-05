@@ -120,28 +120,33 @@ steps:
 
 
 # Special step for fork pull request
-- name: Fork only; install, build doc run scripts and tutorials
-  image: python:3.9
+#- name: Fork only; install, build doc run scripts and tutorials
+#  image: python:3.9
+#  when:
+#    event:
+#      - pull_request
+#
+#  commands:
+#    - |
+#      api_url="https://api.github.com/repos/${DRONE_REPO}/pulls/${DRONE_PULL_REQUEST}"
+#      source_repo=$(curl -s -H "Authorization: token ${GITHUB_TOKEN}" "$api_url" | jq -r .head.repo.full_name)
+#
+#      echo "Source Repository: $source_repo"
+#
+#  environment:
+#    GITHUB_TOKEN:
+#      from_secret: github_token
+
+- name: get-source-repo
+  image: alpine/git
   when:
-    event:
-      - pull_request
+    event: pull_request
 
   commands:
     - |
       #!/bin/sh
-      # Check if DRONE_PULL_REQUEST is available
-      if [ -z "${DRONE_PULL_REQUEST}" ]; then
-        echo "This step only runs for pull requests."
-        exit 1
-      fi
-      
-      # GitHub API URL for the PR
       api_url="https://api.github.com/repos/${DRONE_REPO}/pulls/${DRONE_PULL_REQUEST}"
-      
-      # Use GitHub API to get the source repo information
-      # Use the "github_token" secret for authentication
       source_repo=$(curl -s -H "Authorization: token ${GITHUB_TOKEN}" "$api_url" | jq -r .head.repo.full_name)
-      
       echo "Source Repository: $source_repo"
 
   environment:
