@@ -124,9 +124,13 @@ steps:
   image: python:3.9
   when:
     event:
-    - pull_request
-    condition:
-      - ne: $DRONE_PULL_REQUEST_REPO_OWNER, $DRONE_REPO_OWNER
+      - pull_request
+    repo:
+      include:
+        - Dessia-tech/volmdlr
+    source_repo:
+      exclude:
+        - Dessia-tech/volmdlr
 
   commands:
     - >
