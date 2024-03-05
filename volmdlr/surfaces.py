@@ -1339,10 +1339,13 @@ class Surface3D(DessiaObject):
         intersections = [api_intss.Line(i + 1) for i in range(api_intss.NbLines())]
         surface_intersections = []
         for intersection in intersections:
+            cls_name = intersection.__class__.__name__[5:]
+            if cls_name == "TrimmedCurve":
+                cls_name = intersection.BasisCurve().__class__.__name__[5:]
             try:
-                cls_ = getattr(volmdlr.edges, intersection.__class__.__name__[5:] + '3D')
+                cls_ = getattr(volmdlr.edges, cls_name + '3D')
             except AttributeError:
-                cls_ = getattr(volmdlr.curves, intersection.__class__.__name__[5:] + '3D')
+                cls_ = getattr(volmdlr.curves, cls_name + '3D')
             function = getattr(from_occt, intersection.__class__.__name__.lower()[5:] + '3d_from_occt')
             surface_intersections.append(function(cls_, intersection))
         return surface_intersections

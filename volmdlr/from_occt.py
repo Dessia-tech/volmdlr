@@ -237,7 +237,7 @@ def volmdlr_edge_from_occt_curve(occt_curve, first, last, orientation):
     return curve.trim(start, end, same_sense=orientation == 0)
 
 
-def trimmedcurve3d_from_occt(occt_curve):
+def trimmedcurve3d_from_occt(cls, occt_curve):
     """
     Intanciate an edge from a trimmed curve in OCCT.
 
@@ -247,7 +247,7 @@ def trimmedcurve3d_from_occt(occt_curve):
     start_point = point3d_from_occt(occt_curve.StartPoint())
     end_point = point3d_from_occt(occt_curve.EndPoint())
     occt_basis_curve = occt_curve.BasisCurve()
-    volmdlr_curve = OCCT_TO_VOLMDLR[occt_basis_curve.__class__](occt_basis_curve)
+    volmdlr_curve = OCCT_TO_VOLMDLR[occt_basis_curve.__class__](cls, occt_basis_curve)
     return volmdlr_curve.trim(start_point, end_point)
 
 
