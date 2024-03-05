@@ -133,6 +133,7 @@ steps:
       source_repo=$(curl -s -H "Authorization: token ${GITHUB_TOKEN}" "$api_url" | jq -r .head.repo.full_name)
 
       echo "Source Repository: $source_repo"
+      
 
   environment:
     GITHUB_TOKEN:
