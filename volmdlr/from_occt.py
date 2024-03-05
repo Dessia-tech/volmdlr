@@ -80,7 +80,7 @@ def line2d_from_occt(cls, occt_line):
     """
     Instanciates a volmdlr Line2D, from occt object.
 
-    :param cls: volmdlr class to be instaciated.
+    :param cls: volmdlr class to be instanciated.
     :param occt_line: OCCT Line.
     :return: volmdlr Line2D.
     """
@@ -93,7 +93,7 @@ def line3d_from_occt(cls, occt_line):
     """
     Instanciates a volmdlr Line3D, from occt object.
 
-    :param cls: volmdlr class to be instaciated.
+    :param cls: volmdlr class to be instanciated.
     :param occt_line: OCCT Line 3D.
     :return: volmdlr Line3D.
     """
@@ -106,7 +106,7 @@ def circle2d_from_occt(cls, curve):
     """
     Instanciates a volmdlr Circle2D, from occt object.
 
-    :param cls: volmdlr class to be instaciated.
+    :param cls: volmdlr class to be instanciated.
     :param curve: OCCT curve.
     :return: volmdlr Circle2D.
     """
@@ -118,7 +118,7 @@ def circle3d_from_occt(cls, curve):
     """
     Instanciates a volmdlr Circle3D, from occt object.
 
-    :param cls: volmdlr class to be instaciated.
+    :param cls: volmdlr class to be instanciated.
     :param curve: OCCT curve.
     :return: volmdlr Circle3D.
     """
@@ -130,7 +130,7 @@ def ellipse2d_from_occt(cls, curve):
     """
     Instanciates a volmdlr Ellipse2D, from occt object.
 
-    :param cls: volmdlr class to be instaciated.
+    :param cls: volmdlr class to be instanciated.
     :param curve: OCCT curve.
     :return: volmdlr Ellipse2D.
     """
@@ -142,7 +142,7 @@ def ellipse3d_from_occt(cls, curve):
     """
     Instanciates a volmdlr Ellipse3D, from occt object.
 
-    :param cls: volmdlr class to be instaciated.
+    :param cls: volmdlr class to be instanciated.
     :param curve: OCCT curve.
     :return: volmdlr Ellipse3D.
     """
@@ -154,7 +154,7 @@ def hyperbola3d_from_occt(cls, curve):
     """
     Instanciates a volmdlr Hyperbola3D, from occt object.
 
-    :param cls: volmdlr class to be instaciated.
+    :param cls: volmdlr class to be instanciated.
     :param curve: OCCT curve.
     :return: volmdlr Hyperbola3D.
     """
@@ -166,7 +166,7 @@ def parabola3d_from_occt(cls, curve):
     """
     Instanciates a volmdlr Parabola3D, from occt object.
 
-    :param cls: volmdlr class to be instaciated.
+    :param cls: volmdlr class to be instanciated.
     :param curve: OCCT curve.
     :return: volmdlr Parabola3D.
     """
@@ -182,7 +182,7 @@ def bsplinecurve2d_from_occt(cls, curve):
     """
     Instanciates a volmdlr BSplineCurve2D, from occt object.
 
-    :param cls: volmdlr class to be instaciated.
+    :param cls: volmdlr class to be instanciated.
     :param curve: OCCT curve.
     :return: volmdlr BSplineCurve2D.
     """
@@ -200,7 +200,7 @@ def bsplinecurve3d_from_occt(cls, curve):
     """
     Instanciates a volmdlr BSplineCurve3D, from occt object.
 
-    :param cls: volmdlr class to be instaciated.
+    :param cls: volmdlr class to be instanciated.
     :param curve: OCCT curve.
     :return: volmdlr BSplineCurve3D.
     """
@@ -258,7 +258,7 @@ def sphericalsurface_from_occt(cls, occt_surface):
     """
     Instanciates a volmdlr SphericalSurface3D, from occt object.
 
-    :param cls: volmdlr class to be instaciated.
+    :param cls: volmdlr class to be instanciated.
     :param occt_surface: OCCT surface.
     :return: volmdlr SphericalSurface3D.
     """
@@ -271,7 +271,7 @@ def cylindricalsurface_from_occt(cls, occt_surface):
     """
     Instanciates a volmdlr CylindricalSurface3D, from occt object.
 
-    :param cls: volmdlr class to be instaciated.
+    :param cls: volmdlr class to be instanciated.
     :param occt_surface: OCCT surface.
     :return: volmdlr CylindricalSurface3D.
     """
@@ -284,7 +284,7 @@ def plane_from_occt(cls, occt_surface):
     """
     Instanciates a volmdlr Plane3D, from occt object.
 
-    :param cls: volmdlr class to be instaciated.
+    :param cls: volmdlr class to be instanciated.
     :param occt_surface: OCCT surface.
     :return: volmdlr Plane3D.
     """
@@ -296,7 +296,7 @@ def toroidalsurface_from_occt(cls, occt_surface):
     """
     Instanciates a volmdlr ToroidalSurface3D, from occt object.
 
-    :param cls: volmdlr class to be instaciated.
+    :param cls: volmdlr class to be instanciated.
     :param occt_surface: OCCT surface.
     :return: volmdlr ToroidalSurface3D.
     """
@@ -308,7 +308,7 @@ def conicalsurface_from_occt(cls, occt_surface):
     """
     Instanciates a volmdlr ConicalSurface3D, from occt object.
 
-    :param cls: volmdlr class to be instaciated.
+    :param cls: volmdlr class to be instanciated.
     :param occt_surface: OCCT surface.
     :return: volmdlr ConicalSurface3D.
     """
@@ -322,7 +322,7 @@ def bsplinesurface_from_occt(cls, occt_surface):
     """
     Instanciates a volmdlr BSplineSurface3D, from occt object.
 
-    :param cls: volmdlr class to be instaciated.
+    :param cls: volmdlr class to be instanciated.
     :param occt_surface: OCCT surface.
     :return: volmdlr BSplineSurface3D.
     """
