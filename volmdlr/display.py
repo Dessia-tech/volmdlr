@@ -503,7 +503,7 @@ class Mesh3D(MeshMixin, Primitive3D):
         Compute minimum distance to points using IGL.
         """
         from igl import signed_distance
-        return signed_distance(points_array, self.vertices, self.faces, sign_type=3)[0]
+        return signed_distance(points_array, self.vertices, self.triangles, sign_type=3)[0]
 
     def get_edges_triangles(self):
         """
