@@ -1712,9 +1712,31 @@ class MatrixBasedVoxelization(Voxelization):
         corner_offsets = (offsets - 0.5) * self.voxel_size
         voxel_center = self.min_grid_center + np.array(voxel_position) * self.voxel_size
 
-        corners = np.round(voxel_center + corner_offsets, decimals=3)
+        corners = np.round(voxel_center + corner_offsets, DECIMALS)
 
         return corners
+
+    def get_all_unique_corners(self) -> np.ndarray:
+        """
+        Generate a numpy array of all unique corners in the voxelization.
+
+        :return: A numpy array of shape (N, 3), where N is the number of unique corners.
+        :rtype: np.ndarray
+        """
+        offsets = (
+            np.array([[0, 0, 0], [0, 0, 1], [0, 1, 0], [0, 1, 1], [1, 0, 0], [1, 0, 1], [1, 1, 0], [1, 1, 1]]) - 0.5
+        )
+        corner_offsets = offsets * self.voxel_size
+
+        # Calculate corners for all voxels
+        voxel_centers = np.array(self.get_voxel_centers())
+        corners = voxel_centers[:, None, :] + corner_offsets  # Broadcast add
+
+        # Reshape corners array to list all corners, then round and find unique rows
+        all_corners = np.round(corners.reshape(-1, 3), DECIMALS)
+        unique_corners = np.unique(all_corners, axis=0)
+
+        return unique_corners
 
 
 class OctreeBasedVoxelization(Voxelization):
