@@ -3051,6 +3051,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
 
     @cached_property
     def is_trigo(self):
+        """Verifeis if a Closed Polygon is in the trigo direction or not."""
         if len(self.points) < 3:
             return True
 
@@ -3064,6 +3065,9 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         return angle > 0
 
     def delaunay_triangulation(self):
+        """
+        Triangulates a closed polygon 2d using delaunay triangulation.
+        """
         points = self.points
         new_points = []
         delaunay_triangles = []
@@ -3489,6 +3493,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(), point_numbering=False,
              fill=False, fill_color='w'):
+        """Plots a Closed Polygon 2D using matplotlib."""
         if ax is None:
             _, ax = plt.subplots()
             ax.set_aspect('equal')
