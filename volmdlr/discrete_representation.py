@@ -8,11 +8,11 @@ from typing import Dict, Iterable, List, Set, Tuple, TypeVar, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
-from dessia_common.core import DessiaObject, PhysicalObject
-from dessia_common.serialization import JsonSerializable
 from matplotlib import patches
 from numpy.typing import NDArray
 
+from dessia_common.core import DessiaObject, PhysicalObject
+from dessia_common.serialization import JsonSerializable
 from volmdlr import Point2D, Point3D, Vector3D
 from volmdlr.core import BoundingBox, BoundingRectangle, VolumeModel
 from volmdlr.discrete_representation_compiled import (
@@ -1698,6 +1698,23 @@ class MatrixBasedVoxelization(Voxelization):
                     result[x, y, z] = count - 1
 
         return result
+
+    def get_voxel_corners(self, voxel_position: Tuple[int, int, int]):
+        """
+        Get the 8 corners of a voxel given its position in the 3D matrix.
+
+        :param voxel_position: The (i, j, k) indices of the voxel in the matrix.
+        :type voxel_position: Tuple[int, int, int]
+        :return: A set of tuples, each representing the (x, y, z) coordinates of a corner.
+        :rtype: Set[Tuple[float, float, float]]
+        """
+        offsets = np.array([[0, 0, 0], [0, 0, 1], [0, 1, 0], [0, 1, 1], [1, 0, 0], [1, 0, 1], [1, 1, 0], [1, 1, 1]])
+        corner_offsets = (offsets - 0.5) * self.voxel_size
+        voxel_center = self.min_grid_center + np.array(voxel_position) * self.voxel_size
+
+        corners = np.round(voxel_center + corner_offsets, decimals=3)
+
+        return corners
 
 
 class OctreeBasedVoxelization(Voxelization):
