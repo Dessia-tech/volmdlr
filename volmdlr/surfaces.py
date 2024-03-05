@@ -1341,9 +1341,9 @@ class Surface3D(DessiaObject):
         for intersection in intersections:
             try:
                 cls_ = getattr(volmdlr.edges, intersection.__class__.__name__[5:] + '3D')
-            except AttributeError as error:
+            except AttributeError:
                 cls_ = getattr(volmdlr.curves, intersection.__class__.__name__[5:] + '3D')
-            function = getattr(volmdlr.from_occt, intersection.__class__.__name__.lower()[5:] + '3d_from_occt')
+            function = getattr(from_occt, intersection.__class__.__name__.lower()[5:] + '3d_from_occt')
             surface_intersections.append(function(cls_, intersection))
         return surface_intersections
 
