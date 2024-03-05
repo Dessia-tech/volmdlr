@@ -27,7 +27,7 @@ import volmdlr.geometry
 import volmdlr.utils.common_operations as vm_common_operations
 import volmdlr.utils.intersections as vm_utils_intersections
 import volmdlr.utils.parametric as vm_parametric
-from volmdlr import display, edges, grid, wires, curves, to_occt
+from volmdlr import display, edges, grid, wires, curves, to_occt, from_occt
 from volmdlr.core import EdgeStyle
 from volmdlr.nurbs.core import evaluate_surface, derivatives_surface, point_inversion
 from volmdlr.nurbs.fitting import approximate_surface, interpolate_surface
@@ -1338,10 +1338,13 @@ class Surface3D(DessiaObject):
         api_intss = GeomAPI_IntSS(occt_self_surface, occt_other_surface, Precision.Confusion_s())
         intersections = [api_intss.Line(i + 1) for i in range(api_intss.NbLines())]
         surface_intersections = []
-        import volmdlr.from_occt
         for intersection in intersections:
+            try:
+                cls_ = getattr(volmdlr.edges, intersection.__class__.__name__[5:] + '3D')
+            except AttributeError as error:
+                cls_ = getattr(volmdlr.curves, intersection.__class__.__name__[5:] + '3D')
             function = getattr(volmdlr.from_occt, intersection.__class__.__name__.lower()[5:] + '3d_from_occt')
-            surface_intersections.append(function(intersection))
+            surface_intersections.append(function(cls_, intersection))
         return surface_intersections
 
 
