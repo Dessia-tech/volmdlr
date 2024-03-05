@@ -3779,7 +3779,8 @@ class ToroidalSurface3D(UVPeriodicalSurface):
     #         torus_origin_plane = Plane3D(self.frame)
     #         projected_point_plane3d = plane3d.point_projection(self.frame.origin)
     #         torus_plane_projection = torus_origin_plane.point_projection(projected_point_plane3d)
-    #         point = self.frame.origin + (torus_plane_projection - self.frame.origin).unit_vector() * self.major_radius
+    #         point = self.frame.origin + (torus_plane_projection -\
+    #         self.frame.origin).unit_vector() * self.major_radius
     #         if plane3d.point_distance(point) > self.minor_radius:
     #             return []
     #
@@ -4140,8 +4141,8 @@ class ToroidalSurface3D(UVPeriodicalSurface):
     #             vector = (toroidal_surface.frame.origin - self.frame.origin).unit_vector()
     #             center = self.frame.origin + vector * self.major_radius
     #
-    #             circle = curves.Circle3D(volmdlr.Frame3D(center, vector,
-    #                                                      self.frame.w, vector.cross(self.frame.w)), self.minor_radius)
+    #             circle = curves.Circle3D(volmdlr.Frame3D(
+    #             center, vector, self.frame.w, vector.cross(self.frame.w)), self.minor_radius)
     #             if is_major_same:
     #                 plane = Plane3D(volmdlr.Frame3D(center, self.frame.w, vector.cross(self.frame.w), vector))
     #                 intersections.extend(self.plane_intersections(plane))
@@ -6047,7 +6048,6 @@ class SphericalSurface3D(UVPeriodicalSurface):
         normal = math.cos(phi) * (math.cos(theta) * self.frame.u +
                                   math.sin(theta) * self.frame.v) + math.sin(theta) * self.frame.w
         return normal
-
 
 
 class RuledSurface3D(Surface3D):
