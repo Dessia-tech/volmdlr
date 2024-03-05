@@ -125,37 +125,14 @@ steps:
   when:
     event:
       - pull_request
-    repo:
-      include:
-        - Dessia-tech/volmdlr
-    source_repo:
-      exclude:
-        - Dessia-tech/volmdlr
-
 
   commands:
-    - >
-      if [ "$DRONE_PULL_REQUEST_REPO_OWNER" != "$DRONE_REPO_OWNER" ]; then
-        echo "This is a fork. Running step...";
-        git fetch --tags;
-        pip install .[doc,test];
-        python setup.py build_ext --inplace;
-        cd tests;
-        coverage run --rcfile=../.coveragerc --data-file=../.coverage --source volmdlr -m unittest discover -v;
-        cd ../scripts;
-        coverage run --rcfile=../.coveragerc --data-file=../.coverage --source volmdlr -a ci_scripts.py;
-        cd ../tutorials;
-        coverage run --rcfile=../.coveragerc --data-file=../.coverage --source volmdlr -a ci_tutorials.py;
-        cd ../doc;
-        make html;
-        cd ..;
-        coverage json;
-        coverage report;
-        coverage html;
-        python coverage.py;
-      else
-        echo "This is not a fork. Skipping step.";
-      fi
+    - echo $DRONE_SOURCE_BRANCH
+    - echo $DRONE_COMMIT_BRANCH
+    - echo $DRONE_REPO_BRANCH
+    - echo $DRONE_REPO_NAME
+    - echo $DRONE_REPO
+    - echo $DRONE_REPO_LINK
 
   volumes:
     # Mount pip cache from host
