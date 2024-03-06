@@ -474,18 +474,20 @@ class Mesh3D(MeshMixin, Primitive3D):
         """
         Transform a Mesh3D from the current reference frame to a new one.
 
-        side='old': consider the mesh in local given frame and transforms in global frame.
         side='new': consider the mesh in global frame and transforms in local given frame.
+        side='old': consider the mesh in local given frame and transforms in global frame.
 
         :param frame: The input reference frame.
         :param side: Choose between 'old' and 'new'.
 
         :return: A frame mapped Mesh3D object.
         """
-        if side == "old":
-            mapped_vertices = np.dot(np.array(frame.transfer_matrix()), self.vertices)
-        elif side == "new":
-            mapped_vertices = np.dot(np.array(frame.inverse_transfer_matrix()), self.vertices)
+        if side == "new":
+            mapped_vertices = np.dot(
+                np.array(frame.inverse_transfer_matrix()), (self.vertices - np.array(frame.origin)).T
+            ).T
+        elif side == "old":
+            mapped_vertices = np.dot(np.array(frame.transfer_matrix()), self.vertices.T).T + np.array(frame.origin)
         else:
             raise ValueError("Incorrect value for 'side'.")
 
