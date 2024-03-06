@@ -90,6 +90,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Avoid `pip install .` in drone as it is redundant with `python setup.py build_ext --inplace`
 - Re-order CI steps to build doc in the end / perform shortest test first
 - Avoid duplication of test between push and PR
+- Fix `upload coverage` step
+- Fix CI for PR from fork repo
 
 
 ### Updates
