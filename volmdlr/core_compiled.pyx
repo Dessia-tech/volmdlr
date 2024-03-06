@@ -2240,6 +2240,7 @@ class Matrix22:
                         self.M11 * other_matrix.M12 + self.M12 * other_matrix.M22,
                         self.M21 * other_matrix.M11 + self.M22 * other_matrix.M21,
                         self.M21 * other_matrix.M12 + self.M22 * other_matrix.M22)
+
     def __array__(self) -> npy.ndarray:
         return npy.array([
             [self.M11, self.M12],
