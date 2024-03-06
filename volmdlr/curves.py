@@ -26,7 +26,7 @@ from volmdlr.core import EdgeStyle
 
 def hyperbola_parabola_control_point_and_weight(start, start_tangent, end, end_tangent, point):
     """Gets control points and weights for hyperbola and parabola curves represented by bsplines."""
-    line_class = globals()["Line"+start.__class__.__name__[-2:]]
+    line_class = globals()["Line" + start.__class__.__name__[-2:]]
     line02 = line_class.from_point_and_vector(start, (end - start).to_vector())
 
     line0 = line_class.from_point_and_vector(start, start_tangent.unit_vector())
@@ -36,11 +36,11 @@ def hyperbola_parabola_control_point_and_weight(start, start_tangent, end, end_t
     vector_p1 = point1 - point
     line1p = line_class.from_point_and_vector(point1, vector_p1)
     point_q = line02.line_intersections(line1p)[0]
-    a = math.sqrt((start - point_q).norm()/(point_q - end).norm())
-    u = a/(1.0 + a)
-    num = ((1.0 - u)**2) * (point - start).dot(vector_p1) + u**2 * (point - end).dot(vector_p1)
+    a = math.sqrt((start - point_q).norm() / (point_q - end).norm())
+    u = a / (1.0 + a)
+    num = ((1.0 - u) ** 2) * (point - start).dot(vector_p1) + u ** 2 * (point - end).dot(vector_p1)
     den = 2.0 * u * (1.0 - u) * vector_p1.dot(vector_p1)
-    weight_1 = num/den
+    weight_1 = num / den
     return point1, weight_1
 
 
@@ -119,6 +119,7 @@ class Curve(DessiaObject):
 
 class ClosedCurve(Curve):
     """Abstract class for defining closed curves (Circle, Ellipse) properties."""
+
     def __init__(self, name: str = ''):
         Curve.__init__(self, name=name)
 
@@ -211,7 +212,7 @@ class Line(Curve):
         """
         if self.__class__.__name__ != other_line.__class__.__name__:
             return False
-        if other_line.point_belongs(self.point1, abs_tol) and\
+        if other_line.point_belongs(self.point1, abs_tol) and \
                 self.direction_vector().is_colinear_to(other_line.direction_vector(), abs_tol):
             return True
         return False
@@ -1047,7 +1048,7 @@ class CircleMixin:
         dimension = self.__class__.__name__[-2:]
         if dimension == "2D":
             rotation_sign = self.frame.u.cross(self.frame.v)
-            return start.rotation(self.center, rotation_sign*curvilinear_abscissa / self.radius)
+            return start.rotation(self.center, rotation_sign * curvilinear_abscissa / self.radius)
         return start.rotation(self.frame.origin, self.frame.w, curvilinear_abscissa / self.radius)
 
     def split_at_abscissa(self, abscissa):
@@ -1614,8 +1615,8 @@ class Circle2D(CircleMixin, ClosedCurve):
         c = line2d.get_y_intersection()
         if m == math.inf and c is None:
             x_line = line2d.point1.x
-            y1 = - math.sqrt(self.radius**2 - x_line**2)
-            y2 = math.sqrt(self.radius**2 - x_line**2)
+            y1 = - math.sqrt(self.radius ** 2 - x_line ** 2)
+            y2 = math.sqrt(self.radius ** 2 - x_line ** 2)
             return [volmdlr.Point2D(x_line, y1), volmdlr.Point2D(x_line, y2)]
         quad_eq_a = 1 + m ** 2
         quad_eq_b = 2 * m * c
@@ -2392,9 +2393,9 @@ class Ellipse2D(EllipseMixin, ClosedCurve):
         start = self.point_at_abscissa(0.0)
         return vm_common_operations.get_point_distance_to_edge(self, point, start, start)
 
-    def point_at_polar_abscissa(self,angle):
+    def point_at_polar_abscissa(self, angle):
         """
-        Given an angle as abscissa return a point on ellipse in local coordinates .
+        Given an angle as abscissa return a point on ellipse in global coordinates.
 
         :param angle: Angle to calculate the point on ellipse.
         :type angle: float.
@@ -2402,8 +2403,8 @@ class Ellipse2D(EllipseMixin, ClosedCurve):
         """
         a = self.major_axis
         b = self.minor_axis
-        return volmdlr.Point2D(a*math.cos(angle),b*math.sin(angle))
-
+        local_point = volmdlr.Point2D(a * math.cos(angle), b * math.sin(angle))
+        return self.frame.local_to_global_coordinates(local_point)
 
     def intern_product(self, point, abscissa):
         """
@@ -2412,17 +2413,18 @@ class Ellipse2D(EllipseMixin, ClosedCurve):
 
         :param abscissa: Angle to calculate the point on ellipse.
         :type abscissa: float.
-        :param point: Other point in local coordinates
+        :param point: Other point in global coordinates
         :type point: Point2D.
         :return: float
         """
-
+        local_point = self.frame.global_to_local_coordinates(point)
         a = self.major_axis
         b = self.minor_axis
-        x = point.x
-        y = point.y
+        x = local_point.x
+        y = local_point.y
         t = abscissa
-        return -a*x*math.sin(t) + b*y*math.cos(t) + a*a*math.sin(t)*math.cos(t) - b*b*math.sin(t)*math.cos(t)
+        return -a * x * math.sin(t) + b * y * math.cos(t) + a * a * math.sin(t) * math.cos(t) - b * b * math.sin(
+            t) * math.cos(t)
 
     def vectorial_product(self, point, abscissa):
         """
@@ -2431,21 +2433,22 @@ class Ellipse2D(EllipseMixin, ClosedCurve):
 
         :param abscissa: Angle to calculate the point on ellipse.
         :type abscissa: float.
-        :param point: Other point in local coordinates
+        :param point: Other point in global coordinates
         :type point: Point2D.
         :return: float
         """
 
+        local_point = self.frame.global_to_local_coordinates(point)
         a = self.major_axis
         b = self.minor_axis
-        x = point.x
-        y = point.y
+        x = local_point.x
+        y = local_point.y
         t = abscissa
-        return -a*y*math.sin(t) - x*b*math.cos(t) + a*b
+        return -a * y * math.sin(t) - x * b * math.cos(t) + a * b
 
-    def nearest_point(self,point):
+    def nearest_point(self, point):
         """
-        Calculates the nearest point on ellipse witch form a line segment between other point, this segment is
+        Calculates the nearest point on ellipse which form a line segment between other point, this segment is
         perpendicular to ellipse
 
         :param point: Other point to calculate the point on ellipse.
@@ -2453,8 +2456,10 @@ class Ellipse2D(EllipseMixin, ClosedCurve):
         :return: The point on ellipse
         :rtype: Point2D.
         """
-        x = point.x
-        y = point.y
+
+        local_point = self.frame.global_to_local_coordinates(point)
+        x = local_point.x
+        y = local_point.y
 
         if x >= 0:
             if y >= 0:
@@ -2481,12 +2486,11 @@ class Ellipse2D(EllipseMixin, ClosedCurve):
             else:
                 final_angle = t_
             if abs(f) <= 1e-7:
-                j = 1000
+                break
             j += 1
         return self.point_at_polar_abscissa(t_)
 
-
-    def point_distance_1(self,point):
+    def point_distance_1(self, point):
         """
         Calculates the distance between an Ellipse 2d and point 2d.
 
@@ -2506,20 +2510,20 @@ class Ellipse2D(EllipseMixin, ClosedCurve):
         else:
             initial_angle = math.pi
 
-        if y == 0 and  abs(x) < (a*a - b*b)/a :
+        if y == 0 and abs(x) < (a * a - b * b) / a:
             if x == 0:
                 return b
             else:
-                t0 = math.acos((a*x)/(a*a - b*b))
+                t0 = math.acos((a * x) / (a * a - b * b))
                 ellipse_point0 = self.point_at_polar_abscissa(t0)
                 ellipse_point1 = self.point_at_polar_abscissa(initial_angle)
-                if ellipse_point0.point_distance(point_local) < ellipse_point1.point_distance(point_local):
-                    return ellipse_point0.point_distance(point_local)
+                if ellipse_point0.point_distance(point) < ellipse_point1.point_distance(point):
+                    return ellipse_point0.point_distance(point)
                 else:
-                    return ellipse_point1.point_distance(point_local)
+                    return ellipse_point1.point_distance(point)
 
-        ellipse_point_ = self.nearest_point(point_local)
-        return ellipse_point_.point_distance(point_local)
+        ellipse_point_ = self.nearest_point(point)
+        return ellipse_point_.point_distance(point)
 
     def tangent_points(self, point):
         """
@@ -2532,13 +2536,12 @@ class Ellipse2D(EllipseMixin, ClosedCurve):
         """
         if self.point_inside(point) or self.point_belongs(point):
             return [point, point]
-        point_local = self.frame.global_to_local_coordinates(point)
         a = self.major_axis
         b = self.minor_axis
 
-        nearest_point = self.nearest_point(point_local)
-        u1, u2 = nearest_point.x / b, nearest_point.y / a
-        nearest_angle = geometry.sin_cos_angle(u1, u2)
+        local_nearest_point = self.frame.global_to_local_coordinates(self.nearest_point(point))
+        u1, u2 = local_nearest_point.y / b, local_nearest_point.x / a
+        nearest_angle = math.atan2(u1, u2)
         contour_angle_1 = nearest_angle + math.pi
         contour_angle_2 = nearest_angle - math.pi
         midle_angle = nearest_angle
@@ -2546,13 +2549,13 @@ class Ellipse2D(EllipseMixin, ClosedCurve):
         # bisection method
         while j < 100:
             t_ = (midle_angle + contour_angle_1) / 2
-            f = self.vectorial_product(point_local, t_)
+            f = self.vectorial_product(point, t_)
             if f > 0:
                 contour_angle_1 = t_
             else:
                 midle_angle = t_
             if abs(f) <= 1e-7:
-                j = 1000
+                break
             j += 1
         point_1 = self.point_at_polar_abscissa(t_)
 
@@ -2561,19 +2564,17 @@ class Ellipse2D(EllipseMixin, ClosedCurve):
         # bisection method
         while j < 100:
             t_ = (midle_angle + contour_angle_2) / 2
-            f = self.vectorial_product(point_local, t_)
+            f = self.vectorial_product(point, t_)
             if f > 0:
                 contour_angle_2 = t_
             else:
                 midle_angle = t_
             if abs(f) <= 1e-7:
-                j = 1000
+                break
             j += 1
         point_2 = self.point_at_polar_abscissa(t_)
 
-        return [self.frame.local_to_global_coordinates(point_1), self.frame.local_to_global_coordinates(point_2)]
-
-
+        return [point_1, point_2]
 
     def line_intersections(self, line: 'Line2D', abs_tol: float = 1e-6):
         """
@@ -2893,11 +2894,11 @@ class Ellipse3D(ConicMixin, EllipseMixin, ClosedCurve):
         if number_points:
             angle_resolution = number_points
         discretization_points_3d = [
-                                       self.center + self.major_axis * math.cos(
-                                           theta) * self.major_dir
-                                       + self.minor_axis * math.sin(
-                                           theta) * self.minor_dir for theta in
-                                       np.linspace(0, volmdlr.TWO_PI, angle_resolution)]
+            self.center + self.major_axis * math.cos(
+                theta) * self.major_dir
+            + self.minor_axis * math.sin(
+                theta) * self.minor_dir for theta in
+            np.linspace(0, volmdlr.TWO_PI, angle_resolution)]
 
         return discretization_points_3d
 
@@ -2967,7 +2968,7 @@ class Ellipse3D(ConicMixin, EllipseMixin, ClosedCurve):
         :return: A list of points, containing all intersections between the two Ellipse3D.
         """
         intersections = []
-        if self.frame.w.is_colinear_to(ellipse.frame.w) and\
+        if self.frame.w.is_colinear_to(ellipse.frame.w) and \
                 math.isclose(self.frame.w.dot(ellipse.frame.origin - self.frame.origin), 0, abs_tol=1e-6):
             ellipse2d = ellipse.to_2d(self.frame.origin, self.frame.u, self.frame.v)
             self_ellipse2d = self.to_2d(self.frame.origin, self.frame.u, self.frame.v)
@@ -3036,6 +3037,7 @@ class HyperbolaMixin(Curve):
     """
     Abstract class for a Hyperbola.
     """
+
     def __init__(self, frame: Union[volmdlr.Frame2D, volmdlr.Frame3D], semi_major_axis: float,
                  semi_minor_axis: float, name: str = ''):
         self.frame = frame
@@ -3069,7 +3071,7 @@ class HyperbolaMixin(Curve):
         """
         if not self.frame.is_close(other.frame):
             return False
-        if not math.isclose(self.semi_major_axis, other.semi_major_axis, abs_tol=abs_tol) or\
+        if not math.isclose(self.semi_major_axis, other.semi_major_axis, abs_tol=abs_tol) or \
                 not math.isclose(self.semi_minor_axis, other.semi_minor_axis, abs_tol=abs_tol):
             return False
         return True
@@ -3081,8 +3083,8 @@ class HyperbolaMixin(Curve):
         :param point1: point 1 used to trim circle.
         :param point2: point2 used to trim circle.
         """
-        _bspline_class = getattr(volmdlr.edges, 'BSplineCurve'+self.__class__.__name__[-2:])
-        _lineseg_class = getattr(volmdlr.edges, 'LineSegment'+self.__class__.__name__[-2:])
+        _bspline_class = getattr(volmdlr.edges, 'BSplineCurve' + self.__class__.__name__[-2:])
+        _lineseg_class = getattr(volmdlr.edges, 'LineSegment' + self.__class__.__name__[-2:])
         local_split_start = self.frame.global_to_local_coordinates(point1)
         local_split_end = self.frame.global_to_local_coordinates(point2)
         hyperbola_points = self.get_points(min(local_split_start.y, local_split_end.y),
@@ -3123,7 +3125,7 @@ class HyperbolaMixin(Curve):
         :param y: y component.
         :return: x component.
         """
-        x_positive = np.sqrt(((y ** 2) / (self.semi_minor_axis ** 2) + 1)*(self.semi_major_axis ** 2))
+        x_positive = np.sqrt(((y ** 2) / (self.semi_minor_axis ** 2) + 1) * (self.semi_major_axis ** 2))
         return x_positive
 
 
@@ -3135,6 +3137,7 @@ class Hyperbola2D(HyperbolaMixin):
     :param semi_major_axis: hyperbola's semi major axis.
     :param semi_minor_axis: hyperbola's semi minor axis.
     """
+
     def __init__(self, frame: volmdlr.Frame2D, semi_major_axis, semi_minor_axis, name: str = ''):
         self.frame = frame
         self.semi_major_axis = semi_major_axis
@@ -3162,7 +3165,7 @@ class Hyperbola2D(HyperbolaMixin):
         """
         local_point = self.frame.global_to_local_coordinates(point)
         if math.isclose(
-                local_point.x ** 2 / self.semi_major_axis ** 2 - local_point.y**2 / self.semi_minor_axis ** 1,
+                local_point.x ** 2 / self.semi_major_axis ** 2 - local_point.y ** 2 / self.semi_minor_axis ** 1,
                 1, abs_tol=abs_tol):
             return True
         return False
@@ -3204,16 +3207,16 @@ class Hyperbola2D(HyperbolaMixin):
         line_to_local_coodinates = line.frame_mapping(self.frame, 'new')
         m = line_to_local_coodinates.get_slope()
         c = line_to_local_coodinates.get_y_intersection()
-        a_quad_equation = (self.semi_major_axis**2) * (m**2) - self.semi_minor_axis**2
-        b_quad_equation = 2*(self.semi_major_axis**2)*m*c
-        c_quad_equation = self.semi_major_axis**2 * (self.semi_minor_axis**2 + c**2)
-        if c**2 < (self.semi_major_axis**2)*(m**2) - self.semi_minor_axis**2:
+        a_quad_equation = (self.semi_major_axis ** 2) * (m ** 2) - self.semi_minor_axis ** 2
+        b_quad_equation = 2 * (self.semi_major_axis ** 2) * m * c
+        c_quad_equation = self.semi_major_axis ** 2 * (self.semi_minor_axis ** 2 + c ** 2)
+        if c ** 2 < (self.semi_major_axis ** 2) * (m ** 2) - self.semi_minor_axis ** 2:
             return []
         if a_quad_equation == 0.0:
             return []
-        delta = math.sqrt(b_quad_equation**2 - 4*a_quad_equation*c_quad_equation)
-        x1 = (-b_quad_equation + delta) / (2*a_quad_equation)
-        x2 = (-b_quad_equation - delta) / (2*a_quad_equation)
+        delta = math.sqrt(b_quad_equation ** 2 - 4 * a_quad_equation * c_quad_equation)
+        x1 = (-b_quad_equation + delta) / (2 * a_quad_equation)
+        x2 = (-b_quad_equation - delta) / (2 * a_quad_equation)
         y1 = m * x1 + c
         y2 = m * x2 + c
         intersections = []
@@ -3281,6 +3284,7 @@ class Hyperbola3D(ConicMixin, HyperbolaMixin):
     :param semi_major_axis: hyperbola's semi major axis.
     :param semi_minor_axis: hyperbola's semi minor axis.
     """
+
     def __init__(self, frame: volmdlr.Frame3D, semi_major_axis, semi_minor_axis, name: str = ''):
         self._self_2d = None
         HyperbolaMixin.__init__(self, frame, semi_major_axis, semi_minor_axis, name=name)
@@ -3403,6 +3407,7 @@ class Hyperbola3D(ConicMixin, HyperbolaMixin):
 
 class ParabolaMixin(Curve):
     """Abstract class for Parabola."""
+
     def __getitem__(self, key):
         if key == 0:
             return self.frame
@@ -3466,6 +3471,7 @@ class Parabola2D(ParabolaMixin):
     :param focal_length: the parabola's focal length.
     :type focal_length: float.
     """
+
     def __init__(self, frame, focal_length: float, name: str = ''):
         self.vertex = frame.origin
         self.focal_length = focal_length
@@ -3528,8 +3534,8 @@ class Parabola2D(ParabolaMixin):
         line_to_local_coodinates = line.frame_mapping(self.frame, 'new')
         m = line_to_local_coodinates.get_slope()
         c = line_to_local_coodinates.get_y_intersection()
-        if m**2 > - 4 * self.vrtx_equation_a * c:
-            delta = math.sqrt(m**2 - 4 * self.vrtx_equation_a * (-c))
+        if m ** 2 > - 4 * self.vrtx_equation_a * c:
+            delta = math.sqrt(m ** 2 - 4 * self.vrtx_equation_a * (-c))
             x1 = (m + delta) / (2 * self.vrtx_equation_a)
             x2 = (m - delta) / (2 * self.vrtx_equation_a)
             y1 = m * x1 + c
@@ -3537,7 +3543,7 @@ class Parabola2D(ParabolaMixin):
             intersections = [volmdlr.Point2D(x1, y1), volmdlr.Point2D(x2, y2)]
             intersections = [self.frame.local_to_global_coordinates(point) for point in intersections]
             return intersections
-        if math.isclose(m**2, - 4 * self.vrtx_equation_a * c, abs_tol=abs_tol):
+        if math.isclose(m ** 2, - 4 * self.vrtx_equation_a * c, abs_tol=abs_tol):
             x = m / (2 * self.vrtx_equation_a)
             return [volmdlr.Point2D(x, m * x + c)]
         return []
@@ -3590,6 +3596,7 @@ class Parabola3D(ConicMixin, ParabolaMixin):
     :param focal_length: the parabola's focal length.
     :type focal_length: float.
     """
+
     def __init__(self, frame: volmdlr.Frame3D, focal_length: float, name: str = ''):
         self.vertex = frame.origin
         self.focal_length = focal_length
@@ -3642,7 +3649,7 @@ class Parabola3D(ConicMixin, ParabolaMixin):
         :return: True is point lies on the Hyperbola 3D, False otherwise
         """
         new_point = self.frame.global_to_local_coordinates(point)
-        return math.isclose(new_point.y, self.vrtx_equation_a * new_point.x**2, abs_tol=tol)
+        return math.isclose(new_point.y, self.vrtx_equation_a * new_point.x ** 2, abs_tol=tol)
 
     def sort_points_along_curve(self, points: List[Union[volmdlr.Point2D, volmdlr.Point3D]]):
         """

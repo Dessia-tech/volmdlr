@@ -149,8 +149,11 @@ class TestEllipse2D(unittest.TestCase):
         self.assertAlmostEqual(ellipse2d.point_distance_1(point), 0.9848857801796106)
         point = volmdlr.Point2D(0, 0)
         self.assertAlmostEqual(ellipse2d.point_distance_1(point), 1)
+        ellipse2d = curves.Ellipse2D(4, 2, volmdlr.Frame2D(volmdlr.Point2D(2,1), volmdlr.Vector2D(1/math.sqrt(2),1/math.sqrt(2)), volmdlr.Vector2D(-1/math.sqrt(2),1/math.sqrt(2))))
+        point = volmdlr.Point2D(-2, -2)
+        self.assertAlmostEqual(ellipse2d.point_distance_1(point), 1.0726609929489215)
 
-    def test_nearest_point(self):
+    def test_tangent_points(self):
         ellipse2d = curves.Ellipse2D(2, 1, volmdlr.Frame2D(volmdlr.O2D, volmdlr.X2D, volmdlr.Y2D))
         point_ = ellipse2d.tangent_points(volmdlr.Point2D(3, 3))
         self.assertTrue(point_[0].is_close(volmdlr.Point2D(-1.440833116727059, 0.6935416227131918)))
@@ -161,6 +164,13 @@ class TestEllipse2D(unittest.TestCase):
         point_ = ellipse2d.tangent_points(volmdlr.Point2D(1.5494591465150467,0.6322927236021428))
         self.assertTrue(point_[0].is_close(volmdlr.Point2D(1.5494591465150467, 0.6322927236021428)))
         self.assertTrue(point_[1].is_close(volmdlr.Point2D(1.5494591465150467, 0.6322927236021428)))
+        ellipse2d = curves.Ellipse2D(4, 2, volmdlr.Frame2D(volmdlr.Point2D(2, 1),
+                                                           volmdlr.Vector2D(1 / math.sqrt(2), 1 / math.sqrt(2)),
+                                                           volmdlr.Vector2D(-1 / math.sqrt(2), 1 / math.sqrt(2))))
+        point_ = ellipse2d.tangent_points(volmdlr.Point2D(-2, -2))
+        self.assertTrue(point_[0].is_close(volmdlr.Point2D(-0.048259967125716674, -2.1563801444190935)))
+        self.assertTrue(point_[1].is_close(volmdlr.Point2D(-0.7819287189766486, 0.5337386351049889)))
+
 
 if __name__ == '__main__':
     unittest.main(verbosity=0)
