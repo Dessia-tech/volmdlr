@@ -9,16 +9,18 @@ from typing import List, Tuple, TypeVar, Union
 
 import numpy as np
 import pyfqmr
+from numpy.typing import NDArray
+from scipy.spatial import cKDTree
+
 import trimesh
+import volmdlr.edges
 from dessia_common.core import DessiaObject
 from dessia_common.serialization import BinaryFile
 from dessia_common.typings import JsonSerializable
-from numpy.typing import NDArray
-from scipy.spatial import cKDTree
 from trimesh import Trimesh
-
-import volmdlr.edges
+from volmdlr import Frame3D, Point3D, Vector3D
 from volmdlr.core import Primitive3D
+from volmdlr.geometry import rotation_matrix
 
 # TODO: make this module "mesh" as it is not useful only for display
 
