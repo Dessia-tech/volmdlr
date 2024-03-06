@@ -2240,6 +2240,11 @@ class Matrix22:
                         self.M11 * other_matrix.M12 + self.M12 * other_matrix.M22,
                         self.M21 * other_matrix.M11 + self.M22 * other_matrix.M21,
                         self.M21 * other_matrix.M12 + self.M22 * other_matrix.M22)
+    def __array__(self) -> npy.ndarray:
+        return npy.array([
+            [self.M11, self.M12],
+            [self.M21, self.M22],
+        ], dtype=npy.float64)
 
     def vector_multiplication(self, vector):
         """
@@ -2350,6 +2355,13 @@ class Matrix33:
              f"[{self.M21} {self.M22} {self.M23}]\n"
              f"[{self.M31} {self.M32} {self.M33}]\n")
         return s
+
+    def __array__(self) -> npy.ndarray:
+        return npy.array([
+            [self.M11, self.M12, self.M13],
+            [self.M21, self.M22, self.M23],
+            [self.M31, self.M32, self.M33],
+        ], dtype=npy.float64)
 
     def float_multiplication(self, float_value: float):
         """
