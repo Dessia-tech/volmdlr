@@ -961,10 +961,9 @@ class PointBasedVoxelization(Voxelization):
         :return: A new Voxelization object resulting from the rotation.
         :rtype: PointBasedVoxelization
         """
-        rotation_matrix = self._rotation_matrix(axis, angle)
-        voxel_array = np.array(list(self.voxel_centers)) - np.array([center.x, center.y, center.z])
-        rotated_voxels = np.dot(voxel_array, rotation_matrix.T)
-        rotated_voxels += np.array([center.x, center.y, center.z])
+        voxel_array = np.array(list(self.voxel_centers)) - np.array(center)
+        rotated_voxels = np.dot(voxel_array, rotation_matrix(axis, angle).T)
+        rotated_voxels += np.array(center)
 
         intersecting_voxels = self._voxels_intersecting_voxels(rotated_voxels, self.voxel_size)
 
