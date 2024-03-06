@@ -2,7 +2,7 @@ import math
 import unittest
 
 import volmdlr
-from volmdlr import edges
+from volmdlr import edges, surfaces, faces
 
 
 class TestLineSegment3D(unittest.TestCase):
@@ -85,6 +85,13 @@ class TestLineSegment3D(unittest.TestCase):
                     self.assertEqual(solution.__class__.__name__, expected_solution[0])
                     self.assertAlmostEqual(solution.area(), expected_solution[1])
 
+        edge = edges.LineSegment3D(volmdlr.Point3D(0.0, 0.5, 0.5), volmdlr.Point3D(0.0, 1.0, 1.0))
+        conical_face = edge.revolution(point_axis, revolution_axis, math.pi)[0]
+        self.assertAlmostEqual(conical_face.surface2d.area(), 0.5 * math.pi)
+        self.assertTrue(conical_face.surface3d.apex.is_close(volmdlr.O3D))
+        self.assertTrue(conical_face.surface3d.frame.origin.is_close(volmdlr.Point3D(0.0, 0.0, 0.5)))
+        self.assertAlmostEqual(conical_face.surface3d.ref_radius, 0.5)
+        self.assertAlmostEqual(conical_face.surface3d.semi_angle, math.pi/4)
 
 if __name__ == '__main__':
     unittest.main()

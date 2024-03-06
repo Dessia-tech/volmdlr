@@ -27,6 +27,10 @@ def plot_circle(circle, ax=None, edge_style: EdgeStyle = EdgeStyle()):
     """
     if ax is None:
         _, ax = plt.subplots()
+        x_min, x_max = circle.center[0] - circle.radius, circle.center[0] + circle.radius
+        y_min, y_max = circle.center[1] - circle.radius, circle.center[1] + circle.radius
+        ax.set_xlim(x_min, x_max)
+        ax.set_ylim(y_min, y_max)
     if circle.radius > 0:
         ax.add_patch(matplotlib.patches.Arc((circle.center.x, circle.center.y),
                                             2 * circle.radius,
@@ -43,10 +47,6 @@ def plot_circle(circle, ax=None, edge_style: EdgeStyle = EdgeStyle()):
                 color=edge_style.color, alpha=edge_style.alpha)
     if edge_style.equal_aspect:
         ax.set_aspect('equal')
-    x_min, x_max = circle.center[0] - circle.radius, circle.center[0] + circle.radius
-    y_min, y_max = circle.center[1] - circle.radius, circle.center[1] + circle.radius
-    ax.set_xlim(x_min, x_max)
-    ax.set_ylim(y_min, y_max)
 
     return ax
 
@@ -219,12 +219,11 @@ def get_point_distance_to_edge(edge, point, start, end):
         if start.is_close(end):
             if not edge.periodic:
                 return point.point_distance(start)
-            number_points = 10 if abs(0 - edge.length()) > 5e-6 else 2
+            number_points = 10 if edge.length() > 5e-6 else 2
         else:
             number_points = 10 if abs(edge.abscissa(start) - edge.abscissa(end)) > 5e-6 else 2
-        # number_points = 10 if abs(0 - edge.length()) > 5e-6 else 2
     elif edge.periodic:
-        number_points = 10 if abs(0 - edge.length()) > 5e-6 else 2
+        number_points = 10 if edge.length() > 5e-6 else 2
     distance = best_distance
     point1_ = start
     point2_ = end
@@ -246,8 +245,6 @@ def get_point_distance_to_edge(edge, point, start, end):
         if not point1_ or math.isclose(distance, best_distance, abs_tol=1e-7):
             break
         best_distance = distance
-        # if math.isclose(abscissa1, abscissa2, abs_tol=1e-6):
-        #     break
     return distance
 
 

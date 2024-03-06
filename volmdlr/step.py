@@ -25,7 +25,8 @@ import volmdlr.curves
 import volmdlr.primitives3d
 import volmdlr.wires
 from volmdlr.utils import step_reader
-from volmdlr.utils.step_reader import STEP_TO_VOLMDLR, STEP_REPRESENTATION_ENTITIES
+from volmdlr.utils.step_reader import (STEP_TO_VOLMDLR, STEP_REPRESENTATION_ENTITIES,
+                                       WIREFRAME_STEP_REPRESENTATION_ENTITIES)
 
 
 class StepFunction:
@@ -221,7 +222,7 @@ class Step(dc.DessiaObject):
             arguments = step_reader.step_split_arguments(entity_name_str, function_arg)
 
         for i, argument in enumerate(arguments):
-            if argument[:2] == '(#' and argument[-1] == ')':
+            if argument[:2] == '(#' and argument[-1] == ')' and argument[-2] != ")":
                 arg_list = step_reader.set_to_list(argument)
                 for arg in arg_list:
                     connections.append(int(arg[1:]))
@@ -443,6 +444,8 @@ class Step(dc.DessiaObject):
         """
         name_representation_entity = self.functions[id_representation_entity].name
         arg = self.functions[id_representation_entity].arg[1]
+        if arg[0][1:] == '':
+            print(True)
         if name_representation_entity == "MANIFOLD_SURFACE_SHAPE_REPRESENTATION":
             if self.functions[int(arg[0][1:])].name == "AXIS2_PLACEMENT_3D":
                 id_solid_entity = int(arg[1][1:])
@@ -478,6 +481,8 @@ class Step(dc.DessiaObject):
             # is less of 4 there is no representation entity related to it, and we return None.
             return None
         id_representation_entity = int(self.functions[id_shape_representation].arg[3][1:])
+        if self.functions[id_representation_entity].name in WIREFRAME_STEP_REPRESENTATION_ENTITIES:
+            return None
         id_solid_entity = int(self.functions[id_representation_entity].arg[1][0][1:])
         id_shell = self.functions[id_solid_entity].arg[1]
         if isinstance(id_shell, list):
@@ -518,6 +523,8 @@ class Step(dc.DessiaObject):
         """Returns the ID of the shell entity related to the given shape_definition_representation ID."""
         id_representation_entity = self.functions[shape_definition_representation_id].arg[1]
         function_name = self.functions[int(id_representation_entity[1:])].name
+        if function_name in WIREFRAME_STEP_REPRESENTATION_ENTITIES:
+            return None
         if function_name in STEP_REPRESENTATION_ENTITIES:
             return self.get_shell_node_from_representation_entity(int(id_representation_entity[1:]))
         if function_name == "SHAPE_REPRESENTATION":
@@ -663,7 +670,8 @@ class Step(dc.DessiaObject):
             self.functions[id_product_definition].arg.append(f'#{node}')
             if self.functions[id_shape_representation].name == "SHAPE_REPRESENTATION" and \
                     len(self.functions[id_shape_representation].arg) >= 4:
-                # todo: take all the "arg" starting from index 3 to end ??? needs investigation
+                # todo: Do we really need to take all the "arg" starting from index 3 to end???
+                #  maybe add a parameter "import_invisible_objects" to control this behavior? needs investigation...
                 id_shapes = [int(arg[1:]) for arg in self.functions[id_shape_representation].arg[3:]]
                 self.connections[id_product_definition].extend(id_shapes)
                 for id_shape in id_shapes:
@@ -673,8 +681,8 @@ class Step(dc.DessiaObject):
                 self.functions[id_product_definition].arg.append(f'#{id_shape_representation}')
 
             shell_node = self.shape_definition_representation_to_shell_node(node)
-            product_node = self.shape_definition_representation_to_product_node(node)
             if shell_node:
+                product_node = self.shape_definition_representation_to_product_node(node)
                 self.connections[shell_node].append(product_node)
                 self.functions[shell_node].arg.append(f'#{product_node}')
 
@@ -731,7 +739,8 @@ class Step(dc.DessiaObject):
                     raise NotImplementedError('Error instantiating assembly') from key
                 if key.args[0] in assembly_shape_ids:
                     instantiate_ids.append(key.args[0])
-
+                else:
+                    object_dict, _ = self._helper_instantiate(key.args[0], object_dict, {}, False)
                 last_error = key.args[0]
         return volmdlr_object
 
@@ -781,7 +790,8 @@ class Step(dc.DessiaObject):
         if self.root_nodes["NEXT_ASSEMBLY_USAGE_OCCURRENCE"]:
             return volmdlr.core.VolumeModel([self.instatiate_assembly(object_dict)])
         primitives = []
-        shapes = [object_dict[shape] for shape in shape_representations]
+        shapes = [object_dict[shape] for shape in shape_representations
+                  if self.functions[shape].name in STEP_REPRESENTATION_ENTITIES]
         for shape in shapes:
             if isinstance(shape, list):
                 primitives.extend(shape)
