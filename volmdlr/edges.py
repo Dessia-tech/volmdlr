@@ -1793,7 +1793,7 @@ class BSplineCurve(Edge):
             if self.simplify.__class__ == other_bspline2.__class__:
                 return self.simplify.get_shared_section(other_bspline2, abs_tol)
             return []
-        if not self.is_shared_section_possible(other_bspline2, 1e-7):
+        if not self.is_shared_section_possible(other_bspline2, abs_tol):
             return []
         if not any(self.point_belongs(point, abs_tol=abs_tol)
                    for point in other_bspline2.discretization_points(number_points=10)):
