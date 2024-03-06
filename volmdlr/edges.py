@@ -30,12 +30,15 @@ import volmdlr.nurbs.helpers as nurbs_helpers
 import volmdlr.core
 import volmdlr.core_compiled
 import volmdlr.geometry
+from volmdlr import to_ocp, from_ocp
 from volmdlr import curves as volmdlr_curves
 from volmdlr import get_minimum_distance_points_lines, PATH_ROOT
 import volmdlr.utils.common_operations as vm_common_operations
 import volmdlr.utils.intersections as vm_utils_intersections
 from volmdlr.core import EdgeStyle
 # pylint: disable=arguments-differ
+from OCP.Geom2dAPI import Geom2dAPI_InterCurveCurve
+from OCP.Precision import Precision
 
 
 class Edge(dc.DessiaObject):
@@ -2332,13 +2335,10 @@ class BSplineCurve2D(BSplineCurve):
         """
         if self.bounding_rectangle.distance_to_b_rectangle(bspline.bounding_rectangle) > abs_tol:
             return []
-        from volmdlr import to_ocp, from_ocp
-        from OCP.Geom2dAPI import Geom2dAPI_InterCurveCurve
-        from OCP.Precision import Precision
-        bspline_occt1 = to_occt.volmdlr_bsplinecurve2d_to_occt(self)
-        bspline_occt2 = to_occt.volmdlr_bsplinecurve2d_to_occt(bspline)
-        api_inters = Geom2dAPI_InterCurveCurve(bspline_occt1, bspline_occt2, Precision.Intersection_s())
-        intersections = [from_occt.point2d_from_occt(api_inters.Point(i + 1)) for i in range(api_inters.NbPoints())]
+        bspline_ocp1 = to_ocp.bsplinecurve2d_to_ocp(self)
+        bspline_ocp2 = to_ocp.bsplinecurve2d_to_ocp(bspline)
+        api_inters = Geom2dAPI_InterCurveCurve(bspline_ocp1, bspline_ocp2, Precision.Intersection_s())
+        intersections = [from_ocp.point2d_from_ocp(api_inters.Point(i + 1)) for i in range(api_inters.NbPoints())]
         return intersections
         # return self._generic_edge_intersections(bspline, abs_tol)
 

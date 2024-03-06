@@ -841,11 +841,7 @@ class TestBSplineSurface3D(unittest.TestCase):
         frame = volmdlr.Frame3D(volmdlr.O3D, volmdlr.Z3D, volmdlr.X3D, volmdlr.Y3D)
         plane = surfaces.Plane3D(frame)
         plane = plane.rotation(volmdlr.O3D, volmdlr.Z3D, math.pi / 4)
-        # import time
-        # time_s = time.time()
         intersections = self.spline_surf.plane_intersections(plane)
-        # time_e = time.time()
-        # print('ellapsed time: ', time_e - time_s)
         for i in intersections:
             for point in i.points:
                 self.assertTrue(plane.point_belongs(point))
