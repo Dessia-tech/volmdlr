@@ -138,11 +138,13 @@ steps:
 
       echo "Source Repository: $source_repo"
       
+      if [ -z "$source_repo" ] || [ "$source_repo" = "null" ]; then
+        echo "Failed to fetch source repository. The GitHub token may have expired or lacks the necessary permissions."
+        exit 1  # Exit with error
+      fi
+      
       if [ "$source_repo" = "${DRONE_REPO}" ]; then
         echo "Source repo is ${DRONE_REPO}. Skipping step..."
-        # Add your specific actions here. For example:
-        # python build_docs.py
-        # ./run_tutorials.sh
       else
         echo "Source repo is a fork. Performing install, build doc run scripts and tutorials..."
       
