@@ -440,6 +440,36 @@ class Mesh3D(MeshMixin, Primitive3D):
 
         return self._bounding_box
 
+    def rotation(self, center: Point3D, axis: Vector3D, angle: float) -> "Mesh3D":
+        """
+        Rotate the mesh around the specified center, axis, and angle.
+
+        :param center: The center point of rotation.
+        :param axis: The rotation axis.
+        :param angle: The rotation angle in radians.
+
+        :return: A new Mesh3D object resulting from the rotation.
+        """
+        rotated_vertices = np.dot(self.vertices - np.array(center), rotation_matrix(axis, angle).T) + np.array(center)
+
+        return self.__class__(
+            vertices=rotated_vertices, triangles=self.triangles, color=self.color, alpha=self.alpha, name=self.name
+        )
+
+    def translation(self, offset: Vector3D):
+        """
+        Translate the mesh by the specified offset.
+
+        :param offset: The translation offset.
+
+        :return: A new Mesh3D object resulting from the translation.
+        """
+        translated_vertices = self.vertices + np.array(offset)
+
+        return self.__class__(
+            vertices=translated_vertices, triangles=self.triangles, color=self.color, alpha=self.alpha, name=self.name
+        )
+
     def area(self) -> float:
         """
         Calculate the total surface area of the 3D mesh as the sum of areas of triangles.
