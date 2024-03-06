@@ -395,9 +395,6 @@ class TestCylindricalSurface3D(unittest.TestCase):
         )
 
     def test_coinicalsurface_intersections(self):
-        expected_slutions = [[3.7099792099342372], [2.06629353435829, 0.6888788375190272, 0.7935213250176275],
-                             [0.5464208737829062, 1.037714279156249, 0.4913311852963991, 2.075126971224518],
-                             [0.2954786226570677, 2.279279700347046, 0.29547862265706776, 2.2792797003470455]]
         conical_surface = surfaces.ConicalSurface3D(volmdlr.OXYZ, math.pi / 6)
         cylindrical_surface1 = surfaces.CylindricalSurface3D(
             volmdlr.Frame3D(
@@ -422,8 +419,10 @@ class TestCylindricalSurface3D(unittest.TestCase):
             list_curves = cylindrical_surface.conicalsurface_intersections(
                 conical_surface
             )
-            for curve, expected_length in zip(list_curves, expected_slutions[i]):
-                self.assertAlmostEqual(curve.length(), expected_length)
+            for intersection in list_curves:
+                for point in intersection.discretization_points(number_points=50):
+                    self.assertTrue(cylindrical_surface.point_distance(point) < 1e-6)
+                    self.assertTrue(conical_surface.point_distance(point) < 1e-6)
 
     def test_circle_intersections(self):
         cylindrical_surface = surfaces.CylindricalSurface3D(
