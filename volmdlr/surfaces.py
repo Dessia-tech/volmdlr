@@ -27,7 +27,7 @@ import volmdlr.geometry
 import volmdlr.utils.common_operations as vm_common_operations
 import volmdlr.utils.intersections as vm_utils_intersections
 import volmdlr.utils.parametric as vm_parametric
-from volmdlr import display, edges, grid, wires, curves, to_occt
+from volmdlr import display, edges, grid, wires, curves, to_occt, from_occt
 from volmdlr.core import EdgeStyle
 from volmdlr.nurbs.core import evaluate_surface, derivatives_surface, point_inversion
 from volmdlr.nurbs.fitting import approximate_surface, interpolate_surface
@@ -1345,17 +1345,24 @@ class Surface3D(DessiaObject):
         return False
 
     def generic_surface_intersections_with_occt(self, other_surface):
-        occt_self_surface = getattr(to_occt, 'volmdlr_' + self.__class__.__name__.lower()[:-2] + '_to_occt')(
+        """Generic method for calculating surface intersections with the help of occt."""
+        occt_self_surface = getattr(to_occt, self.__class__.__name__.lower()[:-2] + '_to_occt')(
             self)
         occt_other_surface = getattr(
-            to_occt, 'volmdlr_' + other_surface.__class__.__name__.lower()[:-2] + '_to_occt')(other_surface)
+            to_occt, other_surface.__class__.__name__.lower()[:-2] + '_to_occt')(other_surface)
         api_intss = GeomAPI_IntSS(occt_self_surface, occt_other_surface, Precision.Confusion_s())
         intersections = [api_intss.Line(i + 1) for i in range(api_intss.NbLines())]
         surface_intersections = []
-        import volmdlr.from_occt
         for intersection in intersections:
-            function = getattr(volmdlr.from_occt, intersection.__class__.__name__.lower()[5:] + '3d_from_occt')
-            surface_intersections.append(function(intersection))
+            cls_name = intersection.__class__.__name__[5:]
+            if cls_name == "TrimmedCurve":
+                cls_name = intersection.BasisCurve().__class__.__name__[5:]
+            try:
+                cls_ = getattr(volmdlr.edges, cls_name + '3D')
+            except AttributeError:
+                cls_ = getattr(volmdlr.curves, cls_name + '3D')
+            function = getattr(from_occt, intersection.__class__.__name__.lower()[5:] + '3d_from_occt')
+            surface_intersections.append(function(cls_, intersection))
         return surface_intersections
 
 
@@ -3797,7 +3804,8 @@ class ToroidalSurface3D(UVPeriodicalSurface):
     #         torus_origin_plane = Plane3D(self.frame)
     #         projected_point_plane3d = plane3d.point_projection(self.frame.origin)
     #         torus_plane_projection = torus_origin_plane.point_projection(projected_point_plane3d)
-    #         point = self.frame.origin + (torus_plane_projection - self.frame.origin).unit_vector() * self.major_radius
+    #         point = self.frame.origin + (torus_plane_projection -\
+    #         self.frame.origin).unit_vector() * self.major_radius
     #         if plane3d.point_distance(point) > self.minor_radius:
     #             return []
     #
@@ -4158,8 +4166,8 @@ class ToroidalSurface3D(UVPeriodicalSurface):
     #             vector = (toroidal_surface.frame.origin - self.frame.origin).unit_vector()
     #             center = self.frame.origin + vector * self.major_radius
     #
-    #             circle = curves.Circle3D(volmdlr.Frame3D(center, vector,
-    #                                                      self.frame.w, vector.cross(self.frame.w)), self.minor_radius)
+    #             circle = curves.Circle3D(volmdlr.Frame3D(
+    #             center, vector, self.frame.w, vector.cross(self.frame.w)), self.minor_radius)
     #             if is_major_same:
     #                 plane = Plane3D(volmdlr.Frame3D(center, self.frame.w, vector.cross(self.frame.w), vector))
     #                 intersections.extend(self.plane_intersections(plane))
@@ -6066,7 +6074,6 @@ class SphericalSurface3D(UVPeriodicalSurface):
         normal = math.cos(phi) * (math.cos(theta) * self.frame.u +
                                   math.sin(theta) * self.frame.v) + math.sin(theta) * self.frame.w
         return normal
-
 
 
 class RuledSurface3D(Surface3D):
