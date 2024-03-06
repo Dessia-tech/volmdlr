@@ -13,13 +13,13 @@ from numpy.typing import NDArray
 from scipy.spatial import cKDTree
 
 import trimesh
-import volmdlr.edges
 from dessia_common.core import DessiaObject
 from dessia_common.serialization import BinaryFile
 from dessia_common.typings import JsonSerializable
 from trimesh import Trimesh
 from volmdlr import Frame3D, Point3D, Vector3D
 from volmdlr.core import Primitive3D
+from volmdlr.edges import LineSegment2D, LineSegment3D
 from volmdlr.geometry import rotation_matrix
 
 # TODO: make this module "mesh" as it is not useful only for display
@@ -343,7 +343,7 @@ class Mesh2D(MeshMixin, DessiaObject):
     2D triangle mesh.
     """
 
-    _linesegment_class = volmdlr.edges.LineSegment2D
+    _linesegment_class = LineSegment2D
     _point_class = volmdlr.Point2D
 
     def __init__(self, vertices: NDArray[float], triangles: NDArray[int], name: str = ""):
@@ -380,7 +380,7 @@ class Mesh3D(MeshMixin, Primitive3D):
 
     # pylint: disable=too-many-public-methods
 
-    _linesegment_class = volmdlr.edges.LineSegment3D
+    _linesegment_class = LineSegment3D
     _point_class = volmdlr.Point3D
 
     def __init__(
