@@ -107,14 +107,6 @@ class TestEllipse2D(unittest.TestCase):
             frame_mapped_ellipse.major_axis * frame_mapped_ellipse.major_dir
         self.assertTrue(frame_mapped_ellipse_major_axis_point.is_close(volmdlr.Point2D(2.585786437626905, 0.0)))
 
-    def test_point_distance(self):
-        ellipse2d = curves.Ellipse2D(2, 1, volmdlr.Frame2D(volmdlr.O2D, volmdlr.X2D, -volmdlr.Y2D))
-
-        point2d = volmdlr.Point2D(1.6, 0.7)
-
-        point_distance = ellipse2d.point_distance(point2d)
-        self.assertAlmostEqual(point_distance, 0.08415399818595351)
-
     def test_point_at_polar_abscissa(self):
         ellipse2d = curves.Ellipse2D(2, 1, volmdlr.Frame2D(volmdlr.O2D, volmdlr.X2D, volmdlr.Y2D))
         polar_abscissa = math.pi/math.e
@@ -139,19 +131,19 @@ class TestEllipse2D(unittest.TestCase):
         point = ellipse2d.nearest_point(volmdlr.Point2D(3, 3))
         self.assertTrue(point.is_close(volmdlr.Point2D(1.5494591465150467,0.6322927236021428)))
 
-    def test_point_distance_1(self):
+    def test_point_distance(self):
         ellipse2d = curves.Ellipse2D(2, 1, volmdlr.Frame2D(volmdlr.O2D, volmdlr.X2D, volmdlr.Y2D))
         point = volmdlr.Point2D(3, 3)
-        self.assertAlmostEqual(ellipse2d.point_distance_1(point),2.7767078554173135)
+        self.assertAlmostEqual(ellipse2d.point_distance(point),2.7767078554173135)
         point = volmdlr.Point2D(1.5494591465150467, 0.6322927236021428)
-        self.assertAlmostEqual(ellipse2d.point_distance_1(point), 0)
+        self.assertAlmostEqual(ellipse2d.point_distance(point), 0)
         point = volmdlr.Point2D(0.3, 0)
-        self.assertAlmostEqual(ellipse2d.point_distance_1(point), 0.9848857801796106)
+        self.assertAlmostEqual(ellipse2d.point_distance(point), 0.9848857801796106)
         point = volmdlr.Point2D(0, 0)
-        self.assertAlmostEqual(ellipse2d.point_distance_1(point), 1)
+        self.assertAlmostEqual(ellipse2d.point_distance(point), 1)
         ellipse2d = curves.Ellipse2D(4, 2, volmdlr.Frame2D(volmdlr.Point2D(2,1), volmdlr.Vector2D(1/math.sqrt(2),1/math.sqrt(2)), volmdlr.Vector2D(-1/math.sqrt(2),1/math.sqrt(2))))
         point = volmdlr.Point2D(-2, -2)
-        self.assertAlmostEqual(ellipse2d.point_distance_1(point), 1.0726609929489215)
+        self.assertAlmostEqual(ellipse2d.point_distance(point), 1.0726609929489215)
 
     def test_tangent_points(self):
         ellipse2d = curves.Ellipse2D(2, 1, volmdlr.Frame2D(volmdlr.O2D, volmdlr.X2D, volmdlr.Y2D))

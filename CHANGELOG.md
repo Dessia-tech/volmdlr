@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## v0.18.0 [Future]
 ### New Features
 #### curves.py
-- Ellipse2D point_distance_1 and tangent_points
+- Ellipse2D: tangent_points
 
 #### edges.py
 - 
@@ -41,6 +41,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 
 
 ### Changed
+
+#### curves.py
+- Ellipse2D: point_distance optimization
 
 ### Unittests
 

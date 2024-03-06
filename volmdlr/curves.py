@@ -2371,18 +2371,6 @@ class Ellipse2D(EllipseMixin, ClosedCurve):
         """
         return self.point_belongs(point, abs_tol)
 
-    def point_distance(self, point):
-        """
-        Calculates the distance between an Ellipse 2d and point 2d.
-
-        :param point: Other point to calculate distance.
-        :type point: volmdlr.Point3D.
-        :return: The distance between ellipse and point
-        :rtype: float.
-        """
-        start = self.point_at_abscissa(0.0)
-        return vm_common_operations.get_point_distance_to_edge(self, point, start, start)
-
     def point_at_polar_abscissa(self, angle):
         """
         Given an angle as abscissa return a point on ellipse in global coordinates.
@@ -2398,8 +2386,7 @@ class Ellipse2D(EllipseMixin, ClosedCurve):
 
     def intern_product(self, point, abscissa):
         """
-        Given an angle as abscissa and a point, return the intern product between the tangent vector on ellipse and the
-         vector between de point on ellipse and the other point.
+        Return the intern product between the tangent vector on ellipse and the vector to the other point.
 
         :param abscissa: Angle to calculate the point on ellipse.
         :type abscissa: float.
@@ -2412,14 +2399,12 @@ class Ellipse2D(EllipseMixin, ClosedCurve):
         b = self.minor_axis
         x = local_point.x
         y = local_point.y
-        t = abscissa
-        return -a * x * math.sin(t) + b * y * math.cos(t) + a * a * math.sin(t) * math.cos(t) - b * b * math.sin(
-            t) * math.cos(t)
+        return -a * x * math.sin(abscissa) + b * y * math.cos(abscissa) + a * a * math.sin(abscissa) * math.cos(abscissa) - b * b * math.sin(
+            abscissa) * math.cos(abscissa)
 
     def vectorial_product(self, point, abscissa):
         """
-        Given an angle as abscissa and a point, return the vectorial product between the tangent vector on ellipse and the
-         vector between de point on ellipse and the other point.
+        Return the vectorial product between the tangent vector on ellipse and the vector to the other point.
 
         :param abscissa: Angle to calculate the point on ellipse.
         :type abscissa: float.
@@ -2427,26 +2412,22 @@ class Ellipse2D(EllipseMixin, ClosedCurve):
         :type point: Point2D.
         :return: float
         """
-
         local_point = self.frame.global_to_local_coordinates(point)
         a = self.major_axis
         b = self.minor_axis
         x = local_point.x
         y = local_point.y
-        t = abscissa
-        return -a * y * math.sin(t) - x * b * math.cos(t) + a * b
+        return -a * y * math.sin(abscissa) - x * b * math.cos(abscissa) + a * b
 
     def nearest_point(self, point):
         """
-        Calculates the nearest point on ellipse which form a line segment between other point, this segment is
-        perpendicular to ellipse
+        Calculates the nearest point on ellipse.
 
         :param point: Other point to calculate the point on ellipse.
         :type point: volmdlr.Point2D.
         :return: The point on ellipse
         :rtype: Point2D.
         """
-
         local_point = self.frame.global_to_local_coordinates(point)
         x = local_point.x
         y = local_point.y
@@ -2469,18 +2450,18 @@ class Ellipse2D(EllipseMixin, ClosedCurve):
         j = 0
         # bisection method
         while j < 100:
-            t_ = (initial_angle + final_angle) / 2
-            f = self.intern_product(point, t_)
-            if f > 0:
-                initial_angle = t_
+            new_angle = (initial_angle + final_angle) / 2
+            product = self.intern_product(point, new_angle)
+            if product > 0:
+                initial_angle = new_angle
             else:
-                final_angle = t_
-            if abs(f) <= 1e-7:
+                final_angle = new_angle
+            if abs(product) <= 1e-7:
                 break
             j += 1
-        return self.point_at_polar_abscissa(t_)
+        return self.point_at_polar_abscissa(new_angle)
 
-    def point_distance_1(self, point):
+    def point_distance(self, point):
         """
         Calculates the distance between an Ellipse 2d and point 2d.
 
@@ -2503,14 +2484,12 @@ class Ellipse2D(EllipseMixin, ClosedCurve):
         if y == 0 and abs(x) < (a * a - b * b) / a:
             if x == 0:
                 return b
-            else:
-                t0 = math.acos((a * x) / (a * a - b * b))
-                ellipse_point0 = self.point_at_polar_abscissa(t0)
-                ellipse_point1 = self.point_at_polar_abscissa(initial_angle)
-                if ellipse_point0.point_distance(point) < ellipse_point1.point_distance(point):
-                    return ellipse_point0.point_distance(point)
-                else:
-                    return ellipse_point1.point_distance(point)
+            abscissa = math.acos((a * x) / (a * a - b * b))
+            ellipse_point0 = self.point_at_polar_abscissa(abscissa)
+            ellipse_point1 = self.point_at_polar_abscissa(initial_angle)
+            if ellipse_point0.point_distance(point) < ellipse_point1.point_distance(point):
+                return ellipse_point0.point_distance(point)
+            return ellipse_point1.point_distance(point)
 
         ellipse_point_ = self.nearest_point(point)
         return ellipse_point_.point_distance(point)
@@ -2538,31 +2517,31 @@ class Ellipse2D(EllipseMixin, ClosedCurve):
         j = 0
         # bisection method
         while j < 100:
-            t_ = (midle_angle + contour_angle_1) / 2
-            f = self.vectorial_product(point, t_)
-            if f > 0:
-                contour_angle_1 = t_
+            new_angle = (midle_angle + contour_angle_1) / 2
+            product = self.vectorial_product(point, new_angle)
+            if product > 0:
+                contour_angle_1 = new_angle
             else:
-                midle_angle = t_
-            if abs(f) <= 1e-7:
+                midle_angle = new_angle
+            if abs(product) <= 1e-7:
                 break
             j += 1
-        point_1 = self.point_at_polar_abscissa(t_)
+        point_1 = self.point_at_polar_abscissa(new_angle)
 
         midle_angle = nearest_angle
         j = 0
         # bisection method
         while j < 100:
-            t_ = (midle_angle + contour_angle_2) / 2
-            f = self.vectorial_product(point, t_)
-            if f > 0:
-                contour_angle_2 = t_
+            new_angle = (midle_angle + contour_angle_2) / 2
+            product = self.vectorial_product(point, new_angle)
+            if product > 0:
+                contour_angle_2 = new_angle
             else:
-                midle_angle = t_
-            if abs(f) <= 1e-7:
+                midle_angle = new_angle
+            if abs(product) <= 1e-7:
                 break
             j += 1
-        point_2 = self.point_at_polar_abscissa(t_)
+        point_2 = self.point_at_polar_abscissa(new_angle)
 
         return [point_1, point_2]
 
