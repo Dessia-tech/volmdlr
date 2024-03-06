@@ -104,6 +104,8 @@ steps:
     event: pull_request
   commands:
   - git fetch --tags
+  - apt-get update  # Add this line to update package information
+  - apt-get install -y libgl1  # Add this line to install libgl1
   - pip install .[doc,test]
   - python setup.py build_ext --inplace
   - cd tests

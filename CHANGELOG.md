@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineSurface3D: is_coincident
 
 #### faces.py
-- 
+- Face3D: from_contours3d (add abs_tol as parameter)
 #### shells.py
 - 
 ### Fixed
@@ -27,7 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### curves.py
 - 
 #### edges.py
-- 
+- Edge: delete_shared_section (use abs_tol)
+- Bspline: get_shared_section (update abs_tol for is_shared_section_possible)
 #### wires.py
 - 
 #### surfaces.py
@@ -45,6 +46,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v0.17.0 [Unreleased]
 ### New Features
+
+- occt integration: surface intersections.
+- Commented some surface intersectios methods.
 
 #### curves.py
 - Ellipse3D: to_step
