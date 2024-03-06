@@ -437,6 +437,17 @@ class Line2D(Line):
         """
         return Line2D(*[point.translation(offset) for point in [self.point1, self.point2]])
 
+    def translation_inplace(self, offset: volmdlr.Vector2D):
+        """
+        Line2D translation in-place.
+
+        :param offset: translation vector.
+        :return: A new translated Line2D.
+        """
+        # TODO: RESET CACHE
+        self.point1.translation_inplace(offset)
+        self.point2.translation_inplace(offset)
+
     def point_belongs(self, point2d, abs_tol: float = 1e-6):
         """
         Verifies if the point 2D belongs to the line.
@@ -781,10 +792,6 @@ class Line3D(Line):
         point2 = point1 + direction
         return cls(point1, point2, arguments[0][1:-1])
 
-    def copy(self, *args, **kwargs):
-        """Creates a Copy of Line3D and returns it."""
-        return Line3D(*[point.copy() for point in [self.point1, self.point2]])
-
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
         Changes vector frame_mapping and return a new Line3D.
@@ -822,6 +829,17 @@ class Line3D(Line):
         """
         return Line3D(*[point.translation(offset) for point in
                         [self.point1, self.point2]])
+
+    def translation_inplace(self, offset: volmdlr.Vector3D):
+        """
+        Line3D translation in-place.
+
+        :param offset: translation vector.
+        :return: A new translated Line3D.
+        """
+        # TODO: RESET CACHE
+        self.point1.translation_inplace(offset)
+        self.point2.translation_inplace(offset)
 
     def point_belongs(self, point3d, tol: float = 1e-6):
         """
@@ -1088,6 +1106,16 @@ class CircleMixin:
             return fullar_arc_class_(circle, point1)
         return arc_class_(circle, point1, point2)
 
+    def translation_inplace(self, offset: Union[volmdlr.Vector2D, volmdlr.Vector3D]):
+        """
+        Circle translation in-place.
+
+        :param offset: translation vector
+        :return: A new translated Circle
+        """
+        #TODO: RESET CACHE
+        self.frame = self.frame.translation(offset)
+
 
 class Circle2D(CircleMixin, ClosedCurve):
     """
@@ -1225,14 +1253,6 @@ class Circle2D(CircleMixin, ClosedCurve):
 
         circle = cls(frame, point1.point_distance(center), name=name)
         return circle
-
-    def copy(self, *args, **kwargs):
-        """
-        Create a copy of the arc 2d.
-
-        :return: copied circle 2d.
-        """
-        return Circle2D(self.frame.copy(), self.radius)
 
     def reverse(self):
         """Gets the circle in the reverse direction."""
@@ -2163,6 +2183,14 @@ class EllipseMixin:
         return math.pi * (self.major_axis + self.minor_axis) * \
             (1 + (3 * perimeter_formular_h / (10 + math.sqrt(4 - 3 * perimeter_formular_h))))
 
+    def translation_inplace(self, offset: Union[volmdlr.Vector2D, volmdlr.Vector3D]):
+        """
+        Translation of ellipse from an offset vector in-place.
+
+        :param offset: corresponding translation vector.
+        :return: translated new ellipse.
+        """
+        self.frame = self.frame.translation(offset)
 
 class Ellipse2D(EllipseMixin, ClosedCurve):
     """

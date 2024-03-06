@@ -4,7 +4,7 @@ import volmdlr
 from volmdlr.wires import Contour3D
 from volmdlr.step import Step
 from volmdlr import edges, core
-from volmdlr.models.contours import contour3d
+from volmdlr.models.contours import contour3d, contour3d_all_edges, contour3d_two_arcs
 
 
 folder = os.path.dirname(os.path.realpath(__file__))
@@ -94,6 +94,15 @@ class TestContour3D(unittest.TestCase):
                             volmdlr. Point3D(7.115095100684387, 0.408886063311686, 1.136295354437229)]
         for intersection, expected_result in zip(edge_intersections, expected_results):
             self.assertTrue(intersection.is_close(expected_result))
+
+    def test_translation(self):
+        new_contour = contour3d_all_edges.translation(volmdlr.Z3D)
+        for prim1, prim2 in zip(new_contour.primitives, new_contour.primitives[1:] + [new_contour.primitives[0]]):
+            self.assertIs(prim1.end, prim2.start)
+        new_contour = contour3d_two_arcs.translation(volmdlr.Z3D)
+        self.assertIs(new_contour.primitives[0].circle, new_contour.primitives[1].circle)
+        self.assertIs(new_contour.primitives[0].end, new_contour.primitives[1].start)
+        self.assertIs(new_contour.primitives[1].end, new_contour.primitives[0].start)
 
 
 if __name__ == '__main__':

@@ -5,6 +5,7 @@ import unittest
 
 import volmdlr
 from volmdlr import edges, wires
+from volmdlr.models.wires import wire3d_all_edges
 
 
 class TestWire(unittest.TestCase):
@@ -55,6 +56,11 @@ class TestWire(unittest.TestCase):
 
         self.assertTrue(list_wires[0], primitives_1)
         self.assertTrue(list_wires[1], primitives_2)
+
+    def test_translation(self):
+        new_wire = wire3d_all_edges.translation(volmdlr.Z3D)
+        for prim1, prim2 in zip(new_wire.primitives[:-1], new_wire.primitives[1:]):
+            self.assertIs(prim1.end, prim2.start)
 
 
 if __name__ == '__main__':

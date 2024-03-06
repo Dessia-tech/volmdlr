@@ -86,7 +86,7 @@ class TestConicalFace3D(unittest.TestCase):
         conical_face = faces.ConicalFace3D.from_contours3d(buggy_conical_surface,
                                                            [buggy_contours3d1, buggy_contours3d2])
         self.assertFalse(conical_face.surface2d.inner_contours)
-        self.assertAlmostEqual(conical_face.area(), 0.021682359796019755 , 3)
+        self.assertAlmostEqual(conical_face.area(), 0.021682359796019755, 3)
 
     def test_from_base_and_vertex(self):
         circle = curves.Circle3D(

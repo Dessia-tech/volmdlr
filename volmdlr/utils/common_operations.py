@@ -427,3 +427,9 @@ def get_center_of_mass(list_points):
         center_mass += point
     center_mass /= len(list_points)
     return center_mass
+
+def repair_wire_primitives_structure(primitives):
+    """Helper function to repair wire primitives connectivity after some operation."""
+    for prim1, prim2 in zip(primitives[:-1], primitives[1:]):
+        if not prim2.start is prim1.end:
+            prim2.start = prim1.end

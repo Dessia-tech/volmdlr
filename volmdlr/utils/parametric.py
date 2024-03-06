@@ -424,3 +424,10 @@ def repair_undefined_brep(surface, primitives2d, primitives_mapping, i, previous
             surface.repair_singularity(primitives2d, i, primitives2d[i - 1])
         else:
             surface.repair_translation(primitives2d, primitives_mapping, i, delta)
+
+
+def repair_contour2d_structure(primitives2d):
+    """Helper function to keep contour concistency after transformation."""
+    for prim1, prim2 in zip(primitives2d, primitives2d[1:] + [primitives2d[0]]):
+        if prim2.start.is_close(prim1.end):
+            prim2.start = prim1.end

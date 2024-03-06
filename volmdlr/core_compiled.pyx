@@ -15,6 +15,7 @@ import random
 import sys
 import warnings
 from typing import List, Text, Tuple
+from copy import deepcopy, copy
 
 import matplotlib.pyplot as plt
 import numpy as npy
@@ -578,6 +579,17 @@ cdef class Vector:
     def to_vector(self):
         return self
 
+    def copy(self, deep=True, memo=None):
+        """
+        Creates a copy of a vector.
+
+        :param deep: If False, perform a shallow copy. If True, perform a deep copy.
+        :param memo: A dict that keep track of references.
+        """
+        if deep:
+            return deepcopy(self, memo=memo)
+        return copy(self)
+
 
 cdef class Vector2D(Vector):
     """
@@ -718,17 +730,6 @@ cdef class Vector2D(Vector):
         """
         return cls(dict_["x"], dict_["y"], dict_.get("name", ""))
 
-    def copy(self, deep=True, memo=None):
-        """
-        Creates a copy of a 2-dimensional vector.
-
-        :param deep: *not used*
-        :param memo: *not used*
-        :return: A copy of the Vector2D-like object
-        :rtype: :class:`volmdlr.Vector2D`
-        """
-        return self.__class__(self.x, self.y)
-
     def norm(self):
         """
         Computes the euclidiean norm of a 2-dimensional vector.
@@ -820,6 +821,18 @@ cdef class Vector2D(Vector):
         v2x = self.x + offset.x
         v2y = self.y + offset.y
         return self.__class__(v2x, v2y)
+
+    def translation_inplace(self, offset: Vector2D):
+        """
+        Translates the 2-dimensional vector and returns a new translated vector
+
+        :param offset: The offset vector of the translation
+        :type offset: :class:`volmdlr.Vector2D`
+        :return: A translated Vector2D-like object
+        :rtype: :class:`volmdlr.Vector2D`
+        """
+        self.x += offset.x
+        self.y += offset.y
 
     def frame_mapping(self, frame: "Frame2D", side: str):
         """
@@ -1662,6 +1675,19 @@ cdef class Vector3D(Vector):
         """
         return self + offset
 
+    def translation_inplace(self, offset: Vector3D):
+        """
+        Translates the vector in-place.
+
+        :param offset: A Vector3D-like object used for offsetting
+        :type offset: :class:`volmdlr.Vector3D`
+        :return: A translated Vector3D-like object
+        :rtype: :class:`volmdlr.Vector3D`
+        """
+        self.x += offset.x
+        self.y += offset.y
+        self.z += offset.z
+
     def frame_mapping(self, frame: "Frame3D", side: str):
         """
         # TODO: Needs correction. Add an example ?
@@ -1777,17 +1803,6 @@ cdef class Vector3D(Vector):
         """
         normal_vector = self.deterministic_normal_vector()
         return normal_vector.unit_vector()
-
-    def copy(self, deep=True, memo=None):
-        """
-        Creates a copy of a 2-dimensional vector.
-
-        :param deep: *not used*
-        :param memo: *not used*
-        :return: A copy of the Vector2D-like object
-        :rtype: :class:`volmdlr.Vector2D`
-        """
-        return self.__class__(self.x, self.y, self.z)
 
     @classmethod
     def random(cls, xmin: float, xmax: float, ymin: float, ymax: float, zmin: float, zmax: float, name: str = ""):

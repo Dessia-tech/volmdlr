@@ -942,22 +942,22 @@ def link_curves(curves, tol: float = 1e-7, validate: bool = True):
         if not knotvector:
             # get rid of the last superfluous knot to maintain split curve notation
             knotvector += list(curve.knotvector[:-(curve.degree + 1)])
-            cpts += list(curve.ctrlpts)
+            cpts += curve.control_points
             # Process control points
             if curve.rational:
                 wgts += list(curve.weights)
             else:
-                tmp_w = [1.0 for _ in range(len(curve.ctrlpts))]
+                tmp_w = [1.0 for _ in range(len(curve.control_points))]
                 wgts += tmp_w
         else:
             tmp_kv = [pdomain_end + k for k in curve.knotvector[1:-(curve.degree + 1)]]
             knotvector += tmp_kv
-            cpts += list(curve.ctrlpts[1:])
+            cpts += curve.control_points[1:]
             # Process control points
             if curve.rational:
                 wgts += list(curve.weights[1:])
             else:
-                tmp_w = [1.0 for _ in range(len(curve.ctrlpts) - 1)]
+                tmp_w = [1.0 for _ in range(len(curve.control_points) - 1)]
                 wgts += tmp_w
 
         pdomain_end += curve.knotvector[-1]

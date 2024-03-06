@@ -33,7 +33,8 @@ from volmdlr.nurbs.operations import (split_surface_u, split_surface_v, decompos
                                       extract_surface_curve_u, extract_surface_curve_v)
 from volmdlr.utils.parametric import (array_range_search, repair_start_end_angle_periodicity, angle_discontinuity,
                                       find_parametric_point_at_singularity, is_isocurve,
-                                      verify_repeated_parametric_points, repair_undefined_brep)
+                                      verify_repeated_parametric_points, repair_undefined_brep,
+                                      repair_contour2d_structure)
 
 
 def knots_vector_inv(knots_vector):
@@ -965,6 +966,12 @@ class Surface3D(DessiaObject):
         # Fix contour
         if not is_wire and (self.x_periodicity or self.y_periodicity):
             self.repair_primitives_periodicity(primitives2d, primitives_mapping)
+        if not is_wire and len(primitives2d) > 1:
+            for prim1, prim2 in zip(primitives2d, primitives2d[1:] + [primitives2d[0]]):
+                prim2.start = prim1.end
+        elif is_wire and len(primitives2d) > 1:
+            for prim1, prim2 in zip(primitives2d[:-1], primitives2d[1:]):
+                prim2.start = prim1.end
         if return_primitives_mapping:
             return wires.Contour2D(primitives2d), primitives_mapping
         return wires.Contour2D(primitives2d)
@@ -4512,11 +4519,13 @@ class ConicalSurface3D(UPeriodicalSurface):
                 # very specific conical case due to the singularity in the point z = 0 on parametric domain.
                 if self.is_singularity_point(self.point2d_to_3d(primitives2d[-2].start)):
                     self.repair_primitives_periodicity(primitives2d, primitives_mapping)
+            repair_contour2d_structure(primitives2d)
             if return_primitives_mapping:
                 return wires.Contour2D(primitives2d), primitives_mapping
             return wires.Contour2D(primitives2d)
         # Fix contour
         self.repair_primitives_periodicity(primitives2d, primitives_mapping)
+        repair_contour2d_structure(primitives2d)
         if return_primitives_mapping:
             return wires.Contour2D(primitives2d), primitives_mapping
         return wires.Contour2D(primitives2d)

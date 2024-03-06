@@ -11,7 +11,7 @@ import warnings
 from collections import deque
 from functools import cached_property
 from statistics import mean
-from typing import List
+from typing import List, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -27,6 +27,7 @@ import volmdlr.geometry
 from volmdlr import curves, edges, PATH_ROOT
 from volmdlr.core_compiled import polygon_point_belongs, points_in_polygon
 from volmdlr.core import EdgeStyle
+from volmdlr.utils.common_operations import repair_wire_primitives_structure
 
 
 def argmax(list_of_numbers):
@@ -703,6 +704,27 @@ class WireMixin:
                     intersections_points.append(crossing)
         return intersections_points
 
+    def translation(self, offset: Union[volmdlr.Vector2D, volmdlr.Vector3D]):
+        """
+        Contour translation.
+
+        :param offset: translation vector.
+        :return: A new translated Contour.
+        """
+        self_copy = self.copy(memo={})
+        for edge in self_copy.primitives:
+            edge.start.translation_inplace(offset=offset)
+            if edge.__class__.__name__[:-2] == "LineSegment":
+                continue
+            if edge.__class__.__name__[:-2] == "BSplineCurve":
+                for point in edge.control_points[1:-1]:
+                    point.translation_inplace(offset=offset)
+            elif edge.__class__.__name__[:-2] == "Arc":
+                edge.circle.translation_inplace(offset=offset)
+            elif edge.__class__.__name__[:-2] == "ArcEllipse":
+                edge.ellipse.translation_inplace(offset=offset)
+        self_copy.primitives[-1].end.translation_inplace(offset=offset)
+        return self_copy
 
 class EdgeCollection3D(WireMixin, PhysicalObject):
     """
@@ -1278,16 +1300,6 @@ class Wire2D(WireMixin, PhysicalObject):
         """
         return self.__class__([point.rotation(center, angle)
                                for point in self.primitives])
-
-    def translation(self, offset: volmdlr.Vector2D):
-        """
-        Translates the Wire 2D.
-
-        :param offset: translation vector
-        :return: A new translated Wire 2D.
-        """
-        return self.__class__([primitive.translation(offset)
-                               for primitive in self.primitives])
 
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
         """
@@ -2015,6 +2027,49 @@ class ContourMixin(WireMixin):
         """
         return self.primitives[0].start.is_close(self.primitives[-1].end)
 
+    def translation(self, offset: Union[volmdlr.Vector2D, volmdlr.Vector3D]):
+        """
+        Contour translation.
+
+        :param offset: translation vector.
+        :return: A new translated Contour.
+        """
+        self_copy = self.copy(memo={})
+        for edge in self_copy.primitives:
+            edge.start.translation_inplace(offset=offset)
+            if edge.__class__.__name__[:-2] == "LineSegment":
+                continue
+            if edge.__class__.__name__[:-2] == "BSplineCurve":
+                for point in edge.control_points[1:-1]:
+                    point.translation_inplace(offset=offset)
+            elif edge.__class__.__name__[:-2] == "Arc":
+                edge.circle.translation_inplace(offset=offset)
+            elif edge.__class__.__name__[:-2] == "ArcEllipse":
+                edge.ellipse.translation_inplace(offset=offset)
+        # special case when treating a degenerate 2D contour from contou3d_to_2d transformation
+        if not self_copy.primitives[-1].end.is_close(self_copy.primitives[0].start):
+            self_copy.primitives[-1].end.translation_inplace(offset=offset)
+        return self_copy
+
+    def is_connected(self):
+        """
+        Returns True if all connected edges share the same vertex and False otherwise.
+        """
+        if len(self.primitives) > 1:
+            return all(prim2.start is prim1.end
+                   for prim1, prim2 in zip(self.primitives, self.primitives[1:] + [self.primitives[0]]))
+        return True
+
+    def is_wire_connected(self):
+        """
+        Returns True if all connected edges share the same vertex and False otherwise.
+
+        This a special case for degenerated for contours found in parametric space or in boolean operations.
+        """
+        if len(self.primitives) > 1:
+            return all(prim2.start is prim1.end
+                   for prim1, prim2 in zip(self.primitives[:-1], self.primitives[1:]))
+        return True
 
 class Contour2D(ContourMixin, Wire2D):
     """
@@ -2381,12 +2436,16 @@ class Contour2D(ContourMixin, Wire2D):
                 Contour2D.extract(self, self.primitives[0].start, intersections[0], True)[0]
             extracted_innerpoints_contour1 = \
                 Contour2D.extract(self, intersections[0], self.primitives[-1].end, True)[0]
+            repair_wire_primitives_structure(extracted_outerpoints_contour1.primitives)
+            repair_wire_primitives_structure(extracted_innerpoints_contour1.primitives)
             return extracted_outerpoints_contour1, extracted_innerpoints_contour1
         if len(intersections) == 2:
             extracted_outerpoints_contour1 = \
                 Contour2D.extract(self, intersections[0], intersections[1], True)[0]
             extracted_innerpoints_contour1 = \
                 Contour2D.extract(self, intersections[0], intersections[1], False)[0]
+            repair_wire_primitives_structure(extracted_outerpoints_contour1.primitives)
+            repair_wire_primitives_structure(extracted_innerpoints_contour1.primitives)
             return extracted_innerpoints_contour1, extracted_outerpoints_contour1
         raise NotImplementedError
 
@@ -4360,17 +4419,6 @@ class Contour3D(ContourMixin, Wire3D):
         """
         new_edges = [edge.rotation(center, axis, angle) for edge
                      in self.primitives]
-        return Contour3D(new_edges, self.name)
-
-    def translation(self, offset: volmdlr.Vector3D):
-        """
-        Contour3D translation.
-
-        :param offset: translation vector.
-        :return: A new translated Contour3D.
-        """
-        new_edges = [edge.translation(offset) for edge in
-                     self.primitives]
         return Contour3D(new_edges, self.name)
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
