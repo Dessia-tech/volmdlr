@@ -13,11 +13,11 @@ from numpy.typing import NDArray
 from scipy.spatial import cKDTree
 
 import trimesh
+import volmdlr
 from dessia_common.core import DessiaObject
 from dessia_common.serialization import BinaryFile
 from dessia_common.typings import JsonSerializable
 from trimesh import Trimesh
-from volmdlr import Frame3D, Point3D, Vector3D
 from volmdlr.core import Primitive3D
 from volmdlr.edges import LineSegment2D, LineSegment3D
 from volmdlr.geometry import rotation_matrix
@@ -440,7 +440,7 @@ class Mesh3D(MeshMixin, Primitive3D):
 
         return self._bounding_box
 
-    def rotation(self, center: Point3D, axis: Vector3D, angle: float) -> "Mesh3D":
+    def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float) -> "Mesh3D":
         """
         Rotate the mesh around the specified center, axis, and angle.
 
@@ -456,7 +456,7 @@ class Mesh3D(MeshMixin, Primitive3D):
             vertices=rotated_vertices, triangles=self.triangles, color=self.color, alpha=self.alpha, name=self.name
         )
 
-    def translation(self, offset: Vector3D):
+    def translation(self, offset: volmdlr.Vector3D):
         """
         Translate the mesh by the specified offset.
 
@@ -470,7 +470,7 @@ class Mesh3D(MeshMixin, Primitive3D):
             vertices=translated_vertices, triangles=self.triangles, color=self.color, alpha=self.alpha, name=self.name
         )
 
-    def frame_mapping(self, frame: "Frame3D", side: str):
+    def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
         Transform a Mesh3D from the current reference frame to a new one.
 
