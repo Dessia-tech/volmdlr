@@ -140,7 +140,7 @@ steps:
       
       if [ -z "$source_repo" ] || [ "$source_repo" = "null" ]; then
         echo "Failed to fetch source repository. The GitHub token may have expired or lacks the necessary permissions."
-        exit 1  # Exit with error
+        exit 1
       fi
       
       if [ "$source_repo" = "${DRONE_REPO}" ]; then
