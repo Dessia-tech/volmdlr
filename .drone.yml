@@ -125,7 +125,7 @@ steps:
   when:
     event:
       - pull_request
-      -
+
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -137,6 +137,32 @@ steps:
       source_repo=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "$api_url" | jq -r .head.repo.full_name)
 
       echo "Source Repository: $source_repo"
+      
+      if [ "$source_repo" = "${DRONE_REPO}" ]; then
+        echo "Source repo is ${DRONE_REPO}. Skipping step..."
+        # Add your specific actions here. For example:
+        # python build_docs.py
+        # ./run_tutorials.sh
+      else
+        echo "Source repo is a fork. Performing install, build doc run scripts and tutorials..."
+      
+        git fetch --tags
+        pip install .[doc,test]
+        python setup.py build_ext --inplace
+        cd tests
+        coverage run --rcfile=../.coveragerc --data-file=../.coverage --source volmdlr -m unittest discover -v
+        cd ../scripts
+        coverage run --rcfile=../.coveragerc --data-file=../.coverage --source volmdlr -a ci_scripts.py
+        cd ../tutorials
+        coverage run --rcfile=../.coveragerc --data-file=../.coverage --source volmdlr -a ci_tutorials.py
+        cd ../doc
+        make html
+        cd ..
+        coverage json
+        coverage report
+        coverage html
+        python coverage.py
+      fi
       
 
 - name: generate sdist
