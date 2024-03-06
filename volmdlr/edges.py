@@ -613,8 +613,8 @@ class Edge(dc.DessiaObject):
             return [self]
         if shared_section == self:
             return []
-        split_arcs1 = self.split(shared_section[0].start)
-        split_arcs2 = self.split(shared_section[0].end)
+        split_arcs1 = self.split(shared_section[0].start, abs_tol)
+        split_arcs2 = self.split(shared_section[0].end, abs_tol)
         new_arcs = []
         for arc in split_arcs1 + split_arcs2:
             if arc and not arc.point_belongs(shared_section[0].middle_point(), abs_tol):
