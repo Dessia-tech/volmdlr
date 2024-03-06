@@ -28,6 +28,8 @@ untracked_modules = ['volmdlr/templates.py',
                      'models/__init__.py',
                      'models/contours.py',
                      'models/bspline_curves.py',
+                     'from_occt',
+                     'to_occt'
                      ]
 
 print('untracked modules:', untracked_modules)

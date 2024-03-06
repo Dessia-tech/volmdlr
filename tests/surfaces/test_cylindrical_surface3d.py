@@ -408,14 +408,12 @@ class TestCylindricalSurface3D(unittest.TestCase):
         cylindrical_surface4 = surfaces.CylindricalSurface3D(
             volmdlr.Frame3D(volmdlr.Point3D(0.0, 0.41068360252295905, 1.2886751345948129),
                             volmdlr.Y3D, volmdlr.Z3D, volmdlr.X3D), math.tan(conical_surface.semi_angle) / 2)
-        for i, cylindrical_surface in enumerate(
-                [
+        for cylindrical_surface in [
                     cylindrical_surface1,
                     cylindrical_surface2,
                     cylindrical_surface3,
                     cylindrical_surface4,
-                ]
-        ):
+                ]:
             list_curves = cylindrical_surface.conicalsurface_intersections(
                 conical_surface
             )
