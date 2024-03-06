@@ -521,10 +521,10 @@ class Mesh3D(MeshMixin, Primitive3D):
 
         if return_points:
 
-            closest_point_self = volmdlr.Point3D(closest_point_self[0],
-                                                 closest_point_self[1], closest_point_self[2])
-            closest_point_other = volmdlr.Point3D(closest_point_other[0],
-                                                  closest_point_other[1], closest_point_other[2])
+            closest_point_self = volmdlr.Point3D(closest_point_self[0], closest_point_self[1], closest_point_self[2])
+            closest_point_other = volmdlr.Point3D(
+                closest_point_other[0], closest_point_other[1], closest_point_other[2]
+            )
             return min_distance, closest_point_self, closest_point_other
 
         return min_distance
