@@ -470,6 +470,29 @@ class Mesh3D(MeshMixin, Primitive3D):
             vertices=translated_vertices, triangles=self.triangles, color=self.color, alpha=self.alpha, name=self.name
         )
 
+    def frame_mapping(self, frame: "Frame3D", side: str):
+        """
+        Transform a Mesh3D from the current reference frame to a new one.
+
+        side='old': consider the mesh in local given frame and transforms in global frame.
+        side='new': consider the mesh in global frame and transforms in local given frame.
+
+        :param frame: The input reference frame.
+        :param side: Choose between 'old' and 'new'.
+
+        :return: A frame mapped Mesh3D object.
+        """
+        if side == "old":
+            mapped_vertices = np.dot(np.array(frame.transfer_matrix()), self.vertices)
+        elif side == "new":
+            mapped_vertices = np.dot(np.array(frame.inverse_transfer_matrix()), self.vertices)
+        else:
+            raise ValueError("Incorrect value for 'side'.")
+
+        return self.__class__(
+            vertices=mapped_vertices, triangles=self.triangles, color=self.color, alpha=self.alpha, name=self.name
+        )
+
     def area(self) -> float:
         """
         Calculate the total surface area of the 3D mesh as the sum of areas of triangles.
