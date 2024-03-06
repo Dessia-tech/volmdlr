@@ -22,6 +22,9 @@ import scipy.integrate as scipy_integrate
 from scipy.optimize import least_squares, minimize
 from geomdl import NURBS, BSpline
 
+from OCP.Geom2dAPI import Geom2dAPI_InterCurveCurve
+from OCP.Precision import Precision
+
 from volmdlr.nurbs.operations import split_curve, decompose_curve, link_curves
 from volmdlr.nurbs.core import evaluate_curve, derivatives_curve
 from volmdlr.nurbs import fitting
@@ -37,8 +40,6 @@ import volmdlr.utils.common_operations as vm_common_operations
 import volmdlr.utils.intersections as vm_utils_intersections
 from volmdlr.core import EdgeStyle
 # pylint: disable=arguments-differ
-from OCP.Geom2dAPI import Geom2dAPI_InterCurveCurve
-from OCP.Precision import Precision
 
 
 class Edge(dc.DessiaObject):

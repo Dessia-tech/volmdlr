@@ -126,7 +126,7 @@ def _get_ellipse2d_vertical_line_intersectioons(ellipse2d, line2d):
     """
     x1 = line2d.point1.x
     x2 = x1
-    delta = (1 - x1 ** 2 / ellipse2d.major_axis ** 2)
+    delta = 1 - x1 ** 2 / ellipse2d.major_axis ** 2
     if abs(delta) < 1e-8:
         delta = 0
     y1 = ellipse2d.minor_axis * math.sqrt(delta)
