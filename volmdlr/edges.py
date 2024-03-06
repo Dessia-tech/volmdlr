@@ -2332,7 +2332,7 @@ class BSplineCurve2D(BSplineCurve):
         """
         if self.bounding_rectangle.distance_to_b_rectangle(bspline.bounding_rectangle) > abs_tol:
             return []
-        from volmdlr import to_occt, from_occt
+        from volmdlr import to_ocp, from_ocp
         from OCP.Geom2dAPI import Geom2dAPI_InterCurveCurve
         from OCP.Precision import Precision
         bspline_occt1 = to_occt.volmdlr_bsplinecurve2d_to_occt(self)
