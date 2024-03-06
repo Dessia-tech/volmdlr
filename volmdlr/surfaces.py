@@ -9815,6 +9815,12 @@ class BSplineSurface3D(Surface3D):
         return (u1, v1), (u2, v2)  # (uv1, uv2)
 
     def line_intersections(self, line: curves.Line3D):
+        """
+        Calculates the intersection between a line and a BSpline Surfaces.
+
+        :param line: other line.
+        :return: intersection points.
+        """
         occt_bsplinesurface = to_ocp.bsplinesurface_to_ocp(self)
         occt_line = to_ocp.line3d_to_ocp(line)
         api_inters = GeomAPI_IntCS(occt_line, occt_bsplinesurface)

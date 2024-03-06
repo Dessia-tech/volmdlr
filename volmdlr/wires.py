@@ -2177,6 +2177,7 @@ class Contour2D(ContourMixin, Wire2D):
         return self._area
 
     def centroid(self):
+        """Gets the centroid of a closed polygon 2d."""
         if not self._polygon_100_points:
             self._polygon_100_points = self.to_polygon(100)
         return self._polygon_100_points.barycenter()
