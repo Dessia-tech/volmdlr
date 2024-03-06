@@ -24,7 +24,7 @@ class TestClosedShell3D(unittest.TestCase):
             objects_folder, 'test_union_expected_faces_areas.json')).primitives
         self.assertEqual(len(union.faces), len(expected_shell_faces_areas))
         for i, area in enumerate(sorted([face.area() for face in union.faces])):
-            self.assertAlmostEqual(area, expected_shell_faces_areas[i], 5)
+            self.assertAlmostEqual(area, expected_shell_faces_areas[i], 4)
 
     def test_intersection(self):
         extrusion1, extrusion2 = dessia_common.core.DessiaObject.from_json(

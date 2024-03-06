@@ -2340,7 +2340,6 @@ class BSplineCurve2D(BSplineCurve):
         api_inters = Geom2dAPI_InterCurveCurve(bspline_ocp1, bspline_ocp2, Precision.Intersection_s())
         intersections = [from_ocp.point2d_from_ocp(api_inters.Point(i + 1)) for i in range(api_inters.NbPoints())]
         return intersections
-        # return self._generic_edge_intersections(bspline, abs_tol)
 
     def axial_symmetry(self, line):
         """
