@@ -18,7 +18,7 @@ from scipy.optimize import least_squares, minimize
 
 from dessia_common.core import DessiaObject, PhysicalObject
 from dessia_common.typings import JsonSerializable
-from OCP.GeomAPI import GeomAPI_IntSS
+from OCP.GeomAPI import GeomAPI_IntSS, GeomAPI_IntCS
 from OCP.Precision import Precision
 import volmdlr.nurbs.helpers as nurbs_helpers
 from volmdlr.nurbs.helpers import generate_knot_vector
@@ -36,8 +36,6 @@ from volmdlr.nurbs.operations import (split_surface_u, split_surface_v, decompos
 from volmdlr.utils.parametric import (array_range_search, repair_start_end_angle_periodicity, angle_discontinuity,
                                       find_parametric_point_at_singularity, is_isocurve,
                                       verify_repeated_parametric_points, repair_undefined_brep)
-from OCP.GeomAPI import GeomAPI_IntSS, GeomAPI_IntCS
-from OCP.Precision import Precision
 
 
 def knots_vector_inv(knots_vector):
@@ -956,7 +954,7 @@ class Surface3D(DessiaObject):
         primitives2d, primitives_mapping = self.primitives3d_to_2d(contour3d.primitives)
 
         wire2d = wires.Wire2D(primitives2d)
-        is_wire = False if len(primitives2d) > 1 else True
+        is_wire = not primitives2d
         if self.x_periodicity and not self.is_singularity_point(self.point2d_to_3d(wire2d.primitives[0].start)) and \
                 not self.is_singularity_point(self.point2d_to_3d(wire2d.primitives[-1].end)):
             delta_x = abs(wire2d.primitives[0].start.x - wire2d.primitives[-1].end.x)

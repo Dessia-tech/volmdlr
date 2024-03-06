@@ -1382,6 +1382,37 @@ class Face3D(volmdlr.core.Primitive3D):
                         new_list_faces.append(self.__class__(surf3d, surfaces.Surface2D(new_contour, inner_contours2)))
         return new_list_faces
 
+    def _helper_intersecting_primitives_with_periodicity(self, primitive2d):
+        """
+        Helper method to adjust primitive position if it is out of the face periodicity.
+
+        :param primitive2d: primitived to be adjusted.
+        :return:
+        """
+        contour_edge_intersections = self.surface2d.outer_contour.edge_intersections(primitive2d)
+        if not contour_edge_intersections:
+            return []
+        face_intersecting_primitives2d = []
+        for edge in primitive2d.split(contour_edge_intersections[0]):
+            if edge is None:
+                continue
+            if not self.surface2d.outer_contour.is_edge_inside(edge):
+                primitive_plus_periodicity = edge.translation(
+                    volmdlr.Vector2D(self.surface3d.x_periodicity, 0))
+                if self.surface2d.outer_contour.is_edge_inside(primitive_plus_periodicity,
+                                                               self.face_tolerance):
+                    face_intersecting_primitives2d.append(primitive_plus_periodicity)
+                    continue
+                primitive_minus_periodicity = edge.translation(
+                    volmdlr.Vector2D(- self.surface3d.x_periodicity, 0))
+                if self.surface2d.outer_contour.is_edge_inside(primitive_minus_periodicity,
+                                                               self.face_tolerance):
+                    face_intersecting_primitives2d.append(primitive_minus_periodicity)
+                    continue
+            else:
+                face_intersecting_primitives2d.append(edge)
+        return face_intersecting_primitives2d
+
     def select_face_intersecting_primitives(self, dict_intersecting_combinations):
         """
         Select face intersecting primitives from a dictionary containing all intersection combinations.
@@ -1396,26 +1427,9 @@ class Face3D(volmdlr.core.Primitive3D):
             for primitive2d in wire2d.primitives:
                 if self.surface3d.x_periodicity is not None and not \
                         self.surface2d.outer_contour.is_edge_inside(primitive2d, self.face_tolerance):
-                    contour_edge_intersections = self.surface2d.outer_contour.edge_intersections(primitive2d)
-                    if contour_edge_intersections:
-                        for edge in primitive2d.split(contour_edge_intersections[0]):
-                            if edge is None:
-                                continue
-                            if not self.surface2d.outer_contour.is_edge_inside(edge):
-                                primitive_plus_periodicity = edge.translation(
-                                    volmdlr.Vector2D(self.surface3d.x_periodicity, 0))
-                                if self.surface2d.outer_contour.is_edge_inside(primitive_plus_periodicity,
-                                                                               self.face_tolerance):
-                                    face_intersecting_primitives2d.append(primitive_plus_periodicity)
-                                    continue
-                                primitive_minus_periodicity = edge.translation(
-                                    volmdlr.Vector2D(- self.surface3d.x_periodicity, 0))
-                                if self.surface2d.outer_contour.is_edge_inside(primitive_minus_periodicity,
-                                                                               self.face_tolerance):
-                                    face_intersecting_primitives2d.append(primitive_minus_periodicity)
-                                    continue
-                            else:
-                                face_intersecting_primitives2d.append(edge)
+                    correct_primitives = self._helper_intersecting_primitives_with_periodicity(primitive2d)
+                    if correct_primitives:
+                        face_intersecting_primitives2d.extend(correct_primitives)
                         continue
                     primitive_plus_periodicity = primitive2d.translation(
                         volmdlr.Vector2D(self.surface3d.x_periodicity, 0))
