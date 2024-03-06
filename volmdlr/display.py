@@ -3,7 +3,7 @@
 """
 Classes to define mesh for display use. Display mesh do not require good aspect ratios on elements.
 """
-
+# pylint: disable=wrong-import-order
 import warnings
 from typing import List, Tuple, TypeVar, Union
 
