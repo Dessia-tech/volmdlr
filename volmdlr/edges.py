@@ -89,6 +89,27 @@ class Edge(dc.DessiaObject):
         """
         raise NotImplementedError(f'split method not implemented by {self.__class__.__name__}')
 
+    def split_with_sorted_points(self, sorted_points, abs_tol: float = 1e-6):
+        """
+        Split edge in various sections using a list of sorted points along the edge.
+
+        :param sorted_points: sorted list of points.
+        :return: list of edge sections.
+        """
+        split_edges = []
+        edge_to_split = self
+        for point in sorted_points:
+            if point.is_close(edge_to_split.start, abs_tol) or \
+                    point.is_close(edge_to_split.end, abs_tol):
+                continue
+            split_edge = edge_to_split.split(point)
+            if split_edge[0] is not None:
+                split_edges.append(split_edge[0])
+            edge_to_split = split_edge[1]
+        if edge_to_split is not None:
+            split_edges.append(edge_to_split)
+        return split_edges
+
     def reverse(self):
         """Gets the edge in the reverse direction."""
         if self._reverse is None:
@@ -2808,6 +2829,8 @@ class ArcMixin:
     def _arc_point_angle(self, point):
         """Helper function to calculate the angle of point on a trigonometric arc."""
         local_start_point = self.circle.frame.global_to_local_coordinates(point)
+        if self.radius == 0.0:
+            print(True)
         u1, u2 = local_start_point.x / self.radius, local_start_point.y / self.radius
         point_angle = volmdlr.geometry.sin_cos_angle(u1, u2)
         return point_angle
@@ -3044,6 +3067,27 @@ class FullArcMixin(ArcMixin):
     def from_curve(cls, circle, name: str = ''):
         """Creates A full arc, 2d or 3d, from circle."""
         return cls(circle, circle.center + circle.frame.u * circle.radius, name=name)
+
+    def trim(self, point1, point2, *args, **kwargs):
+        """
+        Trims fullarc between two points.
+
+        :param point1: point 1.
+        :param point2: point 2.
+        :return: edge trimmed.
+        """
+        return self.circle.trim(point1, point2)
+
+    def line_intersections(self, line: volmdlr_curves.Line3D, tol: float = 1e-6):
+        """
+        Calculates intersections between an FullArc3D and a Line3D.
+
+        :param line: line to verify intersections.
+        :param tol: maximum tolerance.
+        :return: list with intersections points between line and FullArc3D.
+        """
+        circle3d_lineseg_inters = vm_utils_intersections.circle_3d_line_intersections(self.circle, line, tol)
+        return circle3d_lineseg_inters
 
 
 class Arc2D(ArcMixin, Edge):
@@ -3753,9 +3797,9 @@ class FullArc2D(FullArcMixin, Arc2D):
         """Plots a fullarc using Matplotlib."""
         return vm_common_operations.plot_circle(self.circle, ax, edge_style)
 
-    def line_intersections(self, line2d: volmdlr_curves.Line2D, tol=1e-9):
+    def line_intersections(self, line: volmdlr_curves.Line2D, tol=1e-9):
         """Full Arc 2D intersections with a Line 2D."""
-        return self.circle.line_intersections(line2d, tol)
+        return self.circle.line_intersections(line, tol)
 
     def linesegment_intersections(self, linesegment2d: LineSegment2D, abs_tol=1e-9):
         """Full arc 2D intersections with a line segment."""
@@ -6377,18 +6421,18 @@ class ArcEllipse3D(ArcEllipseMixin, Edge):
         return self.ellipse == other_arcellipse.ellipse and \
             self.start == other_arcellipse.start and self.end == other_arcellipse.end
 
-    def is_close(self, other_arcellipse, abs_tol: float = 1e-6):
+    def is_close(self, other_arcellipse, tol: float = 1e-6):
         """
         Verifies if two arc ellipses are the same, considereing given tolerance.
 
         :param other_arcellipse: other arc ellipse.
-        :param abs_tol: tolerance.
+        :param tol: tolerance.
         :return: True or False.
         """
         if self.__class__.__name__ != other_arcellipse.__class__.__name__:
             return False
-        return self.ellipse.is_close(other_arcellipse.ellipse, abs_tol) and \
-            self.start.is_close(other_arcellipse.start, abs_tol) and self.end.is_close(other_arcellipse.end, abs_tol)
+        return self.ellipse.is_close(other_arcellipse.ellipse, tol) and \
+            self.start.is_close(other_arcellipse.start, tol) and self.end.is_close(other_arcellipse.end, tol)
 
     @property
     def center(self):
@@ -6862,3 +6906,13 @@ class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
         :return: A list of points, containing all intersections between the Line 3D and the Ellipse3D.
         """
         return self.ellipse.line_intersections(line, abs_tol)
+
+    def trim(self, point1, point2, *args, **kwargs):
+        """
+        Trims fullarcellipse between two points.
+
+        :param point1: point 1.
+        :param point2: point 2.
+        :return: edge trimmed.
+        """
+        return self.ellipse.trim(point1, point2)
