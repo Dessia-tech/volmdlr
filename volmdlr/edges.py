@@ -617,8 +617,8 @@ class Edge(dc.DessiaObject):
             return [self]
         if shared_section == self:
             return []
-        split_arcs1 = self.split(shared_section[0].start)
-        split_arcs2 = self.split(shared_section[0].end)
+        split_arcs1 = self.split(shared_section[0].start, abs_tol)
+        split_arcs2 = self.split(shared_section[0].end, abs_tol)
         new_arcs = []
         for arc in split_arcs1 + split_arcs2:
             if arc and not arc.point_belongs(shared_section[0].middle_point(), abs_tol):
@@ -1890,7 +1890,7 @@ class BSplineCurve(Edge):
             if self.simplify.__class__ == other_bspline2.__class__:
                 return self.simplify.get_shared_section(other_bspline2, abs_tol)
             return []
-        if not self.is_shared_section_possible(other_bspline2, 1e-7):
+        if not self.is_shared_section_possible(other_bspline2, abs_tol):
             return []
         if not any(self.point_belongs(point, abs_tol=abs_tol)
                    for point in other_bspline2.discretization_points(number_points=10)):
