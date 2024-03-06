@@ -125,6 +125,10 @@ steps:
   when:
     event:
       - pull_request
+      -
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
 
   commands:
     - apt-get update && apt-get install -y jq
@@ -134,11 +138,6 @@ steps:
 
       echo "Source Repository: $source_repo"
       
-
-  environment:
-    GITHUB_TOKEN:
-      from_secret: github_token
-
 
 - name: generate sdist
   image: python:3.9
