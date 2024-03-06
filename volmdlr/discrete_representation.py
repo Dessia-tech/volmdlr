@@ -1,6 +1,7 @@
 """
 Class for discrete representations of volmdlr models (voxelization for 3D geometries, pixelization for 2D geometries).
 """
+
 import itertools
 import math
 import warnings
@@ -8,11 +9,11 @@ from typing import Dict, Iterable, List, Set, Tuple, TypeVar, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
-from dessia_common.core import DessiaObject, PhysicalObject
-from dessia_common.serialization import JsonSerializable
 from matplotlib import patches
 from numpy.typing import NDArray
 
+from dessia_common.core import DessiaObject, PhysicalObject
+from dessia_common.serialization import JsonSerializable
 from volmdlr import Point2D, Point3D, Vector3D
 from volmdlr.core import BoundingBox, BoundingRectangle, VolumeModel
 from volmdlr.discrete_representation_compiled import (
@@ -28,6 +29,7 @@ from volmdlr.discrete_representation_compiled import (
 from volmdlr.display import Mesh3D
 from volmdlr.edges import LineSegment2D
 from volmdlr.faces import Face3D, Triangle3D
+from volmdlr.geometry import rotation_matrix
 from volmdlr.shells import ClosedTriangleShell3D, DisplayTriangleShell3D, Shell3D
 from volmdlr.wires import ClosedPolygon2D
 
