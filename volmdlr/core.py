@@ -20,6 +20,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 from numpy.typing import NDArray
 
+from OCP.Interface import Interface_Static
+import OCP.IFSelect
+from OCP.STEPControl import STEPControl_Reader
+
 import dessia_common.core as dc
 from dessia_common.errors import ConsistencyError
 import dessia_common.files as dcf
@@ -30,6 +34,7 @@ from volmdlr.discrete_representation_compiled import triangle_intersects_voxel
 from volmdlr.utils.step_writer import product_writer, geometric_context_writer, assembly_definition_writer, \
     STEP_HEADER, STEP_FOOTER, step_ids_to_str
 from volmdlr.geometry import get_transfer_matrix_from_basis
+from volmdlr import from_occt
 
 np.seterr(divide='raise')
 
@@ -1296,6 +1301,16 @@ class Compound(dc.PhysicalObject):
 
         return step_content, current_id, [brep_id, product_definition_id]
 
+    @classmethod
+    def from_occt(cls, occt_compound):
+        """
+        Creates a volmdlr Compound from an OCCT compound.
+        """
+        # TODO: Today only shells are read. Needs to implement Solid or wireframe models if needed
+        from volmdlr.shells import Shell3D
+        shell_list = [Shell3D.from_occt(occt_shell) for occt_shell in from_occt.get_shells(occt_compound)]
+        return cls(shell_list)
+
 
 class VolumeModel(dc.PhysicalObject):
     """
@@ -1625,6 +1640,42 @@ class VolumeModel(dc.PhysicalObject):
         step_content += STEP_FOOTER
 
         stream.write(step_content)
+
+    @classmethod
+    def from_step(cls, step_file: str):
+        """
+        Translate a step file into a volume model using OCCT.
+        """
+        # Set the unit to meter
+        Interface_Static.SetCVal_s("xstep.cascade.unit", "M")
+        reader = STEPControl_Reader()
+        readStatus = reader.ReadFile(step_file)
+        if readStatus != OCP.IFSelect.IFSelect_RetDone:
+            raise ValueError("STEP File could not be loaded")
+        for i in range(reader.NbRootsForTransfer()):
+            reader.TransferRoot(i + 1)
+
+        occ_shapes = []
+        for i in range(reader.NbShapes()):
+            occ_shapes.append(reader.Shape(i + 1))
+
+        from volmdlr.shells import Shell3D
+        # Make sure that we extract all the solids
+        solids = []
+        for shape in occ_shapes:
+            shape_type = from_occt.shapetype(shape)
+            if shape_type == 0:
+                solids.append(Compound.from_occt(shape))
+            elif shape_type == 1 or shape_type == 2:
+                list_of_shells = from_occt.get_shells(shape)
+                for shell in list_of_shells:
+                    solids.append(Shell3D.from_occt(shell))
+            elif from_occt.shapetype(shape) == 3:
+                Shell3D.from_occt(shape)
+            else:
+                #Reads only Compounds and solids
+                continue
+        return cls(solids)
 
     def volmdlr_volume_model(self):
         """

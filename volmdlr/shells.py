@@ -14,6 +14,8 @@ from dessia_common.typings import JsonSerializable
 from numpy.typing import NDArray
 from trimesh import Trimesh
 
+from OCP.BRep import BRep_Tool
+
 import volmdlr.core
 import volmdlr.core_compiled
 import volmdlr.faces
@@ -21,7 +23,7 @@ import volmdlr.geometry
 from volmdlr import curves, display, edges, surfaces, wires
 from volmdlr.core import edge_in_list, get_edge_index_in_list, get_point_index_in_list, point_in_list
 from volmdlr.utils.step_writer import geometric_context_writer, product_writer, step_ids_to_str
-
+from volmdlr import from_occt
 # pylint: disable=unused-argument
 
 
@@ -1051,6 +1053,32 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
                 shells_list.append(ClosedShell3D(faces_list, name=name + f'_{index}'))
 
         return shells_list
+
+    @classmethod
+    def from_occt(cls, occt_shell) -> "Shell3D":
+        """
+        Builds a shell from an OCP shell.
+        """
+        occt_surface_to_volmdlr_face_map = {
+            "Geom_SphericalSurface": volmdlr.faces.SphericalFace3D,
+            "Geom_CylindricalSurface": volmdlr.faces.CylindricalFace3D,
+            "Geom_Plane": volmdlr.faces.PlaneFace3D,
+            "Geom_ToroidalSurface": volmdlr.faces.ToroidalFace3D,
+            "Geom_ConicalSurface": volmdlr.faces.ConicalFace3D,
+            "Geom_BSplineSurface": volmdlr.faces.BSplineFace3D,
+            "Geom_SurfaceOfLinearExtrusion": volmdlr.faces.ExtrusionFace3D,
+            "Geom_SurfaceOfRevolution": volmdlr.faces.RevolutionFace3D}
+        occt_faces = from_occt.get_faces(occt_shell)
+        faces = []
+        for occt_face in occt_faces:
+            surface = BRep_Tool().Surface_s(occt_face)
+            if surface.get_type_name_s() == 'Geom_RectangularTrimmedSurface':
+                surface = surface.BasisSurface()
+            face_cls = occt_surface_to_volmdlr_face_map[surface.get_type_name_s()]
+            faces.append(face_cls.from_occt(occt_face))
+        if occt_shell.Closed():
+            return ClosedShell3D(faces)
+        return OpenShell3D(faces)
 
     def is_disjoint_from(self, shell2, tol=1e-8):
         """

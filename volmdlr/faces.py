@@ -13,6 +13,9 @@ import triangle as triangle_lib
 
 from dessia_common.core import DessiaObject
 
+from OCP.BRep import BRep_Tool
+from OCP.TopoDS import TopoDS_Shape
+
 import volmdlr.core
 from volmdlr.core import EdgeStyle
 import volmdlr.core_compiled
@@ -24,6 +27,7 @@ import volmdlr.grid
 from volmdlr import surfaces
 from volmdlr.utils.parametric import update_face_grid_points_with_inner_polygons
 import volmdlr.wires
+from volmdlr import from_occt
 
 warnings.simplefilter("once")
 
@@ -77,6 +81,16 @@ def parametric_face_inside(face1, face2, abs_tol: float = 1e-6):
         if self_contour2d.is_superposing(face2_contour2d):
             return True
     return False
+
+
+OCCT_TO_VOLMDLR = {"Geom_SphericalSurface": surfaces.SphericalSurface3D,
+                   "Geom_CylindricalSurface": surfaces.CylindricalSurface3D,
+                   "Geom_Plane": surfaces.Plane3D,
+                   "Geom_ToroidalSurface": surfaces.ToroidalSurface3D,
+                   "Geom_ConicalSurface": surfaces.ConicalSurface3D,
+                   "Geom_BSplineSurface": surfaces.BSplineSurface3D,
+                   'Geom_SurfaceOfLinearExtrusion': surfaces.ExtrusionSurface3D,
+                   "Geom_SurfaceOfRevolution": surfaces.RevolutionSurface3D}
 
 
 class Face3D(volmdlr.core.Primitive3D):
@@ -366,6 +380,26 @@ class Face3D(volmdlr.core.Primitive3D):
                 inner_contours2d[i] = helper_translate_contour(_inner_contour, _brec)
                 for new_primitive, old_primitive in zip(inner_contours2d[i].primitives, _inner_contour.primitives):
                     primitives_mapping[new_primitive] = primitives_mapping.pop(old_primitive)
+
+    @classmethod
+    def from_occt(cls, occt_face: TopoDS_Shape):
+        """
+        Translate an occt face into a volmdlr face.
+        """
+        occt_surface = BRep_Tool().Surface_s(occt_face)
+        if occt_surface.get_type_name_s() == 'Geom_RectangularTrimmedSurface':
+            occt_surface = occt_surface.BasisSurface()
+        surface_function = getattr(from_occt, occt_surface.get_type_name_s().lower()[5:] + '_from_occt')
+        surface_class = OCCT_TO_VOLMDLR[occt_surface.get_type_name_s()]
+        surface = surface_function(surface_class, occt_surface)
+
+        occt_outer_wire, occt_inner_wires = from_occt.get_wires_from_face(occt_face)
+        contours = [volmdlr.wires.Contour3D.from_occt(contour)
+                    for contour in [occt_outer_wire] + occt_inner_wires]
+        contours[0].name = "face_outer_bound"
+
+        face_class = globals()[surface.face_class]
+        return face_class.from_contours3d(surface, contours3d=contours)
 
     def to_step(self, current_id):
         """Transforms a Face 3D into a Step object."""
@@ -2188,6 +2222,13 @@ class PlaneFace3D(Face3D):
         surface = surfaces.Surface2D(outer_contour, [])
         return cls(plane3d, surface, name)
 
+    @classmethod
+    def from_occt(cls, occt_face: TopoDS_Shape):
+        """
+        Translate an occt face into a volmdlr face.
+        """
+        return from_occt.face_from_ocp(cls, occt_face, OCCT_TO_VOLMDLR, surfaces.Surface2D)
+
 
 class PeriodicalFaceMixin:
     """
@@ -2704,6 +2745,13 @@ class CylindricalFace3D(PeriodicalFaceMixin, Face3D):
         surface2d = surfaces.Surface2D(outer_contour, [])
         return cls(cylindrical_surface, surface2d, name)
 
+    @classmethod
+    def from_occt(cls, occt_face: TopoDS_Shape):
+        """
+        Translate an occt face into a volmdlr face.
+        """
+        return from_occt.face_from_ocp(cls, occt_face, OCCT_TO_VOLMDLR, surfaces.Surface2D)
+
     def neutral_fiber(self):
         """
         Returns the faces' neutral fiber.
@@ -2875,6 +2923,13 @@ class ToroidalFace3D(PeriodicalFaceMixin, Face3D):
         """
         planeface_intersections = planeface.toroidalface_intersections(self)
         return planeface_intersections
+
+    @classmethod
+    def from_occt(cls, occt_face: TopoDS_Shape):
+        """
+        Translate an occt face into a volmdlr face.
+        """
+        return from_occt.face_from_ocp(cls, occt_face, OCCT_TO_VOLMDLR, surfaces.Surface2D)
 
 
 class ConicalFace3D(PeriodicalFaceMixin, Face3D):
@@ -3138,6 +3193,13 @@ class SphericalFace3D(PeriodicalFaceMixin, Face3D):
                 inner_contours.append(contour)
         surface2d = surfaces.Surface2D(outer_contour=surface_rectangular_cut, inner_contours=inner_contours)
         return cls(surface3d, surface2d=surface2d, name=name)
+
+    @classmethod
+    def from_occt(cls, occt_face: TopoDS_Shape):
+        """
+        Translate an occt face into a volmdlr face.
+        """
+        return from_occt.face_from_ocp(cls, occt_face, OCCT_TO_VOLMDLR, surfaces.Surface2D)
 
     def get_bounding_box(self):
         """
