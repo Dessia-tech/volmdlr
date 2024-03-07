@@ -1384,37 +1384,37 @@ class Circle2D(CircleMixin, ClosedCurve):
         return [volmdlr.edges.Arc2D(self, split_start, split_end),
                 volmdlr.edges.Arc2D(self, split_end, split_start)]
 
-    def line_intersections(self, line2d: Line2D, abs_tol=1e-9):
+    def line_intersections(self, line: Line2D, abs_tol=1e-9):
         """
         Calculates the intersections between a circle 2D and Line 2D.
 
-        :param line2d: line to calculate intersections
+        :param line: line to calculate intersections
         :param abs_tol: tolerance to consider in calculations.
         :return: circle and line intersections.
         """
-        if line2d.point_distance(self.center) > self.radius + abs_tol:
+        if line.point_distance(self.center) > self.radius + abs_tol:
             return []
-        if line2d.point_belongs(self.center):
-            direction_vector = line2d.unit_direction_vector()
+        if line.point_belongs(self.center):
+            direction_vector = line.unit_direction_vector()
             return [self.center + self.radius * direction_vector, self.center - self.radius * direction_vector]
         if not self.center.is_close(volmdlr.O2D):
-            local_line = line2d.frame_mapping(self.frame, 'new')
+            local_line = line.frame_mapping(self.frame, 'new')
             local_circle = self.frame_mapping(self.frame, 'new')
             local_line_intersections = local_circle.line_intersections(local_line)
             return [self.frame.local_to_global_coordinates(point) for point in local_line_intersections]
-        return self._helper_line_intersections(line2d)
+        return self._helper_line_intersections(line)
 
-    def linesegment_intersections(self, linesegment: 'volmdlr.edges.LineSegment2D', tol=1e-9):
+    def linesegment_intersections(self, linesegment: 'volmdlr.edges.LineSegment2D', abs_tol=1e-9):
         """
         Calculates the intersections between a circle 2D and line segment 2D.
 
         :param linesegment: line segment to calculate intersections
-        :param tol: tolerance to consider in calculations.
+        :param abs_tol: tolerance to consider in calculations.
         :return: circle and line segment intersections.
         """
-        if self.bounding_rectangle.distance_to_b_rectangle(linesegment.bounding_rectangle) > tol:
+        if self.bounding_rectangle.distance_to_b_rectangle(linesegment.bounding_rectangle) > abs_tol:
             return []
-        line_intersections = self.line_intersections(linesegment.line, tol)
+        line_intersections = self.line_intersections(linesegment.line, abs_tol)
         linesegment_intersections = []
         for intersection in line_intersections:
             if linesegment.point_belongs(intersection):
