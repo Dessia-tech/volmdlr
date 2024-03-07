@@ -1395,7 +1395,10 @@ def _triangle_min_max_points(
         Tuple[cython.double, cython.double, cython.double],
         Tuple[cython.double, cython.double, cython.double],
     ]
-) -> Tuple[Tuple[cython.double, cython.double, cython.double], Tuple[cython.double, cython.double, cython.double],]:
+) -> Tuple[
+    Tuple[cython.double, cython.double, cython.double],
+    Tuple[cython.double, cython.double, cython.double],
+]:
     """Calculate and return the minimum and maximum coordinates of a 3D triangle."""
 
     min_x: cython.double = math_c.INFINITY
@@ -1470,9 +1473,7 @@ def _triangle_2d_min_max_points(
 @cython.cfunc
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def _voxel_triangular_faces(
-    x: cython.double, y: cython.double, z: cython.double, voxel_size: float
-) -> vector[
+def _voxel_triangular_faces(x: cython.double, y: cython.double, z: cython.double, voxel_size: float) -> vector[
     Tuple[
         Tuple[cython.double, cython.double, cython.double],
         Tuple[cython.double, cython.double, cython.double],
