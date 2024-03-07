@@ -12,6 +12,7 @@ import cython
 import cython.cimports.libc.math as math_c
 import numpy as np
 from cython.cimports.libcpp import bool as bool_C
+from cython.cimports.libcpp.memory import unique_ptr
 from cython.cimports.libcpp.stack import stack
 from cython.cimports.libcpp.vector import vector
 from numpy.typing import NDArray
@@ -23,6 +24,27 @@ _Triangle3D = Tuple[_Point3D, _Point3D, _Point3D]
 _Point2D = Tuple[float, float]
 _Segment2D = Tuple[_Point2D, _Point2D]
 _Triangle2D = Tuple[_Point2D, _Point2D, _Point2D]
+
+
+# DATA STRUCTURES
+
+
+@cython.cclass
+class OctreeNode:
+    child_present: cython.uchar
+    children: Tuple[
+        unique_ptr[cython.pointer(OctreeNode)],
+        unique_ptr[cython.pointer(OctreeNode)],
+        unique_ptr[cython.pointer(OctreeNode)],
+        unique_ptr[cython.pointer(OctreeNode)],
+        unique_ptr[cython.pointer(OctreeNode)],
+        unique_ptr[cython.pointer(OctreeNode)],
+        unique_ptr[cython.pointer(OctreeNode)],
+        unique_ptr[cython.pointer(OctreeNode)],
+    ]
+
+    def __init__(self):
+        self.childPresent = 0
 
 
 # PYTHON FUNCTIONS
