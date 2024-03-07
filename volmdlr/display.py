@@ -464,7 +464,7 @@ class Mesh3D(MeshMixin, Primitive3D):
 
         :return: A new Mesh3D object resulting from the translation.
         """
-        translated_vertices = self.vertices + np.array(offset)
+        translated_vertices = self.vertices + np.array([offset.x, offset.y, offset.z])
 
         return self.__class__(
             vertices=translated_vertices, triangles=self.triangles, color=self.color, alpha=self.alpha, name=self.name

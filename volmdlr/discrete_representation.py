@@ -980,7 +980,7 @@ class PointBasedVoxelization(Voxelization):
         :rtype: PointBasedVoxelization
         """
         voxel_array = np.array(list(self.voxel_centers))
-        translated_voxels = voxel_array + np.array(offset)
+        translated_voxels = voxel_array + np.array([offset.x, offset.y, offset.z])
 
         intersecting_voxels = self._voxels_intersecting_voxels(translated_voxels, self.voxel_size)
 
