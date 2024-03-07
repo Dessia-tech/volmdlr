@@ -167,6 +167,12 @@ class TriangularElement(vmw.Triangle):
         vmw.Triangle.__init__(self, *points)
 
     def _to_linear_elements(self):
+        """
+        Converts the triangular element to linear elements.
+
+        :return: The linear elements corresponding to the sides of the triangle.
+        :rtype: List[LinearElement]
+        """
         vec1 = vm.Vector2D(self.points[1].x - self.points[0].x,
                            self.points[1].y - self.points[0].y)
         vec2 = vm.Vector2D(self.points[2].x - self.points[1].x,
@@ -262,6 +268,17 @@ class TriangularElement(vmw.Triangle):
     #             pt.translation(offset, copy=False)
 
     def axial_symmetry(self, line):
+        """
+        Applies axial symmetry to the triangular element with respect to a given line.
+
+        This method creates a mirror image of the triangular element across the specified line.
+        Each point of the triangle is reflected on the other side of the line, resulting in a new triangular element
+        that is a mirror image of the original.
+
+        :param line: The line of symmetry.
+        :return: A new TriangularElement instance that is the mirror image of the original.
+        :rtype: TriangularElement
+        """
         new_points = []
         for point in self.points:
             new_points.append(point.axial_symmetry(line))
@@ -310,6 +327,12 @@ class TriangularElement2D(TriangularElement, vmw.ClosedPolygon2D):
         # vmw.Triangle.__init__(self, points)
 
     def _to_linear_elements(self):
+        """
+        Converts the triangular element to linear elements.
+
+        :return: The linear elements corresponding to the sides of the triangle.
+        :rtype: List[LinearElement]
+        """
         vec1 = vm.Vector2D(self.points[1].x - self.points[0].x,
                            self.points[1].y - self.points[0].y)
         vec2 = vm.Vector2D(self.points[2].x - self.points[1].x,
@@ -357,6 +380,17 @@ class TriangularElement2D(TriangularElement, vmw.ClosedPolygon2D):
         return abs(u_vect.cross(v_vect)) / 2
 
     def axial_symmetry(self, line):
+        """
+        Applies axial symmetry to the triangular element with respect to a given line.
+
+        This method creates a mirror image of the triangular element across the specified line.
+        Each point of the triangle is reflected on the other side of the line, resulting in a new triangular element
+        that is a mirror image of the original.
+
+        :param line: The line of symmetry.
+        :return: A new TriangularElement2D instance that is the mirror image of the original.
+        :rtype: TriangularElement2D
+        """
         new_points = []
         for point in self.points:
             new_points.append(point.axial_symmetry(line))

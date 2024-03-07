@@ -264,8 +264,9 @@ class TestSphericalSurface3D(unittest.TestCase):
         spherical_surface2 = spherical_surface1.translation(volmdlr.Vector3D(1, 1, 1))
 
         inters = spherical_surface1.surface_intersections(spherical_surface2)
-        self.assertEqual(len(inters), 1)
-        self.assertAlmostEqual(inters[0].length(), 11.327173398039175)
+        self.assertEqual(len(inters), 2)
+        self.assertAlmostEqual(inters[0].length(), 1.2496117944319336)
+        self.assertAlmostEqual(inters[1].length(), 10.077561604707045)
 
         #test2
         spherical_surface2 = surfaces.SphericalSurface3D(
@@ -274,6 +275,12 @@ class TestSphericalSurface3D(unittest.TestCase):
         inters = spherical_surface1.surface_intersections(spherical_surface2)
         self.assertEqual(len(inters), 1)
         self.assertAlmostEqual(inters[0].length(), 6.283185306688713)
+
+    def test_normal_at_point(self):
+        spherical_surface3d = surfaces.SphericalSurface3D(volmdlr.OXYZ, 1)
+        point = volmdlr.Point3D(0.908248233153, 0.295875797457, 0.295875797457)
+        normal = spherical_surface3d.normal_at_point(point)
+        self.assertTrue(normal.is_close(volmdlr.Vector3D(0.9082483187228496, 0.2958758253326914, 0.30974418137711035)))
 
 
 if __name__ == '__main__':

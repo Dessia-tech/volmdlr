@@ -53,8 +53,7 @@ def version_from_git_describe(version):
                 split_versions[-1] = str(int(split_versions[-1]) + 1)
                 future_version = ".".join(split_versions)
                 return "{}.dev{}".format(future_version, number_commits_ahead)
-            else:
-                return ".".join(split_versions)
+            return ".".join(split_versions)
 
     if number_commits_ahead > 0:
         if len(split_versions) == 2:
@@ -64,11 +63,10 @@ def version_from_git_describe(version):
         split_versions[-1] = str(int(split_versions[-1]) + 1)
         split_versions = ".".join(split_versions)
         return "{}.dev{}+{}".format(split_versions, number_commits_ahead, commit_hash)
-    else:
-        if suffix is not None:
-            split_versions.append(suffix)
+    if suffix is not None:
+        split_versions.append(suffix)
 
-        return ".".join(split_versions)
+    return ".".join(split_versions)
 
 
 # Just testing if get_version works well
@@ -134,7 +132,7 @@ setup(
         "geomdl",
         "networkx",
         "triangle",
-        "plot_data>=0.10.9",
+        "plot_data>=0.23.0",
         "kaitaistruct",
         "binaryornot",
         "sympy",
@@ -143,6 +141,7 @@ setup(
         "gmsh",
         "pyfqmr",
         "CGAL",
+        "cadquery-ocp"
     ],
     extras_require={"test": ["coverage"],
                     "doc": ["sphinx", "nbsphinx", "pydata_sphinx_theme", "nbformat", "nbconvert",

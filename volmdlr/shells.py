@@ -3,7 +3,7 @@ import math
 import random
 import warnings
 from itertools import chain, product
-from typing import Any, Dict, Iterable, List, Tuple, Union
+from typing import Iterable, List, Tuple, Union
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -19,10 +19,8 @@ import volmdlr.core_compiled
 import volmdlr.faces
 import volmdlr.geometry
 from volmdlr import curves, display, edges, surfaces, wires
-from volmdlr.core import (edge_in_list, get_edge_index_in_list,
-                          get_point_index_in_list, point_in_list)
-from volmdlr.utils.step_writer import (geometric_context_writer,
-                                       product_writer, step_ids_to_str)
+from volmdlr.core import edge_in_list, get_edge_index_in_list, get_point_index_in_list, point_in_list
+from volmdlr.utils.step_writer import geometric_context_writer, product_writer, step_ids_to_str
 
 # pylint: disable=unused-argument
 
@@ -99,7 +97,8 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
                  color: Tuple[float, float, float] = None,
                  alpha: float = 1.,
                  name: str = '',
-                 bounding_box: volmdlr.core.BoundingBox = None):
+                 bounding_box: volmdlr.core.BoundingBox = None,
+                 reference_path: str = volmdlr.PATH_ROOT):
 
         self.faces = faces
         if not color:
@@ -119,7 +118,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
 
         volmdlr.core.CompositePrimitive3D.__init__(self,
                                                    primitives=faces, color=color, alpha=alpha,
-                                                   name=name)
+                                                   reference_path=reference_path, name=name)
 
     def __iter__(self):
         return self
@@ -1230,8 +1229,8 @@ class ClosedShell3D(Shell3D):
                     continue
                 break
             else:
-                break
-            continue
+                continue
+            break
         is_inside = True
         if count % 2 == 0:
             is_inside = False
@@ -1498,7 +1497,7 @@ class ClosedShell3D(Shell3D):
             points = [center_of_mass]
 
         if face.surface2d.inner_contours:
-            normal_0 = face.surface2d.outer_contour.primitives[0].normal_vector()
+            normal_0 = face.surface2d.outer_contour.primitives[0].normal_vector(0.0)
             middle_point_0 = face.surface2d.outer_contour.primitives[0].middle_point()
             point1 = middle_point_0 + 0.0001 * normal_0
             point2 = middle_point_0 - 0.0001 * normal_0
@@ -1509,8 +1508,9 @@ class ClosedShell3D(Shell3D):
         for point in points:
             point3d = face.surface3d.point2d_to_3d(point)
             if face.point_belongs(point3d):
-                normal1 = point3d - 0.00001 * face.surface3d.frame.w
-                normal2 = point3d + 0.00001 * face.surface3d.frame.w
+                normal_at_point = face.normal_at_point(point3d)
+                normal1 = point3d - 0.00001 * normal_at_point
+                normal2 = point3d + 0.00001 * normal_at_point
                 if (self.point_inside(normal1) and
                     shell2.point_inside(normal2)) or \
                         (shell2.point_inside(normal1) and
@@ -1535,7 +1535,8 @@ class ClosedShell3D(Shell3D):
             inside_shell2 = shell2.point_inside(new_face.random_point_inside())
             face_on_shell2 = shell2.face_on_shell(new_face)
             if not inside_shell2 or face_on_shell2:
-                if list_coincident_faces:
+                if list_coincident_faces and any(new_face.surface3d.is_coincident(face.surface3d)
+                                                 for faces in list_coincident_faces for face in faces):
                     if self.is_face_between_shells(shell2, new_face):
                         return False
                 return True
@@ -1643,6 +1644,7 @@ class ClosedShell3D(Shell3D):
 
     @staticmethod
     def clean_faces(union_faces, list_new_faces):
+        """Clean Boolean Operations new faces."""
         list_remove_faces = []
         if union_faces:
             for face1 in union_faces:
@@ -1807,9 +1809,10 @@ class OpenTriangleShell3D(OpenShell3D):
         faces: List[volmdlr.faces.Triangle3D],
         color: Tuple[float, float, float] = None,
         alpha: float = 1.0,
+        reference_path: str = volmdlr.PATH_ROOT,
         name: str = "",
     ):
-        OpenShell3D.__init__(self, faces=faces, color=color, alpha=alpha, name=name)
+        OpenShell3D.__init__(self, faces=faces, color=color, alpha=alpha, reference_path=reference_path, name=name)
 
     def get_bounding_box(self) -> volmdlr.core.BoundingBox:
         """Gets the Shell bounding box."""
@@ -1875,7 +1878,6 @@ class OpenTriangleShell3D(OpenShell3D):
                 triangles.append(volmdlr.faces.Triangle3D(points[i1], points[i2], points[i3]))
             except ZeroDivisionError:
                 pass
-
         return cls(triangles, name=name)
 
     def decimate(
@@ -1972,25 +1974,13 @@ class OpenTriangleShell3D(OpenShell3D):
         # not rounding to make sure to retrieve the exact same object with 'dict_to_object'
         vertices, faces = self.to_mesh_data(round_vertices=False)
 
-        dict_["vertices"] = vertices.tolist()
-        dict_["faces"] = faces.tolist()
-        dict_["alpha"] = self.alpha
-        dict_["color"] = self.color
-
+        dict_.update({"vertices": vertices.tolist(), "faces": faces.tolist(), "alpha": self.alpha,
+                      "color": self.color, "reference_path": self.reference_path})
         return dict_
 
     @classmethod
-    def dict_to_object(
-        cls,
-        dict_: JsonSerializable,
-        force_generic: bool = False,
-        global_dict=None,
-        pointers_memo: Dict[str, Any] = None,
-        path: str = "#",
-        name: str = "",
-    ) -> "OpenTriangleShell3D":
+    def dict_to_object(cls, dict_: JsonSerializable, **kwargs) -> "OpenTriangleShell3D":
         """Overload of 'dict_to_object' for performance."""
-
         vertices = dict_["vertices"]
         faces = dict_["faces"]
         name = dict_["name"]
@@ -1998,7 +1988,7 @@ class OpenTriangleShell3D(OpenShell3D):
         triangle_shell = cls.from_mesh_data(vertices, faces, name)
         triangle_shell.alpha = dict_["alpha"]
         triangle_shell.color = dict_["color"]
-
+        triangle_shell.reference_path = dict_.get("reference_path", volmdlr.PATH_ROOT)
         return triangle_shell
 
     def to_display_triangle_shell(self) -> "DisplayTriangleShell3D":
@@ -2035,10 +2025,11 @@ class ClosedTriangleShell3D(OpenTriangleShell3D, ClosedShell3D):
         faces: List[volmdlr.faces.Triangle3D],
         color: Tuple[float, float, float] = None,
         alpha: float = 1.0,
+        reference_path: str = volmdlr.PATH_ROOT,
         name: str = "",
     ):
         OpenTriangleShell3D.__init__(self, faces=faces, color=color, alpha=alpha, name=name)
-        ClosedShell3D.__init__(self, faces, color, alpha, name)
+        ClosedShell3D.__init__(self, faces=faces, color=color, alpha=alpha, reference_path=reference_path, name=name)
 
     def are_normals_pointing_outwards(self):
         """Verifies if all face's normal are pointing outwards the closed shell."""
@@ -2085,7 +2076,8 @@ class DisplayTriangleShell3D(Shell3D):
     performance.
     """
 
-    def __init__(self, positions: NDArray[float], indices: NDArray[int], name: str = ""):
+    def __init__(self, positions: NDArray[float], indices: NDArray[int],
+                 reference_path: str = volmdlr.PATH_ROOT, name: str = ""):
         """
         Instantiate the DisplayTriangleShell3D.
 
@@ -2101,7 +2093,8 @@ class DisplayTriangleShell3D(Shell3D):
         self.positions = positions
         self.indices = indices
 
-        Shell3D.__init__(self, faces=[], name=name)  # avoid saving the faces for memory and performance
+        # Avoid saving the faces for memory and performance
+        Shell3D.__init__(self, faces=[], reference_path=reference_path, name=name)
 
     @classmethod
     def from_triangle_shell(
@@ -2152,17 +2145,8 @@ class DisplayTriangleShell3D(Shell3D):
         return dict_
 
     @classmethod
-    def dict_to_object(
-        cls,
-        dict_: JsonSerializable,
-        force_generic: bool = False,
-        global_dict=None,
-        pointers_memo: Dict[str, Any] = None,
-        path: str = "#",
-        name: str = "",
-    ) -> "DisplayTriangleShell3D":
+    def dict_to_object(cls, dict_: JsonSerializable, **kwargs) -> 'DisplayTriangleShell3D':
         """Overload of 'dict_to_object' for performance."""
-
         positions = np.array(dict_["positions"])
         indices = np.array(dict_["indices"])
         name = dict_["name"]
@@ -2171,7 +2155,6 @@ class DisplayTriangleShell3D(Shell3D):
 
         display_triangle_shell.alpha = dict_["alpha"]
         display_triangle_shell.color = dict_["color"]
-
         return display_triangle_shell
 
     def concatenate(self, other: "DisplayTriangleShell3D") -> "DisplayTriangleShell3D":
