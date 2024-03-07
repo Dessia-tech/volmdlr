@@ -54,6 +54,7 @@ class RoundedLineSegments3D(volmdlr.primitives.RoundedLineSegments):
         volmdlr.primitives.RoundedLineSegments.__init__(self, points, radius, adapt_radius=adapt_radius, name=name)
 
     def arc_features(self, point_index: int):
+        """Get rounded line segments arc features."""
         radius = self.radius[point_index]
         point_1, point_i, point_2 = self.get_points(point_index)
         dist1 = (point_1 - point_i).norm()
@@ -261,6 +262,7 @@ class Block(shells.ClosedShell3D):
                 volmdlr.edges.LineSegment3D(point4.copy(), point8.copy())]
 
     def face_contours3d(self):
+        """Get face contours."""
         edges = self.edges()
         switched_edges = [edge.reverse() for edge in edges[4:]]
         contours = [
