@@ -644,9 +644,6 @@ cdef class Vector2D(Vector):
             return self.x == other.x and self.y == other.y
         return False
 
-    def __array__(self) -> npy.ndarray:
-        return npy.array([self.x, self.y], dtype=npy.float64)
-
     def _data_eq(self, other):
         return self == other
 
@@ -1043,6 +1040,9 @@ cdef class Point2D(Vector2D):
             return self.x == other.x and self.y == other.y
         return False
 
+    def __array__(self) -> npy.ndarray:
+        return npy.array([self.x, self.y], dtype=npy.float64)
+
     def _data_eq(self, other):
         return self == other
 
@@ -1432,9 +1432,6 @@ cdef class Vector3D(Vector):
         if isinstance(other, self.__class__):
             return self.x == other.x and self.y == other.y and self.z == other.z
         return False
-
-    def __array__(self) -> npy.ndarray:
-        return npy.array([self.x, self.y, self.z], dtype=npy.float64)
 
     def _data_eq(self, other):
         return self == other
@@ -1963,6 +1960,9 @@ cdef class Point3D(Vector3D):
         if isinstance(other, self.__class__):
             return self.x == other.x and self.y == other.y and self.z == other.z
         return False
+
+    def __array__(self) -> npy.ndarray:
+        return npy.array([self.x, self.y, self.z], dtype=npy.float64)
 
     def _data_eq(self, other):
         return self == other
