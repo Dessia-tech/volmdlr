@@ -1647,8 +1647,8 @@ class VolumeModel(dc.PhysicalObject):
         Translate a step file into a volume model using OCCT.
         """
         # Set the unit to meter
-        Interface_Static.SetCVal_s("xstep.cascade.unit", "M")
         reader = STEPControl_Reader()
+        Interface_Static.SetCVal_s("xstep.cascade.unit", "M")
         readStatus = reader.ReadFile(step_file)
         if readStatus != OCP.IFSelect.IFSelect_RetDone:
             raise ValueError("STEP File could not be loaded")

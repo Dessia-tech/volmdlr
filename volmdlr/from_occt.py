@@ -541,7 +541,7 @@ def get_contour2d_from_face_wire(contour2d_class, wire, face, occt_to_volmdlr):
         list_edges.append(volmdlr_edge2d_from_occt_curve(occt_to_volmdlr[crv.get_type_name_s()], crv,
                                                          u_start, u_end, orientation))
         exp.Next()
-    if not contour2d_class(list_edges).is_ordered(1e-3):
+    if not contour2d_class(list_edges).is_ordered(1e-2):
         print("Contour not ordered")
     return contour2d_class(list_edges)
 

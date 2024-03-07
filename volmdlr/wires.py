@@ -740,7 +740,7 @@ class WireMixin:
             list_edges.append(from_occt.volmdlr_edge_from_occt_curve(OCCT_TO_VOLMDLR[occt_curve.get_type_name_s()],
                               occt_curve, u_start, u_end, orientation))
             exp.Next()
-        if not cls(list_edges).is_ordered(1e-3):
+        if not cls(list_edges).is_ordered(1e-4):
             print("Contour not ordered")
         return cls(list_edges)
 
