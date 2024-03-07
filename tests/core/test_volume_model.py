@@ -1,5 +1,6 @@
 import math
 import unittest
+import os
 from copy import deepcopy
 import volmdlr
 from volmdlr.primitives3d import Block
@@ -70,6 +71,12 @@ class TestVolumeModel(unittest.TestCase):
 
         self.assertEqual(20, mesh.n_vertices)
         self.assertEqual(24, mesh.n_triangles)
+
+    def test_from_step(self):
+        package_path = os.path.dirname(os.path.dirname(volmdlr.__file__))
+        step_file_path = os.path.join(package_path, "scripts/step/bracket2.step")
+        model = VolumeModel.from_step(step_file_path)
+        self.assertTrue(model.primitives)
 
 
 if __name__ == "__main__":
