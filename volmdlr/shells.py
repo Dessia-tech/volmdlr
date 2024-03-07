@@ -1632,6 +1632,7 @@ class ClosedShell3D(Shell3D):
 
     @staticmethod
     def clean_faces(union_faces, list_new_faces):
+        """Clean Boolean Operations new faces."""
         list_remove_faces = []
         if union_faces:
             for face1 in union_faces:

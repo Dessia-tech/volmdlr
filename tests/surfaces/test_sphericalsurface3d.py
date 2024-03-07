@@ -264,8 +264,9 @@ class TestSphericalSurface3D(unittest.TestCase):
         spherical_surface2 = spherical_surface1.translation(volmdlr.Vector3D(1, 1, 1))
 
         inters = spherical_surface1.surface_intersections(spherical_surface2)
-        self.assertEqual(len(inters), 1)
-        self.assertAlmostEqual(inters[0].length(), 11.327173398039175)
+        self.assertEqual(len(inters), 2)
+        self.assertAlmostEqual(inters[0].length(), 1.2496117944319336)
+        self.assertAlmostEqual(inters[1].length(), 10.077561604707045)
 
         #test2
         spherical_surface2 = surfaces.SphericalSurface3D(
