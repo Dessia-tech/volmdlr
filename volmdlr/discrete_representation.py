@@ -1,6 +1,7 @@
 """
 Class for discrete representations of volmdlr models (voxelization for 3D geometries, pixelization for 2D geometries).
 """
+
 import itertools
 import math
 import warnings
@@ -8,11 +9,11 @@ from typing import Dict, Iterable, List, Set, Tuple, TypeVar, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
-from dessia_common.core import DessiaObject, PhysicalObject
-from dessia_common.serialization import JsonSerializable
 from matplotlib import patches
 from numpy.typing import NDArray
 
+from dessia_common.core import DessiaObject, PhysicalObject
+from dessia_common.serialization import JsonSerializable
 from volmdlr import Point2D, Point3D, Vector3D
 from volmdlr.core import BoundingBox, BoundingRectangle, VolumeModel
 from volmdlr.discrete_representation_compiled import (
@@ -28,6 +29,7 @@ from volmdlr.discrete_representation_compiled import (
 from volmdlr.display import Mesh3D
 from volmdlr.edges import LineSegment2D
 from volmdlr.faces import Face3D, Triangle3D
+from volmdlr.geometry import rotation_matrix
 from volmdlr.shells import ClosedTriangleShell3D, DisplayTriangleShell3D, Shell3D
 from volmdlr.wires import ClosedPolygon2D
 
@@ -959,10 +961,9 @@ class PointBasedVoxelization(Voxelization):
         :return: A new Voxelization object resulting from the rotation.
         :rtype: PointBasedVoxelization
         """
-        rotation_matrix = self._rotation_matrix(axis, angle)
-        voxel_array = np.array(list(self.voxel_centers)) - np.array([center.x, center.y, center.z])
-        rotated_voxels = np.dot(voxel_array, rotation_matrix.T)
-        rotated_voxels += np.array([center.x, center.y, center.z])
+        voxel_array = np.array(list(self.voxel_centers)) - np.array(center)
+        rotated_voxels = np.dot(voxel_array, rotation_matrix(axis, angle).T)
+        rotated_voxels += np.array(center)
 
         intersecting_voxels = self._voxels_intersecting_voxels(rotated_voxels, self.voxel_size)
 
@@ -1101,37 +1102,6 @@ class PointBasedVoxelization(Voxelization):
         z_index = int((point[2] - self.bounding_box.zmin) // self.voxel_size)
 
         return x_index, y_index, z_index
-
-    @staticmethod
-    def _rotation_matrix(axis: Vector3D, angle: float) -> np.array:
-        """
-        Helper method that compute a rotation matrix from an axis and a radians angle.
-
-        :param axis: The rotation axis.
-        :type axis: Vector3D
-        :param angle: The rotation angle.
-        :type angle: float
-
-        :return: The computed rotation matrix.
-        :rtype: numpy.array
-        """
-        # pylint: disable=invalid-name,too-many-locals
-        axis = np.array([axis.x, axis.y, axis.z])
-
-        axis = axis / np.linalg.norm(axis)
-        a = np.cos(angle / 2.0)
-
-        b, c, d = -axis * np.sin(angle / 2.0)
-        aa, bb, cc, dd = a * a, b * b, c * c, d * d
-        bc, ad, ac, ab, bd, cd = b * c, a * d, a * c, a * b, b * d, c * d
-
-        return np.array(
-            [
-                [aa + bb - cc - dd, 2 * (bc + ad), 2 * (bd - ac)],
-                [2 * (bc - ad), aa + cc - bb - dd, 2 * (cd + ab)],
-                [2 * (bd + ac), 2 * (cd - ab), aa + dd - bb - cc],
-            ]
-        )
 
     @staticmethod
     def _voxels_intersecting_voxels(voxel_centers_array: np.ndarray, voxel_size: float) -> Set[_Point3D]:
