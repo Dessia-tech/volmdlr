@@ -6,14 +6,13 @@ Helper Cython functions for discrete representation defined using the pure Pytho
 
 This module needs to be compiled!
 """
-from typing import List, Set, Tuple
+from typing import List, Set, Tuple, Dict
 
 import cython
 import cython.cimports.libc.math as math_c
 import numpy as np
-from cython.cimports.libc.stdlib import free, malloc
 from cython.cimports.libcpp import bool as bool_C
-from cython.cimports.libcpp.map import map as map_cpp
+from cython.cimports.libcpp.unordered_map import unordered_map
 from cython.cimports.libcpp.stack import stack
 from cython.cimports.libcpp.vector import vector
 
@@ -36,11 +35,15 @@ _Triangle2D = Tuple[_Point2D, _Point2D, _Point2D]
 @cython.cclass
 class OctreeNode:
     child_states: cython.uchar  # Each bit indicates the non-nodes child type: 0 for void, 1 for leaf
-    child_nodes: map_cpp[cython.uchar : OctreeNode]
+    child_nodes: unordered_map[cython.uchar : OctreeNode]
+
+    def __cinit__(self):
+        self.child_states = 0
+        self.child_nodes: unordered_map[cython.uchar : OctreeNode]()
 
     def __init__(self):
         self.child_states = 0
-        self.child_nodes = {}
+        self.child_nodes: unordered_map[cython.uchar : OctreeNode]()
 
     # CHILD STATES OPERATIONS
     @cython.ccall
@@ -54,17 +57,17 @@ class OctreeNode:
     # CHILD NODES OPERATIONS
     @cython.ccall
     def create_child_node(self, index: cython.uchar):
-        self.child_nodes[index] = OctreeNode()
+        self.child_nodes.insert(index, OctreeNode())
         self.child_states &= ~(1 << index)
 
     @cython.ccall
     def add_child_node(self, index: cython.uchar, child_node: OctreeNode):
-        self.child_nodes[index] = child_node
+        self.child_nodes.insert(index, child_node)
         self.child_states &= ~(1 << index)
 
     @cython.ccall
     def get_child_node(self, index: cython.uchar) -> OctreeNode:
-        return self.child_nodes[index]
+        return self.child_nodes.find(index)
 
     @cython.ccall
     def delete_child_node(self, index: cython.uchar):
@@ -76,17 +79,30 @@ class OctreeNode:
         self.child_states |= 1 << index
 
     # STATES GETTER
-    @cython.ccall
-    def get_child_nodes(self):
+    def get_child_nodes(self) -> Dict[cython.uchar, OctreeNode]:
         return self.child_nodes
 
+    @cython.cfunc
+    def get_node_child_indices(self) -> vector[cython.uchar]:
+        leaf_indices: vector[cython.uchar]
+        it: unordered_map[cython.uchar : OctreeNode].iterator = self.child_nodes.begin()
+
+        while it != self.child_nodes.end():
+            print(it.first)
+            it.next()
+
     @cython.ccall
-    def get_leaf_child_indices(self) -> List[cython.uchar]:
-        leaf_indices = []
+    def get_leaf_child_indices(self) -> vector[cython.uchar]:
+        leaf_indices: vector[cython.uchar]
+        i: cython.uchar
         for i in range(8):
             if self.child_states & (1 << i):
-                leaf_indices.append(i)
+                leaf_indices.push_back(i)
         return leaf_indices
+
+    @property
+    def nbytes(self):
+        return cython.sizeof(self) + cython.sizeof(self.child_states) + cython.sizeof(self.child_nodes)
 
 
 # PYTHON FUNCTIONS
