@@ -9,8 +9,7 @@ import volmdlr
 import volmdlr.templates
 from volmdlr.utils.step_writer import (product_writer, geometric_context_writer, assembly_definition_writer,
                                        step_ids_to_str)
-from volmdlr.core import (Primitive3D, BoundingBox, helper_babylon_data, map_primitive_with_initial_and_final_frames,
-                          babylon_data)
+from volmdlr.core import (Primitive3D, BoundingBox, map_primitive_with_initial_and_final_frames, get_babylon_data)
 from volmdlr import from_ocp
 from volmdlr.shells import Shell3D
 
@@ -73,7 +72,7 @@ class Assembly(dc.PhysicalObject):
         :return: Dictionary with babylon data.
         """
 
-        return babylon_data(self, merge_meshes=merge_meshes)
+        return get_babylon_data(self, merge_meshes=merge_meshes)
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
@@ -241,7 +240,7 @@ class Compound(dc.PhysicalObject):
         :return: Dictionary with babylon data.
         """
 
-        return babylon_data(self, merge_meshes=merge_meshes)
+        return get_babylon_data(self, merge_meshes=merge_meshes)
 
     def volmdlr_primitives(self):
         """Return primitives."""

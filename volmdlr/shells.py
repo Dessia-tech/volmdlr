@@ -8,7 +8,6 @@ from typing import Iterable, List, Tuple, Union
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
-import pyfqmr
 from dessia_common.core import DessiaObject
 from dessia_common.typings import JsonSerializable
 from numpy.typing import NDArray
@@ -24,6 +23,7 @@ from volmdlr import curves, display, edges, surfaces, wires
 from volmdlr.core import edge_in_list, get_edge_index_in_list, get_point_index_in_list, point_in_list
 from volmdlr.utils.step_writer import geometric_context_writer, product_writer, step_ids_to_str
 from volmdlr import from_ocp
+from volmdlr.utils.mesh_helpers import perform_decimation
 # pylint: disable=unused-argument
 
 
@@ -1940,9 +1940,9 @@ class OpenTriangleShell3D(OpenShell3D):
 
         vertices, triangles = self.to_mesh_data(round_vertices=True, n_decimals=9)
 
-        simplifier = pyfqmr.Simplify()
-        simplifier.setMesh(vertices, triangles)
-        simplifier.simplify_mesh(
+        vertices, faces = perform_decimation(
+            vertices=vertices,
+            triangles=triangles,
             target_count=target_count,
             update_rate=update_rate,
             aggressiveness=aggressiveness,
@@ -1951,11 +1951,9 @@ class OpenTriangleShell3D(OpenShell3D):
             lossless=lossless,
             threshold_lossless=threshold_lossless,
             alpha=alpha,
-            K=k,
+            k=k,
             preserve_border=preserve_border,
         )
-
-        vertices, faces, _ = simplifier.getMesh()
 
         return self.__class__.from_mesh_data(vertices, faces)
 

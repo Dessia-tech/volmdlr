@@ -233,7 +233,7 @@ def _extract_positions(mesh):
     return all_positions
 
 
-def babylon_data(shape, merge_meshes=True):
+def get_babylon_data(shape, merge_meshes=True):
     """
     Get babylonjs data.
 
@@ -1161,7 +1161,7 @@ class VolumeModel(dc.PhysicalObject):
         :return: Dictionary with babylon data.
         """
 
-        return babylon_data(self, merge_meshes=merge_meshes)
+        return get_babylon_data(self, merge_meshes=merge_meshes)
 
     @classmethod
     def babylonjs_script(cls, babylon_data, use_cdn=True, **kwargs):

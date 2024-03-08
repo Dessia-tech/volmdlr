@@ -8,7 +8,6 @@ import warnings
 from typing import List, Tuple, TypeVar, Union
 
 import numpy as np
-import pyfqmr
 from numpy.typing import NDArray
 from scipy.spatial import cKDTree
 
@@ -21,6 +20,7 @@ from trimesh import Trimesh
 from volmdlr.core import Primitive3D
 from volmdlr.edges import LineSegment2D, LineSegment3D
 from volmdlr.geometry import rotation_matrix
+from volmdlr.utils.mesh_helpers import perform_decimation
 
 # TODO: make this module "mesh" as it is not useful only for display
 
@@ -664,9 +664,9 @@ class Mesh3D(MeshMixin, Primitive3D):
         """
         # pylint: disable=too-many-arguments
 
-        simplifier = pyfqmr.Simplify()
-        simplifier.setMesh(self.vertices, self.triangles)
-        simplifier.simplify_mesh(
+        vertices, triangles = perform_decimation(
+            vertices=self.vertices,
+            triangles=self.triangles,
             target_count=target_count,
             update_rate=update_rate,
             aggressiveness=aggressiveness,
@@ -675,11 +675,9 @@ class Mesh3D(MeshMixin, Primitive3D):
             lossless=lossless,
             threshold_lossless=threshold_lossless,
             alpha=alpha,
-            K=k,
+            k=k,
             preserve_border=preserve_border,
         )
-
-        vertices, triangles, _ = simplifier.getMesh()
 
         return self.__class__(vertices, triangles)
 
