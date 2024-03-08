@@ -1,4 +1,4 @@
-# cython: language_level=3
+# cython: language_level=3, boundscheck=False, wraparound=False, cdivision=True
 # distutils: language = c++
 # pylint: disable=no-member, used-before-assignment, no-name-in-module, import-error
 """
@@ -11,10 +11,13 @@ from typing import List, Set, Tuple
 import cython
 import cython.cimports.libc.math as math_c
 import numpy as np
+from cython.cimports.libc.stdlib import free, malloc
 from cython.cimports.libcpp import bool as bool_C
-from cython.cimports.libcpp.memory import unique_ptr
+from cython.cimports.libcpp.map import map as map_cpp
 from cython.cimports.libcpp.stack import stack
 from cython.cimports.libcpp.vector import vector
+# from cython.cimports.libcpp.memory import unique_ptr
+# from cython.operator import dereference, postincrement
 from numpy.typing import NDArray
 
 # CUSTOM TYPES
@@ -31,20 +34,46 @@ _Triangle2D = Tuple[_Point2D, _Point2D, _Point2D]
 
 @cython.cclass
 class OctreeNode:
-    child_present: cython.uchar
-    children: Tuple[
-        unique_ptr[cython.pointer(OctreeNode)],
-        unique_ptr[cython.pointer(OctreeNode)],
-        unique_ptr[cython.pointer(OctreeNode)],
-        unique_ptr[cython.pointer(OctreeNode)],
-        unique_ptr[cython.pointer(OctreeNode)],
-        unique_ptr[cython.pointer(OctreeNode)],
-        unique_ptr[cython.pointer(OctreeNode)],
-        unique_ptr[cython.pointer(OctreeNode)],
-    ]
+    child_state: cython.uchar  # Each bit indicates the non-nodes child type: 0 for none, 1 for leaf
+    child_nodes: map_cpp[cython.uchar : OctreeNode]
 
     def __init__(self):
-        self.childPresent = 0
+        self.child_state = 0
+        # self.children = cython.NULL
+    #
+    # def __cinit__(self):
+    #     self.child_state = 0
+
+    def create_child_node(self, index: int) -> None:
+        self._create_child(index)
+
+    @cython.ccall
+    def _create_child_node(self, index: cython.uchar):
+        self.child_nodes[index] = OctreeNode()
+
+    def add_child_node(self, index: int, child_node: OctreeNode) -> None:
+        self._add_child_node(index, child_node)
+
+    @cython.ccall
+    def _add_child_node(self, index: cython.uchar, child_node: OctreeNode):
+        self.child_nodes[index] = child_node
+
+
+    # def get_child(self, index: cython.uchar) -> OctreeNode:
+    #     child:
+    #     return self.child_nodes[index]
+
+    # def __dealloc__(self):
+    #     children: map_cpp[cython.uchar : cython.pointer(OctreeNode)] = self.children
+    #     it: map_cpp[cython.uchar : cython.pointer(OctreeNode)].iterator = children.begin()
+    #
+    #     while it != children.end():
+    #         value = it.second  # value is a pointer to an OctreeNode
+    #         PyMem_Free(value)
+    #         it.next()
+
+    # def has_child(self, index: int) -> bool:
+    #     return bool(self.child_present & (1 << index))
 
 
 # PYTHON FUNCTIONS
