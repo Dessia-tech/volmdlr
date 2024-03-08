@@ -398,6 +398,10 @@ class TriangularElement2D(TriangularElement, vmw.ClosedPolygon2D):
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(), point_numbering=False,
              fill=False, fill_color='w'):
+        """
+        Plots a triangular element using matplotlib.
+
+        """
         if ax is None:
             _, ax = plt.subplots()
             ax.set_aspect('equal')
@@ -506,6 +510,10 @@ class TetrahedralElement(DessiaObject):
         return triangular_elements
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
+        """
+        Plots a tetrahedral element using matplotlib.
+
+        """
         if ax is None:
             ax = plt.figure().add_subplot(projection='3d')
         for point in self.points:
@@ -660,6 +668,7 @@ class Mesh(DessiaObject):
         DessiaObject.__init__(self, name='')
 
     def _set_nodes_number(self):
+        """Sets number of nodes of the mesh."""
         nodes = set()
         for elements_group in self.elements_groups:
             for element in elements_group.elements:
@@ -671,6 +680,12 @@ class Mesh(DessiaObject):
         return tuple(nodes)
 
     def point_to_element(self, point):
+        """
+        Transform a point to an Element.
+
+        :param point: point to be transformed into an element.
+        :return:
+        """
         for element_group in self.elements_groups:
             element = element_group.point_to_element(point)
             if element is not None:
@@ -678,6 +693,10 @@ class Mesh(DessiaObject):
         return None
 
     def plot(self, ax=None):
+        """
+        Plots a mesh using matplotlib.
+
+        """
         if ax is None:
             if self.elements_groups[0].elements[0].__class__.__name__[-2::] == '2D':
                 _, ax = plt.subplots()
@@ -689,6 +708,11 @@ class Mesh(DessiaObject):
         return ax
 
     def bounding_rectangle(self):
+        """
+        Gets the bounding rectangle for a mesh.
+
+        :return:
+        """
         nodes = self.nodes
         x, y = [], []
         for n in nodes:
@@ -727,6 +751,10 @@ class Mesh(DessiaObject):
     #     return mesh
 
     def nodes_correction(self, reference_index, tol=1e-4):
+        """
+        Apply correction to nodes.
+
+        """
         if not self._nodes_correction:
             nodes_reference = self.elements_groups[reference_index].nodes
             groups = self.elements_groups[:]
@@ -780,6 +808,7 @@ class Mesh(DessiaObject):
         return self._helper_create_mesh(groups)
 
     def _helper_create_mesh(self, groups):
+        """Helper method."""
         mesh = self.__class__(groups)
         mesh.gmsh = self.gmsh
         mesh.set_nodes_correction(self.get_nodes_correction())
@@ -832,6 +861,7 @@ class Mesh(DessiaObject):
         self._gmsh = gmsh_parser
 
     def copy(self):
+        """Copy a mesh."""
         mesh = self.__class__(elements_groups=self.elements_groups[:])
         mesh.set_nodes_correction(self.get_nodes_correction())
         mesh.gmsh = self.gmsh

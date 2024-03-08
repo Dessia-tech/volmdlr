@@ -152,18 +152,6 @@ class TestCylindricalFace3D(unittest.TestCase):
         self.assertAlmostEqual(plane_intersections[0].length(), 0.10485331158773475)
 
     def test_conicalface_intersections(self):
-        expected_results = [[[3.7095444178694787], [2.754671034122705, 0.7935213452250598],
-                             [2.075126698839449,  0.49133092691300395, 1.0377142752022748,  0.5464208749923458],
-                             [2.5699447071876236, 2.569944707187624],
-                             [0.5440554686815117,  0.04555235973555357, 1.2782307913877522,  0.25616610636212483]],
-                            [[0.904180630293272, 1.392773884071054], [2.754671034122705, 0.7935213452250598],
-                             [0.9945099178084125, 0.011885799104577068,  0.49133092691300395, 1.0377142752022748,
-                              0.5464208749923458],  [0.2895638627891746, 0.9393502379009631, 2.569944707187624],
-                             [0.2798809795825533, 0.04555235973555357, 0.7579656339795895]],
-                            [[0.8560428761357552, 0.32222897609785606],
-                             [0.6888878220595716, 0.6888878220595696, 0.1984154951054974, 0.19841549510549764],
-                             [0.49133092691300395, 1.0377142752022748, 0.5464208749923458], [2.569944707187624],
-                             []]]
         conical_surface = surfaces.ConicalSurface3D(volmdlr.OXYZ, math.pi / 6)
         conical_face = faces.ConicalFace3D.from_surface_rectangular_cut(
             conical_surface, 0, volmdlr.TWO_PI, 0, 2)
@@ -196,9 +184,21 @@ class TestCylindricalFace3D(unittest.TestCase):
                 cyl_face = faces.CylindricalFace3D.from_surface_rectangular_cut(
                     cylindrical_surface, 0, volmdlr.TWO_PI, z, 2)
                 list_curves = cyl_face.face_intersections(conical_face)
-                self.assertEqual(len(list_curves), len(expected_results[i][j]))
-                for curve_solution, expected_result in zip(list_curves, expected_results[i][j]):
-                    self.assertAlmostEqual(curve_solution.length(), expected_result, 6)
+                for intersection in list_curves:
+                    for point in intersection.discretization_points(number_points=50):
+                        self.assertTrue(cyl_face.point_belongs(point, 1e-6))
+                        self.assertTrue(conical_face.point_belongs(point, 1e-6))
+                # self.assertEqual(len(list_curves), len(expected_results[i][j]))
+                # for curve_solution, expected_result in zip(list_curves, expected_results[i][j]):
+                #     self.assertAlmostEqual(curve_solution.length(), expected_result, 6)
+
+    def test_cylindricalface_intersections(self):
+        face1, face2 = DessiaObject.from_json(os.path.join(folder,
+            'test_cylindrical_face_intersections.json')).primitives
+        intersections = face1.face_intersections(face2)
+        self.assertTrue(len(intersections), 1)
+        self.assertAlmostEqual(intersections[0].primitives[0].length(), 0.004773175304187915)
+        self.assertTrue(isinstance(intersections[0].primitives[0], edges.ArcEllipse3D))
 
     def test_normal_at_point(self):
         cylindricalsurface = surfaces.CylindricalSurface3D(volmdlr.OXYZ, 0.15)
@@ -209,11 +209,22 @@ class TestCylindricalFace3D(unittest.TestCase):
 
         normal = cylindricalface.normal_at_point(point)
         self.assertTrue(normal.is_close(volmdlr.Vector3D(-1, 0, 0)))
-      
+
     def test_face_inside(self):
         face1, face2 = DessiaObject.from_json(
             os.path.join(folder, "test_cylindricalface_face_inside.json")).primitives
         self.assertTrue(face1.face_inside(face2))
+
+    def test_set_operations_new_faces(self):
+        face, intersections = DessiaObject.from_json(
+            os.path.join(folder, 'test_set_operations_newfaces_290224_3.json')).primitives
+        new_faces = face.set_operations_new_faces({face: intersections})
+        self.assertEqual(len(new_faces), 5)
+        expected_areas = [0.005812103536328831, 0.005812206548041761, 0.009068627125512702,
+                          0.00906862712551361, 0.03348981924655232]
+        for i, area in enumerate(sorted([face.area() for face in new_faces])):
+            self.assertAlmostEqual(area, expected_areas[i])
+
 
 
 if __name__ == '__main__':

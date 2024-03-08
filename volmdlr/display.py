@@ -3,22 +3,24 @@
 """
 Classes to define mesh for display use. Display mesh do not require good aspect ratios on elements.
 """
-
+# pylint: disable=wrong-import-order
 import warnings
 from typing import List, Tuple, TypeVar, Union
 
 import numpy as np
 import pyfqmr
+from numpy.typing import NDArray
+from scipy.spatial import cKDTree
+
 import trimesh
+import volmdlr
 from dessia_common.core import DessiaObject
 from dessia_common.serialization import BinaryFile
 from dessia_common.typings import JsonSerializable
-from numpy.typing import NDArray
-from scipy.spatial import cKDTree
 from trimesh import Trimesh
-
-import volmdlr.edges
 from volmdlr.core import Primitive3D
+from volmdlr.edges import LineSegment2D, LineSegment3D
+from volmdlr.geometry import rotation_matrix
 
 # TODO: make this module "mesh" as it is not useful only for display
 
@@ -341,7 +343,7 @@ class Mesh2D(MeshMixin, DessiaObject):
     2D triangle mesh.
     """
 
-    _linesegment_class = volmdlr.edges.LineSegment2D
+    _linesegment_class = LineSegment2D
     _point_class = volmdlr.Point2D
 
     def __init__(self, vertices: NDArray[float], triangles: NDArray[int], name: str = ""):
@@ -378,7 +380,7 @@ class Mesh3D(MeshMixin, Primitive3D):
 
     # pylint: disable=too-many-public-methods
 
-    _linesegment_class = volmdlr.edges.LineSegment3D
+    _linesegment_class = LineSegment3D
     _point_class = volmdlr.Point3D
 
     def __init__(
@@ -438,6 +440,61 @@ class Mesh3D(MeshMixin, Primitive3D):
 
         return self._bounding_box
 
+    def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float) -> "Mesh3D":
+        """
+        Rotate the mesh around the specified center, axis, and angle.
+
+        :param center: The center point of rotation.
+        :param axis: The rotation axis.
+        :param angle: The rotation angle in radians.
+
+        :return: A new Mesh3D object resulting from the rotation.
+        """
+        rotated_vertices = np.dot(self.vertices - np.array(center), rotation_matrix(axis, angle).T) + np.array(center)
+
+        return self.__class__(
+            vertices=rotated_vertices, triangles=self.triangles, color=self.color, alpha=self.alpha, name=self.name
+        )
+
+    def translation(self, offset: volmdlr.Vector3D):
+        """
+        Translate the mesh by the specified offset.
+
+        :param offset: The translation offset.
+
+        :return: A new Mesh3D object resulting from the translation.
+        """
+        translated_vertices = self.vertices + np.array([offset.x, offset.y, offset.z])
+
+        return self.__class__(
+            vertices=translated_vertices, triangles=self.triangles, color=self.color, alpha=self.alpha, name=self.name
+        )
+
+    def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
+        """
+        Transform a Mesh3D from the current reference frame to a new one.
+
+        side='new': consider the mesh in global frame and transforms in local given frame.
+        side='old': consider the mesh in local given frame and transforms in global frame.
+
+        :param frame: The input reference frame.
+        :param side: Choose between 'old' and 'new'.
+
+        :return: A frame mapped Mesh3D object.
+        """
+        if side == "new":
+            mapped_vertices = np.dot(
+                np.array(frame.inverse_transfer_matrix()), (self.vertices - np.array(frame.origin)).T
+            ).T
+        elif side == "old":
+            mapped_vertices = np.dot(np.array(frame.transfer_matrix()), self.vertices.T).T + np.array(frame.origin)
+        else:
+            raise ValueError("Incorrect value for 'side'.")
+
+        return self.__class__(
+            vertices=mapped_vertices, triangles=self.triangles, color=self.color, alpha=self.alpha, name=self.name
+        )
+
     def area(self) -> float:
         """
         Calculate the total surface area of the 3D mesh as the sum of areas of triangles.
@@ -489,10 +546,10 @@ class Mesh3D(MeshMixin, Primitive3D):
 
         if return_points:
 
-            closest_point_self = volmdlr.Point3D(closest_point_self[0],
-                                                 closest_point_self[1], closest_point_self[2])
-            closest_point_other = volmdlr.Point3D(closest_point_other[0],
-                                                  closest_point_other[1], closest_point_other[2])
+            closest_point_self = volmdlr.Point3D(closest_point_self[0], closest_point_self[1], closest_point_self[2])
+            closest_point_other = volmdlr.Point3D(
+                closest_point_other[0], closest_point_other[1], closest_point_other[2]
+            )
             return min_distance, closest_point_self, closest_point_other
 
         return min_distance

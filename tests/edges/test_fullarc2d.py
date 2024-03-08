@@ -16,8 +16,8 @@ class TestFullArc2D(unittest.TestCase):
         split_point1 = volmdlr.Point2D(-0.7071067811865475, 0.7071067811865475)
         split_point2 = volmdlr.Point2D(-0.7071067811865475, -0.7071067811865475)
         split = self.fullarc2d.trim(split_point1, split_point2)
-        self.assertEqual(split, edges.Arc2D(self.circle2d, volmdlr.Point2D(-0.7071067811865475, -0.7071067811865475),
-                                            volmdlr.Point2D(-0.7071067811865475, 0.7071067811865475)))
+        self.assertEqual(split, edges.Arc2D(self.circle2d, volmdlr.Point2D(-0.7071067811865475, 0.7071067811865475),
+                                            volmdlr.Point2D(-0.7071067811865475, -0.7071067811865475)))
 
 
 if __name__ == '__main__':
