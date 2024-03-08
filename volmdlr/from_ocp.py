@@ -15,7 +15,7 @@ from OCP.TopExp import TopExp_Explorer
 import volmdlr
 
 
-def point2d_from_occt(occt_point):
+def point2d_from_ocp(occt_point):
     """
     Instanciates a volmdlr Point2D, from occt object.
 
@@ -25,7 +25,7 @@ def point2d_from_occt(occt_point):
     return volmdlr.Point2D(occt_point.X(), occt_point.Y())
 
 
-def vector2d_from_occt(occt_vector):
+def vector2d_from_ocp(occt_vector):
     """
     Instanciates a volmdlr Vector2D, from occt object.
 
@@ -35,7 +35,7 @@ def vector2d_from_occt(occt_vector):
     return volmdlr.Vector2D(occt_vector.X(), occt_vector.Y())
 
 
-def point3d_from_occt(occt_point):
+def point3d_from_ocp(occt_point):
     """
     Instanciates a volmdlr Point3D, from occt object.
 
@@ -45,7 +45,7 @@ def point3d_from_occt(occt_point):
     return volmdlr.Point3D(occt_point.X(), occt_point.Y(), occt_point.Z())
 
 
-def vector3d_from_occt(occt_vector):
+def vector3d_from_ocp(occt_vector):
     """
     Instanciates a volmdlr Vector3D, from occt object.
 
@@ -55,36 +55,36 @@ def vector3d_from_occt(occt_vector):
     return volmdlr.Vector3D(occt_vector.X(), occt_vector.Y(), occt_vector.Z())
 
 
-def frame3d_from_occt_ax3(ax2):
+def frame3d_from_ocp_ax3(ax2):
     """
     Instanciates a volmdlr Frame3D, from occt object.
 
     :param ax2: OCCT ax2.
     :return: volmdlr Frame3D.
     """
-    origin = point3d_from_occt(ax2.Location())
-    u = vector3d_from_occt(ax2.XDirection())
-    v = vector3d_from_occt(ax2.YDirection())
+    origin = point3d_from_ocp(ax2.Location())
+    u = vector3d_from_ocp(ax2.XDirection())
+    v = vector3d_from_ocp(ax2.YDirection())
     return volmdlr.Frame3D(origin, u, v, u.cross(v))
 
 
-def frame2d_from_occt_ax22d(ax22d):
+def frame2d_from_ocp_ax22d(ax22d):
     """
     Instanciates a volmdlr Frame2D, from occt object.
 
     :param ax22d: OCCT ax2 2d.
     :return: volmdlr Frame2D.
     """
-    origin = point2d_from_occt(ax22d.Location())
-    u = vector2d_from_occt(ax22d.XDirection())
-    v = vector2d_from_occt(ax22d.YDirection())
+    origin = point2d_from_ocp(ax22d.Location())
+    u = vector2d_from_ocp(ax22d.XDirection())
+    v = vector2d_from_ocp(ax22d.YDirection())
     return volmdlr.Frame2D(origin, u, v)
 
 
 # Curves
 
 
-def line2d_from_occt(cls, occt_line):
+def line2d_from_ocp(cls, occt_line):
     """
     Instanciates a volmdlr Line2D, from occt object.
 
@@ -92,12 +92,12 @@ def line2d_from_occt(cls, occt_line):
     :param occt_line: OCCT Line.
     :return: volmdlr Line2D.
     """
-    vector = vector2d_from_occt(occt_line.Direction())
-    point = point2d_from_occt(occt_line.Location())
+    vector = vector2d_from_ocp(occt_line.Direction())
+    point = point2d_from_ocp(occt_line.Location())
     return cls.from_point_and_vector(point, vector)
 
 
-def line3d_from_occt(cls, occt_line):
+def line3d_from_ocp(cls, occt_line):
     """
     Instanciates a volmdlr Line3D, from occt object.
 
@@ -106,11 +106,11 @@ def line3d_from_occt(cls, occt_line):
     :return: volmdlr Line3D.
     """
     position = occt_line.Position()
-    return cls.from_point_and_vector(point3d_from_occt(position.Location()),
-                                               vector3d_from_occt(position.Direction()))
+    return cls.from_point_and_vector(point3d_from_ocp(position.Location()),
+                                     vector3d_from_ocp(position.Direction()))
 
 
-def circle2d_from_occt(cls, curve):
+def circle2d_from_ocp(cls, curve):
     """
     Instanciates a volmdlr Circle2D, from occt object.
 
@@ -118,11 +118,11 @@ def circle2d_from_occt(cls, curve):
     :param curve: OCCT curve.
     :return: volmdlr Circle2D.
     """
-    frame = frame2d_from_occt_ax22d(curve.Circ2d().Axis())
+    frame = frame2d_from_ocp_ax22d(curve.Circ2d().Axis())
     return cls(frame, curve.Radius())
 
 
-def circle3d_from_occt(cls, curve):
+def circle3d_from_ocp(cls, curve):
     """
     Instanciates a volmdlr Circle3D, from occt object.
 
@@ -130,11 +130,11 @@ def circle3d_from_occt(cls, curve):
     :param curve: OCCT curve.
     :return: volmdlr Circle3D.
     """
-    frame = frame3d_from_occt_ax3(curve.Position())
+    frame = frame3d_from_ocp_ax3(curve.Position())
     return cls(frame, curve.Radius())
 
 
-def ellipse2d_from_occt(cls, curve):
+def ellipse2d_from_ocp(cls, curve):
     """
     Instanciates a volmdlr Ellipse2D, from occt object.
 
@@ -142,11 +142,11 @@ def ellipse2d_from_occt(cls, curve):
     :param curve: OCCT curve.
     :return: volmdlr Ellipse2D.
     """
-    frame = frame2d_from_occt_ax22d(curve.Position())
+    frame = frame2d_from_ocp_ax22d(curve.Position())
     return cls(frame, curve.MajorRadius(), curve.MinorRadius())
 
 
-def ellipse3d_from_occt(cls, curve):
+def ellipse3d_from_ocp(cls, curve):
     """
     Instanciates a volmdlr Ellipse3D, from occt object.
 
@@ -154,11 +154,11 @@ def ellipse3d_from_occt(cls, curve):
     :param curve: OCCT curve.
     :return: volmdlr Ellipse3D.
     """
-    frame = frame3d_from_occt_ax3(curve.Position())
+    frame = frame3d_from_ocp_ax3(curve.Position())
     return cls(curve.MajorRadius(), curve.MinorRadius(), frame)
 
 
-def hyperbola3d_from_occt(cls, curve):
+def hyperbola3d_from_ocp(cls, curve):
     """
     Instanciates a volmdlr Hyperbola3D, from occt object.
 
@@ -166,11 +166,11 @@ def hyperbola3d_from_occt(cls, curve):
     :param curve: OCCT curve.
     :return: volmdlr Hyperbola3D.
     """
-    frame = frame3d_from_occt_ax3(curve.Position())
+    frame = frame3d_from_ocp_ax3(curve.Position())
     return cls(frame, curve.MajorRadius(), curve.MinorRadius())
 
 
-def parabola3d_from_occt(cls, curve):
+def parabola3d_from_ocp(cls, curve):
     """
     Instanciates a volmdlr Parabola3D, from occt object.
 
@@ -178,7 +178,7 @@ def parabola3d_from_occt(cls, curve):
     :param curve: OCCT curve.
     :return: volmdlr Parabola3D.
     """
-    frame = frame3d_from_occt_ax3(curve.Position())
+    frame = frame3d_from_ocp_ax3(curve.Position())
     frame = volmdlr.Frame3D(frame.origin, frame.v, frame.u, frame.w)
     return cls(frame, curve.Focal())
 
@@ -186,7 +186,7 @@ def parabola3d_from_occt(cls, curve):
 # Edges
 
 
-def bsplinecurve2d_from_occt(cls, curve):
+def bsplinecurve2d_from_ocp(cls, curve):
     """
     Instanciates a volmdlr BSplineCurve2D, from occt object.
 
@@ -204,7 +204,7 @@ def bsplinecurve2d_from_occt(cls, curve):
     return cls(curve.Degree(), control_points, multiplicities, knots, weigths)
 
 
-def bsplinecurve3d_from_occt(cls, curve):
+def bsplinecurve3d_from_ocp(cls, curve):
     """
     Instanciates a volmdlr BSplineCurve3D, from occt object.
 
@@ -222,20 +222,20 @@ def bsplinecurve3d_from_occt(cls, curve):
     return cls(curve.Degree(), control_points, multiplicities, knots, weigths)
 
 
-OCCT_TO_VOLMDLR = {"Geom_Line": line3d_from_occt,
-                   "Geom_Circle": circle3d_from_occt,
-                   "Geom_Ellipse": ellipse3d_from_occt,
-                   "Geom_BSplineCurve": bsplinecurve3d_from_occt,
-                   "Geom_Parabola": parabola3d_from_occt,
-                   "Geom_Hyperbola": hyperbola3d_from_occt,
-                   "Geom2d_Line": line2d_from_occt,
-                   "Geom2d_Circle": circle2d_from_occt,
-                   "Geom2d_Ellipse": ellipse2d_from_occt,
-                   "Geom2d_BSplineCurve": bsplinecurve2d_from_occt
+OCCT_TO_VOLMDLR = {"Geom_Line": line3d_from_ocp,
+                   "Geom_Circle": circle3d_from_ocp,
+                   "Geom_Ellipse": ellipse3d_from_ocp,
+                   "Geom_BSplineCurve": bsplinecurve3d_from_ocp,
+                   "Geom_Parabola": parabola3d_from_ocp,
+                   "Geom_Hyperbola": hyperbola3d_from_ocp,
+                   "Geom2d_Line": line2d_from_ocp,
+                   "Geom2d_Circle": circle2d_from_ocp,
+                   "Geom2d_Ellipse": ellipse2d_from_ocp,
+                   "Geom2d_BSplineCurve": bsplinecurve2d_from_ocp
                    }
 
 
-def volmdlr_edge_from_occt_curve(cls, occt_curve, first, last, orientation):
+def volmdlr_edge_from_ocp_curve(cls, occt_curve, first, last, orientation):
     """
     Instanciate a volmdlr edge form an occt curve.
 
@@ -245,14 +245,14 @@ def volmdlr_edge_from_occt_curve(cls, occt_curve, first, last, orientation):
     :param orientation: orientation of the curve to be considered.
     :return: Volmdlr trimmed edge.
     """
-    start = point3d_from_occt(occt_curve.Value(first))
-    end = point3d_from_occt(occt_curve.Value(last))
+    start = point3d_from_ocp(occt_curve.Value(first))
+    end = point3d_from_ocp(occt_curve.Value(last))
     function = OCCT_TO_VOLMDLR[occt_curve.get_type_name_s()]
     curve = function(cls, occt_curve)
     return curve.trim(start, end, same_sense=orientation == 0)
 
 
-def volmdlr_edge2d_from_occt_curve(cls, occt_curve, first, last, orientation):
+def volmdlr_edge2d_from_ocp_curve(cls, occt_curve, first, last, orientation):
     """
     Instanciate a volmdlr edge form an occt curve.
 
@@ -262,22 +262,22 @@ def volmdlr_edge2d_from_occt_curve(cls, occt_curve, first, last, orientation):
     :param orientation: orientation of the curve to be considered.
     :return: Volmdlr trimmed edge.
     """
-    start = point2d_from_occt(occt_curve.Value(first))
-    end = point2d_from_occt(occt_curve.Value(last))
+    start = point2d_from_ocp(occt_curve.Value(first))
+    end = point2d_from_ocp(occt_curve.Value(last))
     function = OCCT_TO_VOLMDLR[occt_curve.get_type_name_s()]
     curve = function(cls, occt_curve)
     return curve.trim(start, end, same_sense=orientation == 0)
 
 
-def trimmedcurve3d_from_occt(cls, occt_curve):
+def trimmedcurve3d_from_ocp(cls, occt_curve):
     """
     Intanciate an edge from a trimmed curve in OCCT.
 
     :param occt_curve: occt trimmed curve.
     :return: Volmdlr trimmed edge.
     """
-    start_point = point3d_from_occt(occt_curve.StartPoint())
-    end_point = point3d_from_occt(occt_curve.EndPoint())
+    start_point = point3d_from_ocp(occt_curve.StartPoint())
+    end_point = point3d_from_ocp(occt_curve.EndPoint())
     occt_basis_curve = occt_curve.BasisCurve()
     volmdlr_curve = OCCT_TO_VOLMDLR[occt_basis_curve.get_type_name_s()](cls, occt_basis_curve)
     return volmdlr_curve.trim(start_point, end_point)
@@ -286,7 +286,7 @@ def trimmedcurve3d_from_occt(cls, occt_curve):
 # Surfaces
 
 
-def sphericalsurface_from_occt(cls, occt_surface):
+def sphericalsurface_from_ocp(cls, occt_surface):
     """
     Instanciates a volmdlr SphericalSurface3D, from occt object.
 
@@ -294,12 +294,12 @@ def sphericalsurface_from_occt(cls, occt_surface):
     :param occt_surface: OCCT surface.
     :return: volmdlr SphericalSurface3D.
     """
-    frame = frame3d_from_occt_ax3(occt_surface.Position())
+    frame = frame3d_from_ocp_ax3(occt_surface.Position())
     radius = occt_surface.Radius()
     return cls(frame, radius)
 
 
-def cylindricalsurface_from_occt(cls, occt_surface):
+def cylindricalsurface_from_ocp(cls, occt_surface):
     """
     Instanciates a volmdlr CylindricalSurface3D, from occt object.
 
@@ -307,12 +307,12 @@ def cylindricalsurface_from_occt(cls, occt_surface):
     :param occt_surface: OCCT surface.
     :return: volmdlr CylindricalSurface3D.
     """
-    frame = frame3d_from_occt_ax3(occt_surface.Position())
+    frame = frame3d_from_ocp_ax3(occt_surface.Position())
     radius = occt_surface.Radius()
     return cls(frame, radius)
 
 
-def plane_from_occt(cls, occt_surface):
+def plane_from_ocp(cls, occt_surface):
     """
     Instanciates a volmdlr Plane3D, from occt object.
 
@@ -320,11 +320,11 @@ def plane_from_occt(cls, occt_surface):
     :param occt_surface: OCCT surface.
     :return: volmdlr Plane3D.
     """
-    frame = frame3d_from_occt_ax3(occt_surface.Position())
+    frame = frame3d_from_ocp_ax3(occt_surface.Position())
     return cls(frame)
 
 
-def toroidalsurface_from_occt(cls, occt_surface):
+def toroidalsurface_from_ocp(cls, occt_surface):
     """
     Instanciates a volmdlr ToroidalSurface3D, from occt object.
 
@@ -332,11 +332,11 @@ def toroidalsurface_from_occt(cls, occt_surface):
     :param occt_surface: OCCT surface.
     :return: volmdlr ToroidalSurface3D.
     """
-    frame = frame3d_from_occt_ax3(occt_surface.Position())
+    frame = frame3d_from_ocp_ax3(occt_surface.Position())
     return cls(frame, occt_surface.MajorRadius(), occt_surface.MinorRadius())
 
 
-def conicalsurface_from_occt(cls, occt_surface):
+def conicalsurface_from_ocp(cls, occt_surface):
     """
     Instanciates a volmdlr ConicalSurface3D, from occt object.
 
@@ -344,13 +344,13 @@ def conicalsurface_from_occt(cls, occt_surface):
     :param occt_surface: OCCT surface.
     :return: volmdlr ConicalSurface3D.
     """
-    frame = frame3d_from_occt_ax3(occt_surface.Position())
+    frame = frame3d_from_ocp_ax3(occt_surface.Position())
     radius = occt_surface.RefRadius()
     semi_angle = occt_surface.SemiAngle()
     return cls(frame, semi_angle, radius)
 
 
-def bsplinesurface_from_occt(cls, occt_surface):
+def bsplinesurface_from_ocp(cls, occt_surface):
     """
     Instanciates a volmdlr BSplineSurface3D, from occt object.
 
@@ -362,7 +362,7 @@ def bsplinesurface_from_occt(cls, occt_surface):
     nb_v = occt_surface.NbVPoles()
     nb_u = occt_surface.NbUPoles()
 
-    control_points = [point3d_from_occt(array.Value(i + 1, j + 1)) for i in range(nb_u) for j in range(nb_v)]
+    control_points = [point3d_from_ocp(array.Value(i + 1, j + 1)) for i in range(nb_u) for j in range(nb_v)]
     u_knots = list(occt_surface.UKnots())
     u_multiplicities = list(occt_surface.UMultiplicities())
     v_knots = list(occt_surface.VKnots())
@@ -376,7 +376,7 @@ def bsplinesurface_from_occt(cls, occt_surface):
                u_multiplicities, v_multiplicities, u_knots, v_knots, weights)
 
 
-def surfaceoflinearextrusion_from_occt(cls, occt_surface):
+def surfaceoflinearextrusion_from_ocp(cls, occt_surface):
     """
     Instanciates a volmdlr ExtrusionSurface3D, from occt object.
 
@@ -399,11 +399,11 @@ def surfaceoflinearextrusion_from_occt(cls, occt_surface):
     occt_curve = occt_surface.BasisCurve()
     curve = OCCT_TO_VOLMDLR[occt_curve.get_type_name_s()](occt_to_volmdlr_classes[occt_curve.get_type_name_s()],
                                                           occt_curve)
-    direction = vector3d_from_occt(occt_surface.Direction())
+    direction = vector3d_from_ocp(occt_surface.Direction())
     return cls(curve, direction)
 
 
-def surfaceofrevolution_from_occt(cls, occt_surface):
+def surfaceofrevolution_from_ocp(cls, occt_surface):
     """
     Instanciates a volmdlr RevolutionSurface3D, from occt object.
 
@@ -426,8 +426,8 @@ def surfaceofrevolution_from_occt(cls, occt_surface):
     occt_curve = occt_surface.BasisCurve()
     curve = OCCT_TO_VOLMDLR[occt_curve.get_type_name_s()](occt_to_volmdlr_classes[occt_curve.get_type_name_s()],
                                                           occt_curve)
-    axis_point = point3d_from_occt(occt_surface.Axis().Location())
-    axis_direction = vector3d_from_occt(occt_surface.Axis().Direction())
+    axis_point = point3d_from_ocp(occt_surface.Axis().Location())
+    axis_direction = vector3d_from_ocp(occt_surface.Axis().Direction())
     return cls(curve, axis_point, axis_direction)
 
 
@@ -438,10 +438,10 @@ def face_from_ocp(cls, occt_face: TopoDS_Shape, occt_to_volmdlr_lut: dict, surfa
     occt_surface = BRep_Tool().Surface_s(occt_face)
     if occt_surface.get_type_name_s() == 'Geom_RectangularTrimmedSurface':
         occt_surface = occt_surface.BasisSurface()
-    surface_function = globals()[occt_surface.get_type_name_s().lower()[5:] + '_from_occt']
+    surface_function = globals()[occt_surface.get_type_name_s().lower()[5:] + '_from_ocp']
     surface_class = occt_to_volmdlr_lut[occt_surface.get_type_name_s()]
     surface = surface_function(surface_class, occt_surface)
-    surface2d = surface2d_class.from_occt_face(occt_face)
+    surface2d = surface2d_class.from_ocp_face(occt_face)
     return cls(surface, surface2d)
 
 
@@ -538,7 +538,7 @@ def get_contour2d_from_face_wire(contour2d_class, wire, face, occt_to_volmdlr):
         if orientation == 1:
             u_start, u_end = u_end, u_start
 
-        list_edges.append(volmdlr_edge2d_from_occt_curve(occt_to_volmdlr[crv.get_type_name_s()], crv,
+        list_edges.append(volmdlr_edge2d_from_ocp_curve(occt_to_volmdlr[crv.get_type_name_s()], crv,
                                                          u_start, u_end, orientation))
         exp.Next()
     if not contour2d_class(list_edges).is_ordered(1e-2):
@@ -546,7 +546,7 @@ def get_contour2d_from_face_wire(contour2d_class, wire, face, occt_to_volmdlr):
     return contour2d_class(list_edges)
 
 
-def surface2d_from_occt_face(cls, contour2d_class, face, occt_to_volmdlr):
+def surface2d_from_ocp_face(cls, contour2d_class, face, occt_to_volmdlr):
     """
     Builds a surface 2D (Boundary representation of a face in volmdlr) from an OCP face.
     """

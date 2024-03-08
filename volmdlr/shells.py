@@ -23,7 +23,7 @@ import volmdlr.geometry
 from volmdlr import curves, display, edges, surfaces, wires
 from volmdlr.core import edge_in_list, get_edge_index_in_list, get_point_index_in_list, point_in_list
 from volmdlr.utils.step_writer import geometric_context_writer, product_writer, step_ids_to_str
-from volmdlr import from_occt
+from volmdlr import from_ocp
 # pylint: disable=unused-argument
 
 
@@ -1055,7 +1055,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         return shells_list
 
     @classmethod
-    def from_occt(cls, occt_shell) -> "Shell3D":
+    def from_ocp(cls, occt_shell) -> "Shell3D":
         """
         Builds a shell from an OCP shell.
         """
@@ -1068,14 +1068,14 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
             "Geom_BSplineSurface": volmdlr.faces.BSplineFace3D,
             "Geom_SurfaceOfLinearExtrusion": volmdlr.faces.ExtrusionFace3D,
             "Geom_SurfaceOfRevolution": volmdlr.faces.RevolutionFace3D}
-        occt_faces = from_occt.get_faces(occt_shell)
+        occt_faces = from_ocp.get_faces(occt_shell)
         faces = []
         for occt_face in occt_faces:
             surface = BRep_Tool().Surface_s(occt_face)
             if surface.get_type_name_s() == 'Geom_RectangularTrimmedSurface':
                 surface = surface.BasisSurface()
             face_cls = occt_surface_to_volmdlr_face_map[surface.get_type_name_s()]
-            faces.append(face_cls.from_occt(occt_face))
+            faces.append(face_cls.from_ocp(occt_face))
         if occt_shell.Closed():
             return ClosedShell3D(faces)
         return OpenShell3D(faces)
@@ -1286,12 +1286,9 @@ class ClosedShell3D(Shell3D):
                     contours1, contours2 = face1.get_coincident_face_intersections(face2)
                     face_combinations1[face1].extend(contours1)
                     face_combinations2[face2].extend(contours2)
-
                 face_intersections = face1.face_intersections(face2, tol)
                 face_combinations1[face1].extend(face_intersections)
                 face_combinations2[face2].extend(face_intersections)
-                # if face_intersections:
-                #     face_combinations[(face1, face2)] = face_intersections
         return face_combinations1, face_combinations2
 
     @staticmethod

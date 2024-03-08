@@ -27,7 +27,7 @@ import volmdlr.grid
 from volmdlr import surfaces
 from volmdlr.utils.parametric import update_face_grid_points_with_inner_polygons
 import volmdlr.wires
-from volmdlr import from_occt
+from volmdlr import from_ocp
 
 warnings.simplefilter("once")
 
@@ -382,19 +382,19 @@ class Face3D(volmdlr.core.Primitive3D):
                     primitives_mapping[new_primitive] = primitives_mapping.pop(old_primitive)
 
     @classmethod
-    def from_occt(cls, occt_face: TopoDS_Shape):
+    def from_ocp(cls, occt_face: TopoDS_Shape):
         """
         Translate an occt face into a volmdlr face.
         """
         occt_surface = BRep_Tool().Surface_s(occt_face)
         if occt_surface.get_type_name_s() == 'Geom_RectangularTrimmedSurface':
             occt_surface = occt_surface.BasisSurface()
-        surface_function = getattr(from_occt, occt_surface.get_type_name_s().lower()[5:] + '_from_occt')
+        surface_function = getattr(from_ocp, occt_surface.get_type_name_s().lower()[5:] + '_from_ocp')
         surface_class = OCCT_TO_VOLMDLR[occt_surface.get_type_name_s()]
         surface = surface_function(surface_class, occt_surface)
 
-        occt_outer_wire, occt_inner_wires = from_occt.get_wires_from_face(occt_face)
-        contours = [volmdlr.wires.Contour3D.from_occt(contour)
+        occt_outer_wire, occt_inner_wires = from_ocp.get_wires_from_face(occt_face)
+        contours = [volmdlr.wires.Contour3D.from_ocp(contour)
                     for contour in [occt_outer_wire] + occt_inner_wires]
         contours[0].name = "face_outer_bound"
 
@@ -973,6 +973,34 @@ class Face3D(volmdlr.core.Primitive3D):
         face_intersections = self.get_face_intersections(face2)
         return face_intersections
 
+    def _face_intersections_helper(self, generic_face, surface_intersections):
+        face_intersections = []
+        intersections_points = self.face_border_intersections(generic_face)
+        for point in generic_face.face_border_intersections(self):
+            if not point.in_list(intersections_points):
+                intersections_points.append(point)
+        for primitive in surface_intersections:
+            points_on_primitive = []
+            for point in intersections_points:
+                if primitive.point_belongs(point, 1e-5):
+                    points_on_primitive.append(point)
+            if not points_on_primitive:
+                continue
+            points_on_primitive = primitive.sort_points_along_curve(points_on_primitive)
+            if isinstance(primitive, (volmdlr_curves.Hyperbola3D, volmdlr_curves.Parabola3D, volmdlr_curves.Line3D)):
+                for point1, point2 in zip(points_on_primitive[:-1], points_on_primitive[1:]):
+                    if point1 == point2:
+                        continue
+                    edge = primitive.trim(point1, point2)
+                    if self.edge3d_inside(edge) and generic_face.edge3d_inside(edge):
+                        face_intersections.append(volmdlr.wires.Wire3D([edge]))
+            else:
+                split_edges = primitive.split_with_sorted_points(points_on_primitive)
+                for edge in split_edges:
+                    if self.edge3d_inside(edge, 1e-4) and generic_face.edge3d_inside(edge, 1e-4):
+                        face_intersections.append(volmdlr.wires.Wire3D([edge]))
+        return face_intersections
+
     def _generic_face_intersections(self, generic_face):
         """
         Calculates the intersections between two Faces 3D.
@@ -981,6 +1009,7 @@ class Face3D(volmdlr.core.Primitive3D):
         :return: list of intersecting wires.
         """
         surface_intersections = self.surface3d.surface_intersections(generic_face.surface3d)
+
         face_intersections = []
         for edge in surface_intersections[:]:
             if not edge.periodic and not hasattr(edge, 'start') and not hasattr(edge, 'end'):
@@ -991,22 +1020,7 @@ class Face3D(volmdlr.core.Primitive3D):
         if not surface_intersections:
             return face_intersections
 
-        intersections_points = self.face_border_intersections(generic_face)
-        for point in generic_face.face_border_intersections(self):
-            if not point.in_list(intersections_points):
-                intersections_points.append(point)
-        for primitive in surface_intersections:
-            points_on_primitive = []
-            for point in intersections_points:
-                if primitive.point_belongs(point, 1e-4):
-                    points_on_primitive.append(point)
-            if not points_on_primitive:
-                continue
-            points_on_primitive = primitive.sort_points_along_curve(points_on_primitive)
-            split_edges = primitive.split_with_sorted_points(points_on_primitive)
-            for edge in split_edges:
-                if self.edge3d_inside(edge) and generic_face.edge3d_inside(edge, 1e-4):
-                    face_intersections.append(volmdlr.wires.Wire3D([edge]))
+        face_intersections.extend(self._face_intersections_helper(generic_face, surface_intersections))
         return face_intersections
 
     def get_face_intersections(self, face2):
@@ -1150,8 +1164,8 @@ class Face3D(volmdlr.core.Primitive3D):
         face_intersecting_primitives2d = self.select_face_intersecting_primitives(dict_intersecting_combinations)
         if not face_intersecting_primitives2d:
             return []
-        list_cutting_contours = volmdlr.wires.Contour2D.contours_from_edges(face_intersecting_primitives2d[:])
-
+        list_cutting_contours = volmdlr.wires.Contour2D.contours_from_edges(face_intersecting_primitives2d[:],
+                                                                            self.face_tolerance)
         cutting_contours = []
         if len(list_cutting_contours) > 1:
             while list_cutting_contours:
@@ -1402,6 +1416,37 @@ class Face3D(volmdlr.core.Primitive3D):
                         new_list_faces.append(self.__class__(surf3d, surfaces.Surface2D(new_contour, inner_contours2)))
         return new_list_faces
 
+    def _helper_intersecting_primitives_with_periodicity(self, primitive2d):
+        """
+        Helper method to adjust primitive position if it is out of the face periodicity.
+
+        :param primitive2d: primitived to be adjusted.
+        :return:
+        """
+        contour_edge_intersections = self.surface2d.outer_contour.edge_intersections(primitive2d)
+        if not contour_edge_intersections:
+            return []
+        face_intersecting_primitives2d = []
+        for edge in primitive2d.split(contour_edge_intersections[0]):
+            if edge is None:
+                continue
+            if not self.surface2d.outer_contour.is_edge_inside(edge):
+                primitive_plus_periodicity = edge.translation(
+                    volmdlr.Vector2D(self.surface3d.x_periodicity, 0))
+                if self.surface2d.outer_contour.is_edge_inside(primitive_plus_periodicity,
+                                                               self.face_tolerance):
+                    face_intersecting_primitives2d.append(primitive_plus_periodicity)
+                    continue
+                primitive_minus_periodicity = edge.translation(
+                    volmdlr.Vector2D(- self.surface3d.x_periodicity, 0))
+                if self.surface2d.outer_contour.is_edge_inside(primitive_minus_periodicity,
+                                                               self.face_tolerance):
+                    face_intersecting_primitives2d.append(primitive_minus_periodicity)
+                    continue
+            else:
+                face_intersecting_primitives2d.append(edge)
+        return face_intersecting_primitives2d
+
     def select_face_intersecting_primitives(self, dict_intersecting_combinations):
         """
         Select face intersecting primitives from a dictionary containing all intersection combinations.
@@ -1415,7 +1460,11 @@ class Face3D(volmdlr.core.Primitive3D):
             wire2d = self.surface3d.contour3d_to_2d(intersection_wire)
             for primitive2d in wire2d.primitives:
                 if self.surface3d.x_periodicity is not None and not \
-                        self.surface2d.outer_contour.is_edge_inside(primitive2d):
+                        self.surface2d.outer_contour.is_edge_inside(primitive2d, self.face_tolerance):
+                    correct_primitives = self._helper_intersecting_primitives_with_periodicity(primitive2d)
+                    if correct_primitives:
+                        face_intersecting_primitives2d.extend(correct_primitives)
+                        continue
                     primitive_plus_periodicity = primitive2d.translation(
                         volmdlr.Vector2D(self.surface3d.x_periodicity, 0))
                     if self.surface2d.outer_contour.is_edge_inside(primitive_plus_periodicity, self.face_tolerance):
@@ -1452,17 +1501,6 @@ class Face3D(volmdlr.core.Primitive3D):
             return False
         return True
 
-    def _get_linesegment_intersections_approximation(self, linesegment: vme.LineSegment3D):
-        """Generator line segment intersections approximation."""
-        if self.__class__ == PlaneFace3D:
-            faces_triangulation = [self]
-        else:
-            triangulation = self.triangulation()
-            faces_triangulation = triangulation.triangular_faces()
-        for face in faces_triangulation:
-            inters = face.linesegment_intersections(linesegment)
-            yield inters
-
     def is_linesegment_crossing(self, linesegment):
         """
         Verify if a face 3d is being crossed by a line segment 3d.
@@ -1471,19 +1509,6 @@ class Face3D(volmdlr.core.Primitive3D):
         if intersections:
             return True
         return False
-
-    def linesegment_intersections_approximation(self, linesegment: vme.LineSegment3D,
-                                                abs_tol: float = 1e-6) -> List[volmdlr.Point3D]:
-        """Approximation of intersections face 3D and a line segment 3D."""
-        if not self._is_linesegment_intersection_possible(linesegment):
-            return []
-        linesegment_intersections = []
-        for inters in self._get_linesegment_intersections_approximation(linesegment):
-            for point in inters:
-                if not point.in_list(linesegment_intersections, abs_tol):
-                    linesegment_intersections.append(point)
-
-        return linesegment_intersections
 
     def face_decomposition(self):
         """
@@ -1652,11 +1677,23 @@ class Face3D(volmdlr.core.Primitive3D):
         :param face: other face.
         :return: two lists of intersections. one list containing wires intersecting face1, the other those for face2.
         """
-        points_intersections = self.outer_contour3d.wire_intersections(face.outer_contour3d)
+        contours1 = [self.outer_contour3d] + self.inner_contours3d
+        contours2 = [face.outer_contour3d] + face.inner_contours3d
+        points_intersections = []
+        for contour1, contour2 in product(contours1, contours2):
+            points_intersections.extend(contour1.wire_intersections(contour2))
         if not points_intersections:
             return [], []
-        extracted_contours = self.outer_contour3d.split_with_sorted_points(points_intersections)
-        extracted_contours2 = face.outer_contour3d.split_with_sorted_points(points_intersections)
+        extracted_contours = []
+        for contour in contours1:
+            extracted_contours.extend(contour.split_with_sorted_points(
+                contour.sort_points_along_wire([point for point in points_intersections
+                                                if contour.point_belongs(point)])))
+        extracted_contours2 = []
+        for contour in contours2:
+            points = contour.sort_points_along_wire(point for point in points_intersections
+                                                    if contour.point_belongs(point))
+            extracted_contours2.extend(contour.split_with_sorted_points(points))
         contours_in_self = [
             contour for contour in extracted_contours2 if all(self.edge3d_inside(edge) for edge in contour.primitives)
         ]
@@ -1866,14 +1903,7 @@ class PlaneFace3D(Face3D):
                 self.edge3d_inside(intersection) and cylindricalface.edge3d_inside(intersection)
                 for intersection in cylindricalsurfaceface_intersections
             ):
-                if isinstance(cylindricalsurfaceface_intersections[0], volmdlr_curves.Circle3D):
-                    contour3d = volmdlr.wires.Contour3D(
-                        [volmdlr.edges.FullArc3D.from_curve(cylindricalsurfaceface_intersections[0])]
-                    )
-                else:
-                    contour3d = volmdlr.wires.Contour3D(
-                        [volmdlr.edges.FullArcEllipse3D.from_curve(cylindricalsurfaceface_intersections[0])]
-                    )
+                contour3d = volmdlr.wires.Contour3D([cylindricalsurfaceface_intersections[0]])
                 return [contour3d]
         intersections_points = self.face_intersections_outer_contour(cylindricalface)
         for point in cylindricalface.face_intersections_outer_contour(self):
@@ -2223,11 +2253,11 @@ class PlaneFace3D(Face3D):
         return cls(plane3d, surface, name)
 
     @classmethod
-    def from_occt(cls, occt_face: TopoDS_Shape):
+    def from_ocp(cls, occt_face: TopoDS_Shape):
         """
         Translate an occt face into a volmdlr face.
         """
-        return from_occt.face_from_ocp(cls, occt_face, OCCT_TO_VOLMDLR, surfaces.Surface2D)
+        return from_ocp.face_from_ocp(cls, occt_face, OCCT_TO_VOLMDLR, surfaces.Surface2D)
 
 
 class PeriodicalFaceMixin:
@@ -2622,6 +2652,7 @@ class CylindricalFace3D(PeriodicalFaceMixin, Face3D):
 
     min_x_density = 5
     min_y_density = 1
+    face_tolerance = 1e-4
 
     def __init__(self, surface3d: surfaces.CylindricalSurface3D, surface2d: surfaces.Surface2D, name: str = ""):
 
@@ -2716,6 +2747,38 @@ class CylindricalFace3D(PeriodicalFaceMixin, Face3D):
                 return False
         return True
 
+    def fullarc_inside(self, fullarc: vme.FullArc3D):
+        """
+        Verifies if FullArc3D is inside a CylindricalFace3D.
+
+        :param fullarc: FullArc3D to be verified.
+        :return: True if it is inside, False otherwise.
+        """
+        primitives, _ = self.surface3d.primitives3d_to_2d([fullarc])
+        fullarc2d = primitives[0]
+
+        for edge in [fullarc2d, fullarc2d.translation(
+                        volmdlr.Vector2D(self.surface3d.x_periodicity, 0)), fullarc2d.translation(
+                        volmdlr.Vector2D(-self.surface3d.x_periodicity, 0))]:
+            contour_edge_intersections = self.surface2d.outer_contour.edge_intersections(edge)
+            if contour_edge_intersections:
+                for split_edge in edge.split(contour_edge_intersections[0]):
+                    if split_edge is None:
+                        continue
+                    if not self.surface2d.outer_contour.is_edge_inside(split_edge):
+                        primitive_plus_periodicity = split_edge.translation(
+                            volmdlr.Vector2D(self.surface3d.x_periodicity, 0))
+                        if self.surface2d.outer_contour.is_edge_inside(primitive_plus_periodicity,
+                                                                       self.face_tolerance):
+                            continue
+                        primitive_minus_periodicity = split_edge.translation(
+                            volmdlr.Vector2D(- self.surface3d.x_periodicity, 0))
+                        if self.surface2d.outer_contour.is_edge_inside(primitive_minus_periodicity,
+                                                                       self.face_tolerance):
+                            continue
+                        return False
+        return True
+
     def planeface_intersections(self, planeface: PlaneFace3D):
         """
         Finds intersections with the given plane face.
@@ -2746,11 +2809,11 @@ class CylindricalFace3D(PeriodicalFaceMixin, Face3D):
         return cls(cylindrical_surface, surface2d, name)
 
     @classmethod
-    def from_occt(cls, occt_face: TopoDS_Shape):
+    def from_ocp(cls, occt_face: TopoDS_Shape):
         """
         Translate an occt face into a volmdlr face.
         """
-        return from_occt.face_from_ocp(cls, occt_face, OCCT_TO_VOLMDLR, surfaces.Surface2D)
+        return from_ocp.face_from_ocp(cls, occt_face, OCCT_TO_VOLMDLR, surfaces.Surface2D)
 
     def neutral_fiber(self):
         """
@@ -2761,6 +2824,16 @@ class CylindricalFace3D(PeriodicalFaceMixin, Face3D):
         point1 = self.surface3d.frame.origin + self.surface3d.frame.w * zmin
         point2 = self.surface3d.frame.origin + self.surface3d.frame.w * zmax
         return volmdlr.wires.Wire3D([vme.LineSegment3D(point1, point2)])
+
+    def face_inside(self, face2, abs_tol: float = 1e-6):
+        """
+        Verifies if a face is inside another one.
+
+        It returns True if face2 is inside or False if the opposite.
+        """
+        if self.surface3d.frame.is_close(face2.surface3d.frame):
+            return parametric_face_inside(self, face2, abs_tol)
+        return super().face_inside(face2, abs_tol)
 
 
 class ToroidalFace3D(PeriodicalFaceMixin, Face3D):
@@ -2924,12 +2997,20 @@ class ToroidalFace3D(PeriodicalFaceMixin, Face3D):
         planeface_intersections = planeface.toroidalface_intersections(self)
         return planeface_intersections
 
+    def face_inside(self, face2, abs_tol: float = 1e-6):
+        """
+        Verifies if a face is inside another one.
+
+        It returns True if face2 is inside or False if the opposite.
+        """
+        return parametric_face_inside(self, face2, abs_tol)
+
     @classmethod
-    def from_occt(cls, occt_face: TopoDS_Shape):
+    def from_ocp(cls, occt_face: TopoDS_Shape):
         """
         Translate an occt face into a volmdlr face.
         """
-        return from_occt.face_from_ocp(cls, occt_face, OCCT_TO_VOLMDLR, surfaces.Surface2D)
+        return from_ocp.face_from_ocp(cls, occt_face, OCCT_TO_VOLMDLR, surfaces.Surface2D)
 
 
 class ConicalFace3D(PeriodicalFaceMixin, Face3D):
@@ -3195,11 +3276,11 @@ class SphericalFace3D(PeriodicalFaceMixin, Face3D):
         return cls(surface3d, surface2d=surface2d, name=name)
 
     @classmethod
-    def from_occt(cls, occt_face: TopoDS_Shape):
+    def from_ocp(cls, occt_face: TopoDS_Shape):
         """
         Translate an occt face into a volmdlr face.
         """
-        return from_occt.face_from_ocp(cls, occt_face, OCCT_TO_VOLMDLR, surfaces.Surface2D)
+        return from_ocp.face_from_ocp(cls, occt_face, OCCT_TO_VOLMDLR, surfaces.Surface2D)
 
     def get_bounding_box(self):
         """
@@ -3487,7 +3568,7 @@ class BSplineFace3D(Face3D):
     :param name: The name of the face.
     :type name: str
     """
-    face_tolerance = 1e-5
+    face_tolerance = 1e-3
 
     def __init__(self, surface3d: surfaces.BSplineSurface3D, surface2d: surfaces.Surface2D, name: str = ""):
         Face3D.__init__(self, surface3d=surface3d, surface2d=surface2d, name=name)
@@ -4011,12 +4092,27 @@ class BSplineFace3D(Face3D):
             return volmdlr.wires.Wire3D([neutral_fiber.trim(point1, neutral_fiber.point_projection(point3d_max)[0])])
         return volmdlr.wires.Wire3D([neutral_fiber.trim(point1, neutral_fiber.end)])
 
-    def linesegment_intersections(self, linesegment: vme.LineSegment3D, abs_tol: float = 1e-6) -> List[volmdlr.Point3D]:
+    def linesegment_intersections(self, linesegment: vme.LineSegment3D, abs_tol: float = 1e-5) -> List[volmdlr.Point3D]:
         """
         Get intersections between a BSpline face 3d and a Line Segment 3D.
 
+        DEVELOPER NOTE: method repeated on purspose.
+        It was a way to say that bsplineface needs a specific abs_tol, diferents from other faces.
+
         :param linesegment: other linesegment.
-        :param abs_tol: tolerance.
+        :param abs_tol: tolerance used.
         :return: a list of intersections.
         """
-        return self.linesegment_intersections_approximation(linesegment, abs_tol)
+        return super().linesegment_intersections(linesegment, abs_tol)
+
+    def divide_face(self, list_cutting_contours: List[volmdlr.wires.Contour2D], abs_tol: float = 1e-5):
+        """
+        Divides a Face 3D with a list of cutting contours.
+
+        DEVELOPER NOTE: method repeated on purspose.
+        It was a way to say that bsplineface needs a specific abs_tol, diferents from other faces.
+
+        :param list_cutting_contours: list of contours cutting the face.
+        :param abs_tol: tolerance.
+        """
+        return super().divide_face(list_cutting_contours, abs_tol)

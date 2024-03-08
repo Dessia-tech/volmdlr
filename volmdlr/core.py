@@ -34,7 +34,7 @@ from volmdlr.discrete_representation_compiled import triangle_intersects_voxel
 from volmdlr.utils.step_writer import product_writer, geometric_context_writer, assembly_definition_writer, \
     STEP_HEADER, STEP_FOOTER, step_ids_to_str
 from volmdlr.geometry import get_transfer_matrix_from_basis
-from volmdlr import from_occt
+from volmdlr import from_ocp
 
 np.seterr(divide='raise')
 
@@ -250,7 +250,7 @@ class EdgeStyle:
     dashed: bool = True
     linestyle: str = '-'
     linewidth: float = 1
-    equal_aspect: bool = True
+    equal_aspect: bool = False
 
 
 class Primitive3D(dc.PhysicalObject):
@@ -1302,13 +1302,13 @@ class Compound(dc.PhysicalObject):
         return step_content, current_id, [brep_id, product_definition_id]
 
     @classmethod
-    def from_occt(cls, occt_compound):
+    def from_ocp(cls, occt_compound):
         """
         Creates a volmdlr Compound from an OCCT compound.
         """
         # TODO: Today only shells are read. Needs to implement Solid or wireframe models if needed
         from volmdlr.shells import Shell3D
-        shell_list = [Shell3D.from_occt(occt_shell) for occt_shell in from_occt.get_shells(occt_compound)]
+        shell_list = [Shell3D.from_ocp(occt_shell) for occt_shell in from_ocp.get_shells(occt_compound)]
         return cls(shell_list)
 
 
@@ -1663,15 +1663,15 @@ class VolumeModel(dc.PhysicalObject):
         # Make sure that we extract all the solids
         solids = []
         for shape in occ_shapes:
-            shape_type = from_occt.shapetype(shape)
+            shape_type = from_ocp.shapetype(shape)
             if shape_type == 0:
-                solids.append(Compound.from_occt(shape))
+                solids.append(Compound.from_ocp(shape))
             elif shape_type == 1 or shape_type == 2:
-                list_of_shells = from_occt.get_shells(shape)
+                list_of_shells = from_ocp.get_shells(shape)
                 for shell in list_of_shells:
-                    solids.append(Shell3D.from_occt(shell))
-            elif from_occt.shapetype(shape) == 3:
-                Shell3D.from_occt(shape)
+                    solids.append(Shell3D.from_ocp(shell))
+            elif from_ocp.shapetype(shape) == 3:
+                Shell3D.from_ocp(shape)
             else:
                 #Reads only Compounds and solids
                 continue

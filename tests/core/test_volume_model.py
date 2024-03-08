@@ -73,7 +73,9 @@ class TestVolumeModel(unittest.TestCase):
         self.assertEqual(24, mesh.n_triangles)
 
     def test_from_step(self):
-        model = VolumeModel.from_step(step_file="bracket2.step")
+        file_path = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(volmdlr.__file__))),
+                                 "scripts\\step\\bracket2.step")
+        model = VolumeModel.from_step(step_file=file_path)
         self.assertTrue(model.primitives)
 
 
