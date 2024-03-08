@@ -16,6 +16,7 @@ from cython.cimports.libcpp import bool as bool_C
 from cython.cimports.libcpp.map import map as map_cpp
 from cython.cimports.libcpp.stack import stack
 from cython.cimports.libcpp.vector import vector
+
 # from cython.cimports.libcpp.memory import unique_ptr
 # from cython.operator import dereference, postincrement
 from numpy.typing import NDArray
@@ -34,17 +35,23 @@ _Triangle2D = Tuple[_Point2D, _Point2D, _Point2D]
 
 @cython.cclass
 class OctreeNode:
-    child_state: cython.uchar  # Each bit indicates the non-nodes child type: 0 for none, 1 for leaf
+    child_states: cython.uchar  # Each bit indicates the non-nodes child type: 0 for void, 1 for leaf
     child_nodes: map_cpp[cython.uchar : OctreeNode]
 
     def __init__(self):
-        self.child_state = 0
-        self.child_nodes: map_cpp[cython.uchar : OctreeNode] = {}
-        # self.children = cython.NULL
-    #
-    # def __cinit__(self):
-    #     self.child_state = 0
+        self.child_states = 0
+        self.child_nodes = {}
 
+    # CHILD STATES OPERATIONS
+    @cython.ccall
+    def set_void_child(self, index: cython.uchar):
+        self.child_states &= ~(1 << index)
+
+    @cython.ccall
+    def set_leaf_child(self, index: cython.uchar):
+        self.child_states |= 1 << index
+
+    # CHILD NODES OPERATIONS
     @cython.ccall
     def create_child_node(self, index: cython.uchar):
         self.child_nodes[index] = OctreeNode()
@@ -57,17 +64,35 @@ class OctreeNode:
     def get_child_node(self, index: cython.uchar) -> OctreeNode:
         return self.child_nodes[index]
 
-    # def __dealloc__(self):
-    #     children: map_cpp[cython.uchar : cython.pointer(OctreeNode)] = self.children
-    #     it: map_cpp[cython.uchar : cython.pointer(OctreeNode)].iterator = children.begin()
-    #
-    #     while it != children.end():
-    #         value = it.second  # value is a pointer to an OctreeNode
-    #         PyMem_Free(value)
-    #         it.next()
+    @cython.ccall
+    def delete_child_node(self, index: cython.uchar):
+        self.child_nodes.erase(index)
 
-    # def has_child(self, index: int) -> bool:
-    #     return bool(self.child_present & (1 << index))
+    @cython.ccall
+    def make_child_node_leaf(self, index: cython.uchar):
+        self.child_nodes.erase(index)
+        self.child_states |= 1 << index
+
+    # STATES GETTER
+    @cython.ccall
+    def get_child_nodes(self):
+        return self.child_nodes
+
+    @cython.ccall
+    def get_leaf_child_indices(self) -> List[cython.uchar]:
+        leaf_indices = []
+        for i in range(8):
+            if self.child_states & (1 << i):
+                leaf_indices.append(i)
+        return leaf_indices
+
+    @cython.ccall
+    def get_void_child_indices(self) -> List[cython.uchar]:
+        leaf_indices = []
+        for i in range(8):
+            if not (self.child_states & (1 << i)):
+                leaf_indices.append(i)
+        return leaf_indices
 
 
 # PYTHON FUNCTIONS
