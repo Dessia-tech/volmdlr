@@ -22,6 +22,9 @@ import scipy.integrate as scipy_integrate
 from scipy.optimize import least_squares, minimize
 from geomdl import NURBS, BSpline
 
+from OCP.Geom2dAPI import Geom2dAPI_InterCurveCurve
+from OCP.Precision import Precision
+
 from volmdlr.nurbs.operations import split_curve, decompose_curve, link_curves
 from volmdlr.nurbs.core import evaluate_curve, derivatives_curve
 from volmdlr.nurbs import fitting
@@ -30,6 +33,7 @@ import volmdlr.nurbs.helpers as nurbs_helpers
 import volmdlr.core
 import volmdlr.core_compiled
 import volmdlr.geometry
+from volmdlr import to_ocp, from_ocp
 from volmdlr import curves as volmdlr_curves
 from volmdlr import get_minimum_distance_points_lines, PATH_ROOT
 import volmdlr.utils.common_operations as vm_common_operations
@@ -88,6 +92,27 @@ class Edge(dc.DessiaObject):
 
         """
         raise NotImplementedError(f'split method not implemented by {self.__class__.__name__}')
+
+    def split_with_sorted_points(self, sorted_points, abs_tol: float = 1e-6):
+        """
+        Split edge in various sections using a list of sorted points along the edge.
+
+        :param sorted_points: sorted list of points.
+        :return: list of edge sections.
+        """
+        split_edges = []
+        edge_to_split = self
+        for point in sorted_points:
+            if point.is_close(edge_to_split.start, abs_tol) or \
+                    point.is_close(edge_to_split.end, abs_tol):
+                continue
+            split_edge = edge_to_split.split(point)
+            if split_edge[0] is not None:
+                split_edges.append(split_edge[0])
+            edge_to_split = split_edge[1]
+        if edge_to_split is not None:
+            split_edges.append(edge_to_split)
+        return split_edges
 
     def reverse(self):
         """Gets the edge in the reverse direction."""
@@ -592,8 +617,8 @@ class Edge(dc.DessiaObject):
             return [self]
         if shared_section == self:
             return []
-        split_arcs1 = self.split(shared_section[0].start)
-        split_arcs2 = self.split(shared_section[0].end)
+        split_arcs1 = self.split(shared_section[0].start, abs_tol)
+        split_arcs2 = self.split(shared_section[0].end, abs_tol)
         new_arcs = []
         for arc in split_arcs1 + split_arcs2:
             if arc and not arc.point_belongs(shared_section[0].middle_point(), abs_tol):
@@ -1465,7 +1490,7 @@ class BSplineCurve(Edge):
         initial_condition_list = [u_min + index * (u_max - u_min) / (self.sample_size - 1) for index in indexes[:3]]
         for u0 in initial_condition_list:
             res = minimize(objective_function, np.array(u0), bounds=[(u_min, u_max)], jac=True)
-            if res.fun < 1e-6: # or (res.success and abs(res.fun - distance) <= 1e-8):
+            if res.fun < 1e-6 or (res.success and abs(res.fun - distance) <= 1e-12):
                 return float(res.x[0] * length)
 
         for patch, param in self.decompose(True):
@@ -1877,7 +1902,7 @@ class BSplineCurve(Edge):
             if self.simplify.__class__ == other_bspline2.__class__:
                 return self.simplify.get_shared_section(other_bspline2, abs_tol)
             return []
-        if not self.is_shared_section_possible(other_bspline2, 1e-7):
+        if not self.is_shared_section_possible(other_bspline2, abs_tol):
             return []
         if not any(self.point_belongs(point, abs_tol=abs_tol)
                    for point in other_bspline2.discretization_points(number_points=10)):
@@ -2323,7 +2348,11 @@ class BSplineCurve2D(BSplineCurve):
         """
         if self.bounding_rectangle.distance_to_b_rectangle(bspline.bounding_rectangle) > abs_tol:
             return []
-        return self._generic_edge_intersections(bspline, abs_tol)
+        bspline_ocp1 = to_ocp.bsplinecurve2d_to_ocp(self)
+        bspline_ocp2 = to_ocp.bsplinecurve2d_to_ocp(bspline)
+        api_inters = Geom2dAPI_InterCurveCurve(bspline_ocp1, bspline_ocp2, Precision.Intersection_s())
+        intersections = [from_ocp.point2d_from_ocp(api_inters.Point(i + 1)) for i in range(api_inters.NbPoints())]
+        return intersections
 
     def axial_symmetry(self, line):
         """
@@ -3050,6 +3079,27 @@ class FullArcMixin(ArcMixin):
         """Creates A full arc, 2d or 3d, from circle."""
         return cls(circle, circle.center + circle.frame.u * circle.radius, name=name)
 
+    def trim(self, point1, point2, *args, **kwargs):
+        """
+        Trims fullarc between two points.
+
+        :param point1: point 1.
+        :param point2: point 2.
+        :return: edge trimmed.
+        """
+        return self.circle.trim(point1, point2)
+
+    def line_intersections(self, line: volmdlr_curves.Line3D, tol: float = 1e-6):
+        """
+        Calculates intersections between an FullArc3D and a Line3D.
+
+        :param line: line to verify intersections.
+        :param tol: maximum tolerance.
+        :return: list with intersections points between line and FullArc3D.
+        """
+        circle3d_lineseg_inters = vm_utils_intersections.circle_3d_line_intersections(self.circle, line, tol)
+        return circle3d_lineseg_inters
+
 
 class Arc2D(ArcMixin, Edge):
     """
@@ -3741,9 +3791,9 @@ class FullArc2D(FullArcMixin, Arc2D):
         """Plots a fullarc using Matplotlib."""
         return vm_common_operations.plot_circle(self.circle, ax, edge_style)
 
-    def line_intersections(self, line2d: volmdlr_curves.Line2D, tol=1e-9):
+    def line_intersections(self, line: volmdlr_curves.Line2D, tol=1e-9):
         """Full Arc 2D intersections with a Line 2D."""
-        return self.circle.line_intersections(line2d, tol)
+        return self.circle.line_intersections(line, tol)
 
     def linesegment_intersections(self, linesegment2d: LineSegment2D, abs_tol=1e-9):
         """Full arc 2D intersections with a line segment."""
@@ -6349,18 +6399,18 @@ class ArcEllipse3D(ArcEllipseMixin, Edge):
         return self.ellipse == other_arcellipse.ellipse and \
             self.start == other_arcellipse.start and self.end == other_arcellipse.end
 
-    def is_close(self, other_arcellipse, abs_tol: float = 1e-6):
+    def is_close(self, other_arcellipse, tol: float = 1e-6):
         """
         Verifies if two arc ellipses are the same, considereing given tolerance.
 
         :param other_arcellipse: other arc ellipse.
-        :param abs_tol: tolerance.
+        :param tol: tolerance.
         :return: True or False.
         """
         if self.__class__.__name__ != other_arcellipse.__class__.__name__:
             return False
-        return self.ellipse.is_close(other_arcellipse.ellipse, abs_tol) and \
-            self.start.is_close(other_arcellipse.start, abs_tol) and self.end.is_close(other_arcellipse.end, abs_tol)
+        return self.ellipse.is_close(other_arcellipse.ellipse, tol) and \
+            self.start.is_close(other_arcellipse.start, tol) and self.end.is_close(other_arcellipse.end, tol)
 
     @property
     def center(self):
@@ -6834,3 +6884,13 @@ class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
         :return: A list of points, containing all intersections between the Line 3D and the Ellipse3D.
         """
         return self.ellipse.line_intersections(line, abs_tol)
+
+    def trim(self, point1, point2, *args, **kwargs):
+        """
+        Trims fullarcellipse between two points.
+
+        :param point1: point 1.
+        :param point2: point 2.
+        :return: edge trimmed.
+        """
+        return self.ellipse.trim(point1, point2)

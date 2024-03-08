@@ -59,6 +59,10 @@ class StepFunction:
 
     @classmethod
     def dict_to_object(cls, dict_, *args, **kwargs):
+        """
+        Create a StepFunction object from a dictionary representation.
+
+        """
         return cls(dict_["id"], dict_["name"], dict_["arg"])
 
     def simplify(self, new_name):
@@ -233,6 +237,7 @@ class Step(dc.DessiaObject):
         return functions, connections
 
     def not_implemented(self):
+        """Helper function?."""
         not_implemented = []
         for _, fun in self.functions.items():
             if fun.name not in STEP_TO_VOLMDLR:
@@ -444,8 +449,6 @@ class Step(dc.DessiaObject):
         """
         name_representation_entity = self.functions[id_representation_entity].name
         arg = self.functions[id_representation_entity].arg[1]
-        if arg[0][1:] == '':
-            print(True)
         if name_representation_entity == "MANIFOLD_SURFACE_SHAPE_REPRESENTATION":
             if self.functions[int(arg[0][1:])].name == "AXIS2_PLACEMENT_3D":
                 id_solid_entity = int(arg[1][1:])
@@ -693,6 +696,7 @@ class Step(dc.DessiaObject):
             self.functions[next_assembly_usage_occurrence].arg.append(f'#{node}')
 
     def instatiate_assembly(self, object_dict):
+        """Instanciates an assembly."""
         assemblies_structure, valid_entities = self.get_assembly_structure()
 
         instantiate_ids = list(assemblies_structure.keys())
@@ -851,6 +855,7 @@ class Step(dc.DessiaObject):
         return points3d[1:]
 
     def plot_data(self):
+        """Network plot_data method for step file entities."""
         graph = self.graph().copy()
 
         graph.remove_nodes_from([stepfunction.id for stepfunction
