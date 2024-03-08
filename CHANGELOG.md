@@ -52,6 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - occt integration: surface intersections.
 - Commented some surface intersectios methods.
+- fix missing docstrings
 
 #### curves.py
 - Ellipse3D: to_step
