@@ -39,7 +39,7 @@ def list_to_tcolgp_array10fpnt(list_of_points):
     """
     array = TColgp_Array1OfPnt(1, len(list_of_points))
     for i, point in enumerate(list_of_points):
-        array.SetValue(i + 1, point3d_to_occt(point))
+        array.SetValue(i + 1, point3d_to_ocp(point))
     return array
 
 
@@ -50,76 +50,76 @@ def list_to_tcolgp_array10fpnt2d(list_of_points):
     """
     array = TColgp_Array1OfPnt2d(1, len(list_of_points))
     for i, point in enumerate(list_of_points):
-        array.SetValue(i + 1, point2d_to_occt(point))
+        array.SetValue(i + 1, point2d_to_ocp(point))
     return array
 
 
-def point2d_to_occt(point2d):
+def point2d_to_ocp(point2d):
     """
-    Create an OCCT Point2D from a voldmlr Point2D.
+    Create an OCP Point2D from a voldmlr Point2D.
 
     :param point2d: volmdlr Point2D.
-    :return: OCCT Point2D
+    :return: OCP Point2D
     """
     return gp_Pnt2d(*point2d)
 
 
-def point3d_to_occt(point):
+def point3d_to_ocp(point):
     """
-    Create an OCCT Point3D from a voldmlr Point3D.
+    Create an OCP Point3D from a voldmlr Point3D.
 
     :param point: volmdlr Point3D.
-    :return: OCCT Point3D
+    :return: OCP Point3D
     """
     return gp_Pnt(*point)
 
 
-def vector3d_to_occt(vector):
+def vector3d_to_ocp(vector):
     """
-    Create an OCCT Vector3D from a voldmlr Vector3D.
+    Create an OCP Vector3D from a voldmlr Vector3D.
 
     :param vector: volmdlr Vector3D.
-    :return: OCCT Vector3D
+    :return: OCP Vector3D
     """
     return gp_Dir(*vector)
 
 
-def vector2d_to_occt(vector):
+def vector2d_to_ocp(vector):
     """
-    Create an OCCT Vector2D from a voldmlr Vector2D.
+    Create an OCP Vector2D from a voldmlr Vector2D.
 
     :param vector: volmdlr Vector2D.
-    :return: OCCT Vector2D
+    :return: OCP Vector2D
     """
     return gp_Dir2d(*vector)
 
 
-def frame3d_to_occt(frame):
+def frame3d_to_ocp(frame):
     """
-    Create an OCCT Frame3D from a voldmlr Frame3D.
+    Create an OCP Frame3D from a voldmlr Frame3D.
 
     :param frame: volmdlr Frame3D.
-    :return: OCCT Frame3D.
+    :return: OCP Frame3D.
     """
-    point = point3d_to_occt(frame.origin)
-    z_vector = vector3d_to_occt(frame.w)
-    x_vector = vector3d_to_occt(frame.u)
+    point = point3d_to_ocp(frame.origin)
+    z_vector = vector3d_to_ocp(frame.w)
+    x_vector = vector3d_to_ocp(frame.u)
     return gp_Ax3(point, z_vector, x_vector)
 
 
-def line3d_to_occt(line):
+def line3d_to_ocp(line):
     """
-    Create an OCCT Line from a voldmlr Line3D.
+    Create an OCP Line from a voldmlr Line3D.
 
     :param line: volmdlr Line3D.
-    :return: OCCT Frame3D.
+    :return: OCP Frame3D.
     """
-    point = point3d_to_occt(line.point1)
-    direction = vector3d_to_occt(line.unit_direction_vector())
+    point = point3d_to_ocp(line.point1)
+    direction = vector3d_to_ocp(line.unit_direction_vector())
     return Geom_Line(point, direction)
 
 
-def bsplinecurve3d_to_occt(bsplinecurve):
+def bsplinecurve3d_to_ocp(bsplinecurve):
     """
     Creates a Bspline Curve 3D from a volmdlr object.
 
@@ -138,7 +138,7 @@ def bsplinecurve3d_to_occt(bsplinecurve):
                              bsplinecurve.degree)
 
 
-def bsplinecurve2d_to_occt(bsplinecurve):
+def bsplinecurve2d_to_ocp(bsplinecurve):
     """
     Creates a Bspline Curve 3D from a volmdlr object.
 
@@ -157,67 +157,67 @@ def bsplinecurve2d_to_occt(bsplinecurve):
                                bsplinecurve.degree)
 
 
-def plane_to_occt(surface):
+def plane_to_ocp(surface):
     """
-    Create an OCCT Plane from a voldmlr Plane3D.
+    Create an OCP Plane from a voldmlr Plane3D.
 
     :param surface: volmdlr Plane3D.
-    :return: OCCT Plane.
+    :return: OCP Plane.
     """
-    gp_ax3 = frame3d_to_occt(surface.frame)
+    gp_ax3 = frame3d_to_ocp(surface.frame)
     return Geom_Plane(gp_ax3)
 
 
-def cylindricalsurface_to_occt(surface):
+def cylindricalsurface_to_ocp(surface):
     """
-    Create an OCCT CylindricalSurface from a voldmlr CylindricalSurface3D.
+    Create an OCP CylindricalSurface from a voldmlr CylindricalSurface3D.
 
     :param surface: volmdlr CylindricalSurface3D.
-    :return: OCCT CylindricalSurface.
+    :return: OCP CylindricalSurface.
     """
-    gp_ax3 = frame3d_to_occt(surface.frame)
+    gp_ax3 = frame3d_to_ocp(surface.frame)
     return Geom_CylindricalSurface(gp_ax3, surface.radius)
 
 
-def conicalsurface_to_occt(surface):
+def conicalsurface_to_ocp(surface):
     """
-    Create an OCCT ConicalSurface from a voldmlr ConicalSurface3D.
+    Create an OCP ConicalSurface from a voldmlr ConicalSurface3D.
 
     :param surface: volmdlr ConicalSurface3D.
-    :return: OCCT ConicalSurface.
+    :return: OCP ConicalSurface.
     """
-    gp_ax3 = frame3d_to_occt(surface.frame)
+    gp_ax3 = frame3d_to_ocp(surface.frame)
     return Geom_ConicalSurface(gp_ax3, surface.semi_angle, surface.ref_radius)
 
 
-def sphericalsurface_to_occt(surface):
+def sphericalsurface_to_ocp(surface):
     """
-    Create an OCCT SphericalSurface from a voldmlr SphericalSurface3D.
+    Create an OCP SphericalSurface from a voldmlr SphericalSurface3D.
 
     :param surface: volmdlr SphericalSurface3D.
-    :return: OCCT SphericalSurface.
+    :return: OCP SphericalSurface.
     """
-    gp_ax3 = frame3d_to_occt(surface.frame)
+    gp_ax3 = frame3d_to_ocp(surface.frame)
     return Geom_SphericalSurface(gp_ax3, surface.radius)
 
 
-def toroidalsurface_to_occt(surface):
+def toroidalsurface_to_ocp(surface):
     """
-    Create an OCCT ToroidalSurface from a voldmlr ToroidalSurface3D.
+    Create an OCP ToroidalSurface from a voldmlr ToroidalSurface3D.
 
     :param surface: volmdlr ToroidalSurface3D.
-    :return: OCCT ToroidalSurface.
+    :return: OCP ToroidalSurface.
     """
-    gp_ax3 = frame3d_to_occt(surface.frame)
+    gp_ax3 = frame3d_to_ocp(surface.frame)
     return Geom_ToroidalSurface(gp_ax3, surface.major_radius, surface.minor_radius)
 
 
-def bsplinesurface_to_occt(surface):
+def bsplinesurface_to_ocp(surface):
     """
-    Create an OCCT BSplineSurface3D from a voldmlr FraBSplineSurface3Dme3D.
+    Create an OCP BSplineSurface3D from a voldmlr FraBSplineSurface3Dme3D.
 
     :param surface: volmdlr BSplineSurface3D.
-    :return: OCCT BSplineSurface.
+    :return: OCP BSplineSurface.
     """
     points = surface.control_points_table
     u_deg, v_deg = surface.degree_u, surface.degree_v
