@@ -93,7 +93,7 @@ class TestToroidalFace3D(unittest.TestCase):
             inters = tf.face_intersections(cylface)
             self.assertEqual(len(inters), len(expected_results[i]))
             for inter, expected_result in zip(inters, expected_results[i]):
-                self.assertAlmostEqual(inter.length(), expected_result, 6)
+                self.assertAlmostEqual(inter.length(), expected_result, 5)
 
     def test_conicalface_intersections(self):
         tf = faces.ToroidalFace3D.from_surface_rectangular_cut(

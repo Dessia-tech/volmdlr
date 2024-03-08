@@ -444,8 +444,6 @@ class Step(dc.DessiaObject):
         """
         name_representation_entity = self.functions[id_representation_entity].name
         arg = self.functions[id_representation_entity].arg[1]
-        if arg[0][1:] == '':
-            print(True)
         if name_representation_entity == "MANIFOLD_SURFACE_SHAPE_REPRESENTATION":
             if self.functions[int(arg[0][1:])].name == "AXIS2_PLACEMENT_3D":
                 id_solid_entity = int(arg[1][1:])

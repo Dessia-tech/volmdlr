@@ -1,0 +1,386 @@
+{
+  "object_class": "volmdlr.core.VolumeModel",
+  "name": "",
+  "primitives": [
+    {
+      "object_class": "volmdlr.faces.CylindricalFace3D",
+      "name": "",
+      "radius": 0.0127,
+      "center": {
+        "object_class": "volmdlr.Point3D",
+        "x": 0.111658445346,
+        "y": -0.055755,
+        "z": 0.11025
+      },
+      "normal": {
+        "object_class": "volmdlr.Vector3D",
+        "x": -0.0,
+        "y": 1.0,
+        "z": 0.0
+      },
+      "surface3d": {
+        "object_class": "volmdlr.surfaces.CylindricalSurface3D",
+        "name": "",
+        "radius": 0.0127,
+        "frame": {
+          "object_class": "volmdlr.Frame3D",
+          "name": "",
+          "origin": {
+            "object_class": "volmdlr.Point3D",
+            "x": 0.111658445346,
+            "y": -0.055755,
+            "z": 0.11025
+          },
+          "u": {
+            "object_class": "volmdlr.Vector3D",
+            "x": 1.0,
+            "y": 0.0,
+            "z": 6.123233995736766e-17
+          },
+          "v": {
+            "object_class": "volmdlr.Vector3D",
+            "x": 6.123233995736766e-17,
+            "y": 0.0,
+            "z": -1.0
+          },
+          "w": {
+            "object_class": "volmdlr.Vector3D",
+            "x": -0.0,
+            "y": 1.0,
+            "z": 0.0
+          }
+        }
+      },
+      "surface2d": {
+        "object_class": "volmdlr.surfaces.Surface2D",
+        "name": "name",
+        "outer_contour": {
+          "object_class": "volmdlr.wires.Contour2D",
+          "name": "",
+          "primitives": [
+            {
+              "name": "",
+              "start": {
+                "object_class": "volmdlr.Point2D",
+                "x": -2.1380283840332397,
+                "y": 0.0
+              },
+              "end": {
+                "object_class": "volmdlr.Point2D",
+                "x": -1.5707963267948954,
+                "y": 0.0
+              },
+              "reference_path": "#",
+              "object_class": "volmdlr.edges.LineSegment2D"
+            },
+            {
+              "name": "",
+              "start": {
+                "object_class": "volmdlr.Point2D",
+                "x": -1.5707963267948954,
+                "y": 0.0
+              },
+              "end": {
+                "object_class": "volmdlr.Point2D",
+                "x": -1.5707963267948954,
+                "y": 0.11151
+              },
+              "reference_path": "#",
+              "object_class": "volmdlr.edges.LineSegment2D"
+            },
+            {
+              "name": "",
+              "start": {
+                "object_class": "volmdlr.Point2D",
+                "x": -1.5707963267948954,
+                "y": 0.11151
+              },
+              "end": {
+                "object_class": "volmdlr.Point2D",
+                "x": -2.1380283840332397,
+                "y": 0.11151
+              },
+              "reference_path": "#",
+              "object_class": "volmdlr.edges.LineSegment2D"
+            },
+            {
+              "name": "",
+              "start": {
+                "object_class": "volmdlr.Point2D",
+                "x": -2.1380283840332397,
+                "y": 0.11151
+              },
+              "end": {
+                "object_class": "volmdlr.Point2D",
+                "x": -2.1380283840332397,
+                "y": 0.0
+              },
+              "reference_path": "#",
+              "object_class": "volmdlr.edges.LineSegment2D"
+            }
+          ],
+          "reference_path": "#"
+        },
+        "inner_contours": []
+      },
+      "color": null,
+      "alpha": 1.0,
+      "reference_path": "#"
+    },
+    [
+      {
+        "object_class": "volmdlr.wires.Wire3D",
+        "name": "",
+        "primitives": [
+          {
+            "object_class": "volmdlr.edges.ArcEllipse3D",
+            "name": "",
+            "start": {
+              "object_class": "volmdlr.Point3D",
+              "x": 0.10483473978079802,
+              "y": -0.03933344054352296,
+              "z": 0.12096107101831706
+            },
+            "end": {
+              "object_class": "volmdlr.Point3D",
+              "x": 0.111658445346,
+              "y": -0.04022627772767679,
+              "z": 0.12295
+            },
+            "reference_path": "#",
+            "ellipse": {
+              "object_class": "volmdlr.curves.Ellipse3D",
+              "name": "",
+              "frame": {
+                "object_class": "volmdlr.Frame3D",
+                "name": "",
+                "origin": {
+                  "object_class": "volmdlr.Point3D",
+                  "x": 0.11165844534599989,
+                  "y": -0.040226277728158205,
+                  "z": 0.11025000000028326
+                },
+                "u": {
+                  "object_class": "volmdlr.Vector3D",
+                  "x": -0.9915483612635883,
+                  "y": 0.12973760933319464,
+                  "z": 0.0
+                },
+                "v": {
+                  "object_class": "volmdlr.Vector3D",
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 1.0
+                },
+                "w": {
+                  "object_class": "volmdlr.Vector3D",
+                  "x": -0.12973760933319442,
+                  "y": -0.9915483612635884,
+                  "z": 0.0
+                }
+              },
+              "major_axis": 0.012808250707827968,
+              "minor_axis": 0.012699999999716743
+            },
+            "angle_start": 1.0035642695507823,
+            "angle_end": 1.570796326790029,
+            "angle": 0.5672320572392466
+          }
+        ],
+        "color": null,
+        "alpha": 1.0,
+        "reference_path": "#"
+      },
+      {
+        "object_class": "volmdlr.wires.Wire3D",
+        "name": "",
+        "primitives": [
+          {
+            "object_class": "volmdlr.edges.ArcEllipse3D",
+            "name": "",
+            "start": {
+              "object_class": "volmdlr.Point3D",
+              "x": 0.111658445346,
+              "y": 0.040226277727686444,
+              "z": 0.12295
+            },
+            "end": {
+              "object_class": "volmdlr.Point3D",
+              "x": 0.10483473978079802,
+              "y": 0.03933344054353262,
+              "z": 0.12096107101831706
+            },
+            "reference_path": "#",
+            "ellipse": {
+              "object_class": "volmdlr.curves.Ellipse3D",
+              "name": "",
+              "frame": {
+                "object_class": "volmdlr.Frame3D",
+                "name": "",
+                "origin": {
+                  "object_class": "volmdlr.Point3D",
+                  "x": 0.11165844534600011,
+                  "y": 0.04022627772815823,
+                  "z": 0.11025000000028326
+                },
+                "u": {
+                  "object_class": "volmdlr.Vector3D",
+                  "x": 0.9915483612635885,
+                  "y": 0.12973760933319411,
+                  "z": 0.0
+                },
+                "v": {
+                  "object_class": "volmdlr.Vector3D",
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 1.0
+                },
+                "w": {
+                  "object_class": "volmdlr.Vector3D",
+                  "x": -0.12973760933319442,
+                  "y": 0.9915483612635884,
+                  "z": 0.0
+                }
+              },
+              "major_axis": 0.012808250707827967,
+              "minor_axis": 0.012699999999716743
+            },
+            "angle_start": 1.570796326799684,
+            "angle_end": 2.1380283840389156,
+            "angle": 0.5672320572392315
+          }
+        ],
+        "color": null,
+        "alpha": 1.0,
+        "reference_path": "#"
+      },
+      {
+        "object_class": "volmdlr.wires.Wire3D",
+        "name": "",
+        "primitives": [
+          {
+            "object_class": "volmdlr.edges.ArcEllipse3D",
+            "name": "",
+            "start": {
+              "object_class": "volmdlr.Point3D",
+              "x": 0.10483473978079802,
+              "y": 0.029086828996278895,
+              "z": 0.12096107101831706
+            },
+            "end": {
+              "object_class": "volmdlr.Point3D",
+              "x": 0.111658445346,
+              "y": 0.029979666180432643,
+              "z": 0.12295
+            },
+            "reference_path": "#",
+            "ellipse": {
+              "object_class": "volmdlr.curves.Ellipse3D",
+              "name": "",
+              "frame": {
+                "object_class": "volmdlr.Frame3D",
+                "name": "",
+                "origin": {
+                  "object_class": "volmdlr.Point3D",
+                  "x": 0.111658445346,
+                  "y": 0.0299796661800631,
+                  "z": 0.11025000000028326
+                },
+                "u": {
+                  "object_class": "volmdlr.Vector3D",
+                  "x": 0.99154836126359,
+                  "y": 0.12973760933318107,
+                  "z": 0.0
+                },
+                "v": {
+                  "object_class": "volmdlr.Vector3D",
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": -1.0
+                },
+                "w": {
+                  "object_class": "volmdlr.Vector3D",
+                  "x": 0.12973760933318138,
+                  "y": -0.99154836126359,
+                  "z": 0.0
+                }
+              },
+              "major_axis": 0.012808250707827918,
+              "minor_axis": 0.012700000000283262
+            },
+            "angle_start": 4.145156923150784,
+            "angle_end": 4.7123984257816565,
+            "angle": 0.5672415026308721
+          }
+        ],
+        "color": null,
+        "alpha": 1.0,
+        "reference_path": "#"
+      },
+      {
+        "object_class": "volmdlr.wires.Wire3D",
+        "name": "",
+        "primitives": [
+          {
+            "object_class": "volmdlr.edges.ArcEllipse3D",
+            "name": "",
+            "start": {
+              "object_class": "volmdlr.Point3D",
+              "x": 0.111658445346,
+              "y": -0.02997967716169346,
+              "z": 0.12295
+            },
+            "end": {
+              "object_class": "volmdlr.Point3D",
+              "x": 0.10483473978079802,
+              "y": -0.02908683997754677,
+              "z": 0.12096107101831706
+            },
+            "reference_path": "#",
+            "ellipse": {
+              "object_class": "volmdlr.curves.Ellipse3D",
+              "name": "",
+              "frame": {
+                "object_class": "volmdlr.Frame3D",
+                "name": "",
+                "origin": {
+                  "object_class": "volmdlr.Point3D",
+                  "x": 0.11165844534599996,
+                  "y": -0.029979677161759626,
+                  "z": 0.11025000000113305
+                },
+                "u": {
+                  "object_class": "volmdlr.Vector3D",
+                  "x": -0.9915483612637215,
+                  "y": 0.12973760933217626,
+                  "z": 0.0
+                },
+                "v": {
+                  "object_class": "volmdlr.Vector3D",
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": -1.0
+                },
+                "w": {
+                  "object_class": "volmdlr.Vector3D",
+                  "x": 0.12973760933217615,
+                  "y": 0.9915483612637216,
+                  "z": -0.0
+                }
+              },
+              "major_axis": 0.01280825070782622,
+              "minor_axis": 0.012700000001133055
+            },
+            "angle_start": 4.712407871302041,
+            "angle_end": 5.279621037929121,
+            "angle": 0.5672131666270799
+          }
+        ],
+        "color": null,
+        "alpha": 1.0,
+        "reference_path": "#"
+      }
+    ]
+  ],
+  "_references": {}
+}

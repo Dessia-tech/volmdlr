@@ -1057,7 +1057,8 @@ class Wire2D(WireMixin, PhysicalObject):
         """
         self_primitives_to_test = [prim for prim in self.primitives if prim.is_point_edge_extremity(crossing)]
         if len(self_primitives_to_test) < 2:
-            self_primitive = [prim for prim in self.primitives if prim.point_belongs(crossing)][0]
+            self_primitive = [prim for prim in self.primitives if prim.point_belongs(crossing)]
+            self_primitive = self_primitive[0]
             crossing_abscissa = self_primitive.abscissa(crossing)
             vector_crossing = self_primitive.direction_vector(crossing_abscissa)
             current_vector = current_wire_primitive.direction_vector(current_wire_primitive.length())
@@ -2126,11 +2127,11 @@ class Contour2D(ContourMixin, Wire2D):
             return False
         if include_edge_points:
             for primitive in self.primitives:
-                if primitive.point_belongs(point, 1e-6):
+                if primitive.point_belongs(point, tol):
                     return True
         if not self._polygon_100_points:
             self._polygon_100_points = self.to_polygon(100)
-        if point.is_close(self.center_of_mass()) and self._polygon_100_points.is_convex():
+        if point.is_close(self.centroid()) and self._polygon_100_points.is_convex():
             return True
         if self._polygon_100_points.point_inside(point):
             return True
@@ -2172,8 +2173,14 @@ class Contour2D(ContourMixin, Wire2D):
                         area += trigo * edge.straight_line_area()
                     self._area = abs(area)
                 else:
-                    self._area = polygon.triangulation().area()
+                    self._area = float(polygon.triangulation().area())
         return self._area
+
+    def centroid(self):
+        """Gets the centroid of a closed polygon 2d."""
+        if not self._polygon_100_points:
+            self._polygon_100_points = self.to_polygon(100)
+        return self._polygon_100_points.barycenter()
 
     def center_of_mass(self):
         """
@@ -2181,7 +2188,9 @@ class Contour2D(ContourMixin, Wire2D):
 
         :return: Contour's center of mass.
         """
-        center = self.edge_polygon.area() * self.edge_polygon.center_of_mass()
+        center = volmdlr.O2D
+        if self.edge_polygon.area() != 0.0:
+            center = self.edge_polygon.area() * self.edge_polygon.center_of_mass()
         if self.edge_polygon.is_trigo:
             trigo = 1
         else:
@@ -2495,6 +2504,7 @@ class Contour2D(ContourMixin, Wire2D):
                              closing_contour, abs_tol: float = 1e-6):
         """
         Get divided contours.
+
         """
         extracted_innerpoints_contour1_prims, extracted_outerpoints_contour1_prims = self.split_with_two_points(
             cutting_point1, cutting_point2, abs_tol)
@@ -2513,9 +2523,9 @@ class Contour2D(ContourMixin, Wire2D):
         elif extracted_innerpoints_contour1.primitives[0].start.is_close(closing_contour.primitives[-1].end, abs_tol):
             primitives2 = closing_contour.primitives + extracted_innerpoints_contour1.primitives
         contour1 = Contour2D(primitives1)
-        contour1.order_contour()
+        contour1.order_contour(abs_tol)
         contour2 = Contour2D(primitives2)
-        contour2.order_contour()
+        contour2.order_contour(abs_tol)
         return contour1, contour2
 
     def divide(self, contours, abs_tol: float = 1e-6):
@@ -2539,9 +2549,11 @@ class Contour2D(ContourMixin, Wire2D):
                         list_cutting_contours.pop(j)
                         list_cutting_contours_modified = True
                         break
-                    contour_crossings = cutting_contour.wire_crossings(base_contour)
-                    if contour_crossings:
-                        sorted_points = cutting_contour.sort_points_along_wire(contour_crossings)
+                    contour_intersections = cutting_contour.wire_intersections(base_contour)
+                    points = [cutting_contour.primitives[0].start, cutting_contour.primitives[-1].end]
+                    if len(contour_intersections) >= 2 and not all(
+                            pnt.in_list(points, abs_tol) for pnt in contour_intersections):
+                        sorted_points = cutting_contour.sort_points_along_wire(contour_intersections)
                         split_wires = cutting_contour.split_with_sorted_points(sorted_points)
                         list_cutting_contours.pop(j)
                         list_cutting_contours = split_wires + list_cutting_contours
