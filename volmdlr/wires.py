@@ -553,10 +553,8 @@ class WireMixin:
 
                     if primitive.is_point_edge_extremity(new_primitives[i][-1].end, tol):
                         if new_primitives[i][-1].end.is_close(primitive.start, tol):
-                            primitive.start = new_primitives[i][-1].end
                             new_primitives[i].append(primitive)
                         else:
-                            primitive.end = new_primitives[i][-1].end
                             new_primitives[i].append(primitive.reverse())
                         list_edges.remove(primitive)
                         broke = True
@@ -564,10 +562,8 @@ class WireMixin:
 
                     if primitive.is_point_edge_extremity(new_primitives[i][0].start, tol):
                         if new_primitives[i][0].start.is_close(primitive.end, tol):
-                            primitive.end = new_primitives[i][0].start
                             new_primitives[i].insert(0, primitive)
                         else:
-                            primitive.start = new_primitives[i][0].start
                             new_primitives[i].insert(0, primitive.reverse())
                         list_edges.remove(primitive)
                         broke = True
@@ -1598,12 +1594,9 @@ class ContourMixin(WireMixin):
                 if (edge.is_point_edge_extremity(contour_primitives[-1].end, tol) and
                         not edge.direction_independent_is_close(contour_primitives[-1])):
                     if contour_primitives[-1].end.is_close(edge.start, tol):
-                        edge.start = contour_primitives[-1].end
                         contour_primitives.append(edge)
                     else:
-                        edge = edge.reverse()
-                        edge.start = contour_primitives[-1].end
-                        contour_primitives.append(edge)
+                        contour_primitives.append(edge.reverse())
                     list_edges.pop(i)
                     validating_points = points[:]
                     validating_point = contour_primitives[-1].end
@@ -1612,12 +1605,9 @@ class ContourMixin(WireMixin):
                 if (edge.is_point_edge_extremity(contour_primitives[0].start, tol) and
                         not edge.direction_independent_is_close(contour_primitives[0])):
                     if contour_primitives[0].start.is_close(edge.end, tol):
-                        edge.end = contour_primitives[0].start
                         contour_primitives.insert(0, edge)
                     else:
-                        edge = edge.reverse()
-                        edge.end = contour_primitives[0].start
-                        contour_primitives.insert(0, edge)
+                        contour_primitives.insert(0, edge.reverse())
                     validating_points = points[:]
                     validating_point = contour_primitives[0].start
                     points.insert(0, contour_primitives[0].start)
@@ -1642,10 +1632,8 @@ class ContourMixin(WireMixin):
                         new_contour = cls(contour_primitives[spliting_primitives_index:])
                         contour_primitives = contour_primitives[:spliting_primitives_index]
                         points = points[:spliting_primitives_index + 1]
-                    new_contour.primitives[0].start = new_contour.primitives[-1].end
                     list_contours.append(new_contour)
                 else:
-                    contour_primitives[0].start = contour_primitives[-1].end
                     list_contours.append(cls(contour_primitives))
                     if list_edges:
                         points = [list_edges[0].start, list_edges[0].end]
@@ -4407,22 +4395,6 @@ class Contour3D(ContourMixin, Wire3D):
         new_edges = [edge.frame_mapping(frame, side) for edge in
                      self.primitives]
         return Contour3D(new_edges, self.name)
-
-    # def copy(self, deep=True, memo=None):
-    #     """
-    #     Creates a copy of the Contour3D.
-    #
-    #     As contours are containers, if deep is set to False, this method will return a new instance with the
-    #     same primitives of self.
-    #
-    #     :param deep: If False, perform a shallow copy. If True, perform a deep copy.
-    #     :param memo: A dict that keep track of references.
-    #     """
-    #     if not deep:
-    #         return Contour3D(self.primitives, self.name)
-    #     memo = {}
-    #     new_edges = [edge.copy(deep=deep, memo=memo) for edge in self.primitives]
-    #     return Contour3D(new_edges, self.name)
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         """Contour 3D plot using Matplotlib."""

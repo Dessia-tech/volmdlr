@@ -794,8 +794,6 @@ class LineSegment(Edge):
         :param abscissa: abscissa where in the curve the point should be calculated.
         :return: Corresponding point.
         """
-        if self.length() < 1e-6:
-            print(True)
         return self.start + self.unit_direction_vector() * abscissa
 
     def get_geo_lines(self, tag: int, start_point_tag: int, end_point_tag: int):
@@ -918,32 +916,23 @@ class BSplineCurve(Edge):
 
     def __init__(self,
                  degree: int,
-                 control_points: Union[List[volmdlr.Point2D], List[volmdlr.Point3D], NDArray],
+                 control_points: Union[List[volmdlr.Point2D], List[volmdlr.Point3D]],
                  knot_multiplicities: Union[List[int], NDArray],
                  knots: Union[List[float], NDArray],
                  weights: Union[List[float], NDArray] = None,
                  name: str = ''):
-        self.ctrlpts = np.asarray(control_points)
+        self._control_points = control_points
         self.degree = degree
         self.knots = np.asarray(nurbs_helpers.standardize_knot_vector(knots))
         self.knot_multiplicities = np.asarray(knot_multiplicities, dtype=np.int16)
         self.weights = weights
-        self.ctrlptsw = None
         self.rational = False
         if self.weights is not None:
             self.weights = np.asarray(weights, dtype=np.float64)
             self.rational = self.weights.any()
-            if self.rational:
-                self.ctrlptsw = np.hstack((self.ctrlpts * self.weights[:, np.newaxis], self.weights[:, np.newaxis]))
-            else:
+            if not self.rational:
                 self.weights = None
-        point_class = getattr(volmdlr, "Point" + self.__class__.__name__[-2:])
-        start = control_points[0]
-        end = control_points[-1]
-        if not isinstance(start, point_class):
-            start = point_class(*control_points[0])
-            end = point_class(*control_points[-1])
-        Edge.__init__(self, start, end, name=name)
+        Edge.__init__(self, start=self._control_points[0], end=self._control_points[-1], name=name)
         self._simplified = None
         self._delta = 0.01
         self._length = None
@@ -985,12 +974,23 @@ class BSplineCurve(Edge):
 
     @property
     def control_points(self):
-        """Return the control points of the bspline curve."""
-        point_name = "Point" + self.__class__.__name__[-2:]
-        control_points = [getattr(volmdlr, point_name)(*point) for point in self.ctrlpts]
-        control_points[0] = self.start
-        control_points[-1] = self.end
-        return control_points
+        """Return the control points of the bspline curve updating start and end points."""
+        self._control_points[0] = self.start
+        self._control_points[-1] = self.end
+        return self._control_points
+
+
+    @property
+    def ctrlpts(self):
+        """Return the control points of the bspline curve as an array."""
+        return np.asarray(self.control_points)
+
+    @property
+    def ctrlptsw(self):
+        """Return the control points of the bspline curve as an array."""
+        if self.rational:
+            return np.hstack((self.ctrlpts * self.weights[:, np.newaxis], self.weights[:, np.newaxis]))
+        return None
 
     @property
     def knotvector(self):
@@ -1112,16 +1112,16 @@ class BSplineCurve(Edge):
         Returns a copy of the instance.
 
         :param deep: If False, perform a shallow copy. If True, perform a deep copy.
+        :param memo: (Optional) A dicionary to keep track of objects that have been already copied.
         """
         if deep:
             weights = None
             if self.rational:
                 weights = self.weights.copy()
-            control_points = [point.copy(deep=deep, memo=memo) for point in self.control_points]
-            return self.__class__(self.degree, control_points,
-                                  self.knot_multiplicities.copy(), self.knots.copy(), weights,
-                                  name=self.name + "_copy")
-        return self.__class__(self.degree, self.ctrlpts, self.knot_multiplicities,
+            return self.__class__(self.degree, [point.copy(memo=memo) for point in self.control_points],
+                                  self.knot_multiplicities.copy(),
+                                  self.knots.copy(), weights, name=self.name + "_copy")
+        return self.__class__(self.degree, self.control_points, self.knot_multiplicities,
                               self.knots, self.weights, name=self.name + "_copy")
 
     def to_geomdl(self):
@@ -1264,12 +1264,14 @@ class BSplineCurve(Edge):
             curve
         :rtype: List[:class:`volmdlr.edges.BSplineCurve`]
         """
-        if split_point.is_close(self.start, tol):
-            return [None, self.copy()]
-        if split_point.is_close(self.end, tol):
-            return [self.copy(), None]
         parameter = self.point_to_parameter(split_point)
         parameter = next((knot for knot in self.knots if abs(knot - parameter) < 1e-12), parameter)
+        umin, umax = self.domain
+        if split_point.is_close(self.start, tol) or parameter == umin:
+            return [None, self.copy()]
+        if split_point.is_close(self.end, tol) or parameter == umax:
+            return [self.copy(), None]
+
         return split_curve(self, parameter)
 
     def cut_before(self, parameter: float):
