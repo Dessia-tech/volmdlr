@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### core.py
 - VolumeModel: from_step using OCP step reader
 
+#### display.py
+- Mesh3D: rotation / translation / frame_mapping
+
 #### curves.py
 - 
 #### edges.py
