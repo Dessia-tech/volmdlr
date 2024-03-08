@@ -319,6 +319,12 @@ class Stl(dc.DessiaObject):
 
     # TODO: decide which algorithm to be used (no _BIS)
     def extract_points_bis(self, min_distance: float = 0.001):
+        """
+        Extract the unique points from the STL object.
+
+        :return: A list of unique Point3D objects.
+        :rtype: List[vm.Point3D]
+        """
         points = []
         for triangle in self.triangles:
             distance12 = triangle.point1.point_distance(triangle.point2)
