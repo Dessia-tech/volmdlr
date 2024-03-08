@@ -39,29 +39,23 @@ class OctreeNode:
 
     def __init__(self):
         self.child_state = 0
+        self.child_nodes: map_cpp[cython.uchar : OctreeNode] = {}
         # self.children = cython.NULL
     #
     # def __cinit__(self):
     #     self.child_state = 0
 
-    def create_child_node(self, index: int) -> None:
-        self._create_child(index)
-
     @cython.ccall
-    def _create_child_node(self, index: cython.uchar):
+    def create_child_node(self, index: cython.uchar):
         self.child_nodes[index] = OctreeNode()
 
-    def add_child_node(self, index: int, child_node: OctreeNode) -> None:
-        self._add_child_node(index, child_node)
-
     @cython.ccall
-    def _add_child_node(self, index: cython.uchar, child_node: OctreeNode):
+    def add_child_node(self, index: cython.uchar, child_node: OctreeNode):
         self.child_nodes[index] = child_node
 
-
-    # def get_child(self, index: cython.uchar) -> OctreeNode:
-    #     child:
-    #     return self.child_nodes[index]
+    @cython.ccall
+    def get_child_node(self, index: cython.uchar) -> OctreeNode:
+        return self.child_nodes[index]
 
     # def __dealloc__(self):
     #     children: map_cpp[cython.uchar : cython.pointer(OctreeNode)] = self.children
