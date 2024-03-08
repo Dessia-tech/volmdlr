@@ -55,10 +55,12 @@ class OctreeNode:
     @cython.ccall
     def create_child_node(self, index: cython.uchar):
         self.child_nodes[index] = OctreeNode()
+        self.child_states &= ~(1 << index)
 
     @cython.ccall
     def add_child_node(self, index: cython.uchar, child_node: OctreeNode):
         self.child_nodes[index] = child_node
+        self.child_states &= ~(1 << index)
 
     @cython.ccall
     def get_child_node(self, index: cython.uchar) -> OctreeNode:
@@ -83,14 +85,6 @@ class OctreeNode:
         leaf_indices = []
         for i in range(8):
             if self.child_states & (1 << i):
-                leaf_indices.append(i)
-        return leaf_indices
-
-    @cython.ccall
-    def get_void_child_indices(self) -> List[cython.uchar]:
-        leaf_indices = []
-        for i in range(8):
-            if not (self.child_states & (1 << i)):
                 leaf_indices.append(i)
         return leaf_indices
 
