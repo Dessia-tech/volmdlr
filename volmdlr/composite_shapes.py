@@ -9,7 +9,8 @@ import volmdlr
 import volmdlr.templates
 from volmdlr.utils.step_writer import (product_writer, geometric_context_writer, assembly_definition_writer,
                                        step_ids_to_str)
-from volmdlr.core import Primitive3D, BoundingBox, helper_babylon_data, map_primitive_with_initial_and_final_frames
+from volmdlr.core import (Primitive3D, BoundingBox, helper_babylon_data, map_primitive_with_initial_and_final_frames,
+                          babylon_data)
 from volmdlr import from_ocp
 from volmdlr.shells import Shell3D
 
@@ -72,23 +73,7 @@ class Assembly(dc.PhysicalObject):
         :return: Dictionary with babylon data.
         """
 
-        babylon_data = {'meshes': [],
-                        'lines': []}
-        display_points = []
-        for primitive in self.primitives:
-            if hasattr(primitive, 'babylon_meshes'):
-                babylon_data['meshes'].extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
-            elif hasattr(primitive, 'babylon_curves'):
-                curves = primitive.babylon_curves()
-                if curves:
-                    babylon_data['lines'].append(curves)
-            elif hasattr(primitive, 'babylon_data'):
-                data = primitive.babylon_data(merge_meshes=merge_meshes)
-                babylon_data['meshes'].extend(mesh for mesh in data.get("meshes"))
-                babylon_data['lines'].extend(line for line in data.get("lines"))
-            elif isinstance(primitive, volmdlr.Point3D):
-                display_points.append(primitive)
-        return helper_babylon_data(babylon_data, display_points)
+        return babylon_data(self, merge_meshes=merge_meshes)
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
@@ -256,23 +241,7 @@ class Compound(dc.PhysicalObject):
         :return: Dictionary with babylon data.
         """
 
-        babylon_data = {'meshes': [],
-                        'lines': []}
-        display_points = []
-        for primitive in self.primitives:
-            if hasattr(primitive, 'babylon_meshes'):
-                babylon_data['meshes'].extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
-            elif hasattr(primitive, 'babylon_curves'):
-                curves = primitive.babylon_curves()
-                if curves:
-                    babylon_data['lines'].append(curves)
-            elif hasattr(primitive, 'babylon_data'):
-                data = primitive.babylon_data(merge_meshes=merge_meshes)
-                babylon_data['meshes'].extend(mesh for mesh in data.get("meshes"))
-                babylon_data['lines'].extend(line for line in data.get("lines"))
-            elif isinstance(primitive, volmdlr.Point3D):
-                display_points.append(primitive)
-        return helper_babylon_data(babylon_data, display_points)
+        return babylon_data(self, merge_meshes=merge_meshes)
 
     def volmdlr_primitives(self):
         """Return primitives."""

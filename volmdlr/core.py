@@ -21,7 +21,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from OCP.Interface import Interface_Static
-# import OCP.IFSelect
+import OCP.IFSelect
 from OCP.STEPControl import STEPControl_Reader
 
 import dessia_common.core as dc
@@ -34,7 +34,6 @@ from volmdlr.discrete_representation_compiled import triangle_intersects_voxel
 from volmdlr.geometry import get_transfer_matrix_from_basis
 from volmdlr.utils.step_writer import STEP_HEADER, STEP_FOOTER
 from volmdlr import from_ocp
-
 
 np.seterr(divide='raise')
 
@@ -232,6 +231,32 @@ def _extract_positions(mesh):
 
     all_positions += mesh.get("positions", [])
     return all_positions
+
+
+def babylon_data(shape, merge_meshes=True):
+    """
+    Get babylonjs data.
+
+    :return: Dictionary with babylon data.
+    """
+
+    babylon_data_ = {'meshes': [],
+                     'lines': []}
+    display_points = []
+    for primitive in shape.primitives:
+        if hasattr(primitive, 'babylon_meshes'):
+            babylon_data_['meshes'].extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
+        elif hasattr(primitive, 'babylon_curves'):
+            curves = primitive.babylon_curves()
+            if curves:
+                babylon_data_['lines'].append(curves)
+        elif hasattr(primitive, 'babylon_data'):
+            data = primitive.babylon_data(merge_meshes=merge_meshes)
+            babylon_data_['meshes'].extend(mesh for mesh in data.get("meshes"))
+            babylon_data_['lines'].extend(line for line in data.get("lines"))
+        elif isinstance(primitive, volmdlr.Point3D):
+            display_points.append(primitive)
+    return helper_babylon_data(babylon_data_, display_points)
 
 
 @dataclass
@@ -1136,23 +1161,7 @@ class VolumeModel(dc.PhysicalObject):
         :return: Dictionary with babylon data.
         """
 
-        babylon_data = {'meshes': [],
-                        'lines': []}
-        display_points = []
-        for primitive in self.primitives:
-            if hasattr(primitive, 'babylon_meshes'):
-                babylon_data['meshes'].extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
-            elif hasattr(primitive, 'babylon_curves'):
-                curves = primitive.babylon_curves()
-                if curves:
-                    babylon_data['lines'].append(curves)
-            elif hasattr(primitive, 'babylon_data'):
-                data = primitive.babylon_data(merge_meshes=merge_meshes)
-                babylon_data['meshes'].extend(mesh for mesh in data.get("meshes"))
-                babylon_data['lines'].extend(line for line in data.get("lines"))
-            elif isinstance(primitive, volmdlr.Point3D):
-                display_points.append(primitive)
-        return helper_babylon_data(babylon_data, display_points)
+        return babylon_data(self, merge_meshes=merge_meshes)
 
     @classmethod
     def babylonjs_script(cls, babylon_data, use_cdn=True, **kwargs):
@@ -1170,12 +1179,12 @@ class VolumeModel(dc.PhysicalObject):
         return script
 
     def babylonjs(
-        self,
-        page_name: str = None,
-        use_cdn: bool = True,
-        debug: bool = False,
-        merge_meshes: bool = True,
-        dark_mode: bool = False,
+            self,
+            page_name: str = None,
+            use_cdn: bool = True,
+            debug: bool = False,
+            merge_meshes: bool = True,
+            dark_mode: bool = False,
     ):
         """
         Generate and display an HTML file to visualize the 3D model using Babylon.js in a web browser.
@@ -1341,9 +1350,9 @@ class VolumeModel(dc.PhysicalObject):
         # Set the unit to meter
         reader = STEPControl_Reader()
         Interface_Static.SetCVal_s("xstep.cascade.unit", "M")
-        reader.ReadFile(step_file)
-        # if read_status != OCP.IFSelect.IFSelect_RetDone:
-        #     raise ValueError("STEP File could not be loaded")
+        read_status = reader.ReadFile(step_file)
+        if read_status != OCP.IFSelect.IFSelect_RetDone:
+            raise ValueError("STEP File could not be loaded")
         for i in range(reader.NbRootsForTransfer()):
             reader.TransferRoot(i + 1)
 
@@ -1351,7 +1360,7 @@ class VolumeModel(dc.PhysicalObject):
         for i in range(reader.NbShapes()):
             occ_shapes.append(reader.Shape(i + 1))
 
-        # pylint: disable=cyclic-import
+        # pylint: disable=cyclic-import, import-outside-toplevel
         from volmdlr.shells import Shell3D
         # Make sure that we extract all the solids
         solids = []

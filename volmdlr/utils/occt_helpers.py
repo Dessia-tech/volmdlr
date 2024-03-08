@@ -1,3 +1,6 @@
+"""
+Utils to help reading and writing OCP objects.
+"""
 from volmdlr import curves, edges, surfaces
 
 
