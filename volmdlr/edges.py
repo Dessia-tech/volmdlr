@@ -22,6 +22,9 @@ import scipy.integrate as scipy_integrate
 from scipy.optimize import least_squares, minimize
 from geomdl import NURBS, BSpline
 
+from OCP.Geom2dAPI import Geom2dAPI_InterCurveCurve
+from OCP.Precision import Precision
+
 from volmdlr.nurbs.operations import split_curve, decompose_curve, link_curves
 from volmdlr.nurbs.core import evaluate_curve, derivatives_curve
 from volmdlr.nurbs import fitting
@@ -30,6 +33,7 @@ import volmdlr.nurbs.helpers as nurbs_helpers
 import volmdlr.core
 import volmdlr.core_compiled
 import volmdlr.geometry
+from volmdlr import to_ocp, from_ocp
 from volmdlr import curves as volmdlr_curves
 from volmdlr import get_minimum_distance_points_lines, PATH_ROOT
 import volmdlr.utils.common_operations as vm_common_operations
@@ -1474,7 +1478,7 @@ class BSplineCurve(Edge):
         initial_condition_list = [u_min + index * (u_max - u_min) / (self.sample_size - 1) for index in indexes[:3]]
         for u0 in initial_condition_list:
             res = minimize(objective_function, np.array(u0), bounds=[(u_min, u_max)], jac=True)
-            if res.fun < 1e-6: # or (res.success and abs(res.fun - distance) <= 1e-8):
+            if res.fun < 1e-6 or (res.success and abs(res.fun - distance) <= 1e-12):
                 return float(res.x[0] * length)
 
         for patch, param in self.decompose(True):
@@ -2332,7 +2336,11 @@ class BSplineCurve2D(BSplineCurve):
         """
         if self.bounding_rectangle.distance_to_b_rectangle(bspline.bounding_rectangle) > abs_tol:
             return []
-        return self._generic_edge_intersections(bspline, abs_tol)
+        bspline_ocp1 = to_ocp.bsplinecurve2d_to_ocp(self)
+        bspline_ocp2 = to_ocp.bsplinecurve2d_to_ocp(bspline)
+        api_inters = Geom2dAPI_InterCurveCurve(bspline_ocp1, bspline_ocp2, Precision.Intersection_s())
+        intersections = [from_ocp.point2d_from_ocp(api_inters.Point(i + 1)) for i in range(api_inters.NbPoints())]
+        return intersections
 
     def axial_symmetry(self, line):
         """
@@ -2829,8 +2837,6 @@ class ArcMixin:
     def _arc_point_angle(self, point):
         """Helper function to calculate the angle of point on a trigonometric arc."""
         local_start_point = self.circle.frame.global_to_local_coordinates(point)
-        if self.radius == 0.0:
-            print(True)
         u1, u2 = local_start_point.x / self.radius, local_start_point.y / self.radius
         point_angle = volmdlr.geometry.sin_cos_angle(u1, u2)
         return point_angle
