@@ -7,6 +7,7 @@ import volmdlr
 import volmdlr.shells as vmshells
 from volmdlr import surfaces
 from volmdlr.geometry import get_transfer_matrix_from_basis
+from volmdlr import composite_shapes
 
 
 def set_to_list(step_set):
@@ -494,7 +495,7 @@ def shell_based_surface_model(arguments, object_dict, *args, **kwargs):
     if len(arguments[1]) == 1:
         return object_dict[int(arguments[1][0][1:])]
     primitives = [object_dict[int(arg[1:])] for arg in arguments[1]]
-    compound = volmdlr.core.Compound(primitives)
+    compound = composite_shapes.Compound(primitives)
     compound.compound_type = "manifold_solid_brep"
     return compound
 
@@ -536,7 +537,7 @@ def manifold_surface_shape_representation(arguments, object_dict, *args, **kwarg
         primitive = object_dict[int(arg[1:])]
         if isinstance(primitive, vmshells.Shell3D):
             primitives.append(primitive)
-        if isinstance(primitive, volmdlr.core.Compound):
+        if isinstance(primitive, composite_shapes.Compound):
             counter = 0
             for sub_prim in primitive.primitives:
                 if sub_prim:
@@ -545,7 +546,7 @@ def manifold_surface_shape_representation(arguments, object_dict, *args, **kwarg
             primitives.append(primitive)
     if len(primitives) == 1:
         return primitives[0]
-    compound = volmdlr.core.Compound(primitives)
+    compound = composite_shapes.Compound(primitives)
     compound.compound_type = "manifold_solid_brep"
     return compound
 
@@ -569,7 +570,7 @@ def faceted_brep_shape_representation(arguments, object_dict, *args, **kwargs):
                       vmshells.Shell3D):
             shell = object_dict[int(arg[1:])]
             shells.append(shell)
-    return volmdlr.core.Compound(shells)
+    return composite_shapes.Compound(shells)
 
 
 def manifold_solid_brep(arguments, object_dict, *args, **kwargs):
@@ -652,7 +653,7 @@ def advanced_brep_shape_representation(arguments, object_dict, *args, **kwargs):
         primitive = object_dict[int(arg[1:])]
         if isinstance(primitive, vmshells.Shell3D):
             primitives.append(primitive)
-        if isinstance(primitive, volmdlr.core.Compound):
+        if isinstance(primitive, composite_shapes.Compound):
             counter = 0
             for sub_prim in primitive.primitives:
                 sub_prim.name = arguments[0][1:-1] + str(counter)
@@ -660,7 +661,7 @@ def advanced_brep_shape_representation(arguments, object_dict, *args, **kwargs):
             primitives.append(primitive)
     if len(primitives) == 1:
         return primitives[0]
-    compound = volmdlr.core.Compound(primitives)
+    compound = composite_shapes.Compound(primitives)
     compound.compound_type = "manifold_solid_brep"
     return compound
 
@@ -681,7 +682,7 @@ def geometrically_bounded_surface_shape_representation(arguments, object_dict, *
     for arg in arguments[1]:
         primitives.extend(object_dict[int(arg[1:])])
     if len(primitives) > 1:
-        compound = volmdlr.core.Compound(primitives, name=arguments[0])
+        compound = composite_shapes.Compound(primitives, name=arguments[0])
         compound.compound_type = "geometric_curve_set"
         return compound
     return primitives[0]
@@ -705,7 +706,7 @@ def geometrically_bounded_wireframe_shape_representation(arguments, object_dict,
         if isinstance(prim, list):
             primitives.extend(prim)
     if len(primitives) > 1:
-        compound = volmdlr.core.Compound(primitives, name=arguments[0])
+        compound = composite_shapes.Compound(primitives, name=arguments[0])
         compound.compound_type = "geometric_curve_set"
         return compound
     return primitives[0]

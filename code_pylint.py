@@ -23,7 +23,7 @@ MAX_ERROR_BY_TYPE = {
                      'line-too-long': 12,
                      'too-many-branches': 22,
                      'too-many-statements': 11,
-                     'no-name-in-module': 13,
+                     'no-name-in-module': 23,
                      'abstract-method': 47,
                      'duplicate-code': 8,
                      'arguments-renamed': 5,

@@ -28,6 +28,8 @@ from volmdlr import surfaces
 from volmdlr.utils.parametric import update_face_grid_points_with_inner_polygons
 import volmdlr.wires
 from volmdlr import from_ocp
+from volmdlr.utils.occt_helpers import OCCT_TO_VOLMDLR
+from volmdlr.utils import step_writer
 
 warnings.simplefilter("once")
 
@@ -81,16 +83,6 @@ def parametric_face_inside(face1, face2, abs_tol: float = 1e-6):
         if self_contour2d.is_superposing(face2_contour2d):
             return True
     return False
-
-
-OCCT_TO_VOLMDLR = {"Geom_SphericalSurface": surfaces.SphericalSurface3D,
-                   "Geom_CylindricalSurface": surfaces.CylindricalSurface3D,
-                   "Geom_Plane": surfaces.Plane3D,
-                   "Geom_ToroidalSurface": surfaces.ToroidalSurface3D,
-                   "Geom_ConicalSurface": surfaces.ConicalSurface3D,
-                   "Geom_BSplineSurface": surfaces.BSplineSurface3D,
-                   'Geom_SurfaceOfLinearExtrusion': surfaces.ExtrusionSurface3D,
-                   "Geom_SurfaceOfRevolution": surfaces.RevolutionSurface3D}
 
 
 class Face3D(volmdlr.core.Primitive3D):
@@ -391,7 +383,7 @@ class Face3D(volmdlr.core.Primitive3D):
             occt_surface = occt_surface.BasisSurface()
         surface_function = getattr(from_ocp, occt_surface.get_type_name_s().lower()[5:] + '_from_ocp')
         surface_class = OCCT_TO_VOLMDLR[occt_surface.get_type_name_s()]
-        surface = surface_function(surface_class, occt_surface)
+        surface = surface_function(surface_class, occt_surface, occt_to_volmdlr=OCCT_TO_VOLMDLR)
 
         occt_outer_wire, occt_inner_wires = from_ocp.get_wires_from_face(occt_face)
         contours = [volmdlr.wires.Contour3D.from_ocp(contour)
@@ -425,7 +417,7 @@ class Face3D(volmdlr.core.Primitive3D):
             current_id = face_bound_id + 1
 
         content += (
-            f"#{current_id} = ADVANCED_FACE('{self.name}',({volmdlr.core.step_ids_to_str(contours_ids)})"
+            f"#{current_id} = ADVANCED_FACE('{self.name}',({step_writer.step_ids_to_str(contours_ids)})"
             f",#{surface3d_ids[0]},.T.);\n"
         )
         # TODO: create an ADVANCED_FACE for each surface3d_ids ?

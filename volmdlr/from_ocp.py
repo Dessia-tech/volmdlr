@@ -2,13 +2,12 @@
 Module to translate objects in OCP to Volmdlr.
 """
 from typing import Any
-from OCP.Geom import Geom_Circle, Geom_Line, Geom_BSplineCurve, Geom_Ellipse
 from OCP.TColStd import TColStd_Array2OfReal, TColStd_Array1OfReal
 from OCP.BRep import BRep_Tool
 from OCP.BRepTools import BRepTools, BRepTools_WireExplorer
 from OCP.TopAbs import (TopAbs_EDGE, TopAbs_FACE, TopAbs_VERTEX, TopAbs_WIRE, TopAbs_SHELL, TopAbs_ShapeEnum,
                         TopAbs_SOLID, TopAbs_COMPSOLID, TopAbs_COMPOUND)
-from OCP.TopoDS import (TopoDS_Edge, TopoDS_Face, TopoDS_Shell, TopoDS_Vertex, TopoDS_Wire, TopoDS, TopoDS_Shape)
+from OCP.TopoDS import (TopoDS_Face, TopoDS_Shell, TopoDS_Wire, TopoDS, TopoDS_Shape)
 
 from OCP.TopExp import TopExp_Explorer
 
@@ -286,7 +285,7 @@ def trimmedcurve3d_from_ocp(cls, occt_curve):
 # Surfaces
 
 
-def sphericalsurface_from_ocp(cls, occt_surface):
+def sphericalsurface_from_ocp(cls, occt_surface, **kwargs):
     """
     Instanciates a volmdlr SphericalSurface3D, from occt object.
 
@@ -299,7 +298,7 @@ def sphericalsurface_from_ocp(cls, occt_surface):
     return cls(frame, radius)
 
 
-def cylindricalsurface_from_ocp(cls, occt_surface):
+def cylindricalsurface_from_ocp(cls, occt_surface, **kwargs):
     """
     Instanciates a volmdlr CylindricalSurface3D, from occt object.
 
@@ -312,7 +311,7 @@ def cylindricalsurface_from_ocp(cls, occt_surface):
     return cls(frame, radius)
 
 
-def plane_from_ocp(cls, occt_surface):
+def plane_from_ocp(cls, occt_surface, **kwargs):
     """
     Instanciates a volmdlr Plane3D, from occt object.
 
@@ -324,7 +323,7 @@ def plane_from_ocp(cls, occt_surface):
     return cls(frame)
 
 
-def toroidalsurface_from_ocp(cls, occt_surface):
+def toroidalsurface_from_ocp(cls, occt_surface, **kwargs):
     """
     Instanciates a volmdlr ToroidalSurface3D, from occt object.
 
@@ -336,7 +335,7 @@ def toroidalsurface_from_ocp(cls, occt_surface):
     return cls(frame, occt_surface.MajorRadius(), occt_surface.MinorRadius())
 
 
-def conicalsurface_from_ocp(cls, occt_surface):
+def conicalsurface_from_ocp(cls, occt_surface, **kwargs):
     """
     Instanciates a volmdlr ConicalSurface3D, from occt object.
 
@@ -350,7 +349,7 @@ def conicalsurface_from_ocp(cls, occt_surface):
     return cls(frame, semi_angle, radius)
 
 
-def bsplinesurface_from_ocp(cls, occt_surface):
+def bsplinesurface_from_ocp(cls, occt_surface, **kwargs):
     """
     Instanciates a volmdlr BSplineSurface3D, from occt object.
 
@@ -376,7 +375,7 @@ def bsplinesurface_from_ocp(cls, occt_surface):
                u_multiplicities, v_multiplicities, u_knots, v_knots, weights)
 
 
-def surfaceoflinearextrusion_from_ocp(cls, occt_surface):
+def surfaceoflinearextrusion_from_ocp(cls, occt_surface, **kwargs):
     """
     Instanciates a volmdlr ExtrusionSurface3D, from occt object.
 
@@ -384,18 +383,8 @@ def surfaceoflinearextrusion_from_ocp(cls, occt_surface):
     :param occt_surface: OCCT surface.
     :return: volmdlr ExtrusionSurface3D.
     """
-    from volmdlr import curves, edges
-    occt_to_volmdlr_classes = {"Geom_Line": curves.Line3D,
-                               "Geom_Circle": curves.Circle3D,
-                               "Geom_Ellipse": curves.Ellipse3D,
-                               "Geom_BSplineCurve": edges.BSplineCurve3D,
-                               "Geom_Parabola": curves.Parabola3D,
-                               "Geom_Hyperbola": curves.Hyperbola3D,
-                               "Geom2d_Line": curves.Line2D,
-                               "Geom2d_Circle": curves.Circle2D,
-                               "Geom2d_Ellipse": curves.Ellipse2D,
-                               "Geom2d_BSplineCurve": edges.BSplineCurve2D
-                               }
+    occt_to_volmdlr_classes = kwargs.get("occt_to_volmdlr")
+
     occt_curve = occt_surface.BasisCurve()
     curve = OCCT_TO_VOLMDLR[occt_curve.get_type_name_s()](occt_to_volmdlr_classes[occt_curve.get_type_name_s()],
                                                           occt_curve)
@@ -403,7 +392,7 @@ def surfaceoflinearextrusion_from_ocp(cls, occt_surface):
     return cls(curve, direction)
 
 
-def surfaceofrevolution_from_ocp(cls, occt_surface):
+def surfaceofrevolution_from_ocp(cls, occt_surface, **kwargs):
     """
     Instanciates a volmdlr RevolutionSurface3D, from occt object.
 
@@ -411,18 +400,7 @@ def surfaceofrevolution_from_ocp(cls, occt_surface):
     :param occt_surface: OCCT surface.
     :return: volmdlr RevolutionSurface3D.
     """
-    from volmdlr import curves, edges
-    occt_to_volmdlr_classes = {"Geom_Line": curves.Line3D,
-                               "Geom_Circle": curves.Circle3D,
-                               "Geom_Ellipse": curves.Ellipse3D,
-                               "Geom_BSplineCurve": edges.BSplineCurve3D,
-                               "Geom_Parabola": curves.Parabola3D,
-                               "Geom_Hyperbola": curves.Hyperbola3D,
-                               "Geom2d_Line": curves.Line2D,
-                               "Geom2d_Circle": curves.Circle2D,
-                               "Geom2d_Ellipse": curves.Ellipse2D,
-                               "Geom2d_BSplineCurve": edges.BSplineCurve2D
-                               }
+    occt_to_volmdlr_classes = kwargs.get("occt_to_volmdlr")
     occt_curve = occt_surface.BasisCurve()
     curve = OCCT_TO_VOLMDLR[occt_curve.get_type_name_s()](occt_to_volmdlr_classes[occt_curve.get_type_name_s()],
                                                           occt_curve)

@@ -22,7 +22,7 @@ class TestShell3D(unittest.TestCase):
     def test_from_occt(self):
         cylinder = BRepPrimAPI_MakeCylinder(0.5, 2).Cylinder()
         shell = cylinder.Shell()
-        volmdlr_shell = shells.Shell3D.from_occt(shell)
+        volmdlr_shell = shells.Shell3D.from_ocp(shell)
         self.assertEqual(len(volmdlr_shell.primitives), 3)
 
 

@@ -20,12 +20,8 @@ from scipy.spatial.qhull import ConvexHull, Delaunay
 from triangle import triangulate
 
 from OCP.BRep import BRep_Tool
-from OCP.BRepTools import BRepTools, BRepTools_WireExplorer
-from OCP.TopAbs import (TopAbs_EDGE, TopAbs_FACE, TopAbs_VERTEX, TopAbs_WIRE)
-from OCP.TopoDS import (TopoDS_Edge, TopoDS_Face, TopoDS_Vertex, TopoDS_Wire, TopoDS)
-from OCP.TopExp import TopExp_Explorer
-from OCP.BRepAdaptor import BRepAdaptor_Curve
-
+from OCP.BRepTools import BRepTools_WireExplorer
+from OCP.TopoDS import TopoDS
 
 from dessia_common.core import PhysicalObject
 import volmdlr
@@ -36,6 +32,7 @@ from volmdlr import curves, edges, PATH_ROOT
 from volmdlr.core_compiled import polygon_point_belongs, points_in_polygon
 from volmdlr.core import EdgeStyle
 from volmdlr import from_ocp
+from volmdlr.utils import step_writer
 
 
 def argmax(list_of_numbers):
@@ -1526,7 +1523,7 @@ class Wire3D(WireMixin, PhysicalObject):
 
         current_id += 1
         content += (f"#{current_id} = COMPOSITE_CURVE('{self.name}',"
-                    f"({volmdlr.core.step_ids_to_str(composite_curve_segment_ids)}),.U.);\n")
+                    f"({step_writer.step_ids_to_str(composite_curve_segment_ids)}),.U.);\n")
 
         return content, current_id
 
@@ -4375,7 +4372,7 @@ class Contour3D(ContourMixin, Wire3D):
             edge_ids.append(current_id)
 
         current_id += 1
-        content += f"#{current_id} = EDGE_LOOP('{self.name}',({volmdlr.core.step_ids_to_str(edge_ids)}));\n"
+        content += f"#{current_id} = EDGE_LOOP('{self.name}',({step_writer.step_ids_to_str(edge_ids)}));\n"
         return content, current_id
 
     def average_center_point(self):

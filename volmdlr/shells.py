@@ -481,7 +481,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
 
         shell_id = current_id
         step_content += f"#{current_id} = {self.STEP_FUNCTION}('{self.name}'," \
-                        f"({volmdlr.core.step_ids_to_str(face_ids)}));\n"
+                        f"({step_ids_to_str(face_ids)}));\n"
         manifold_id = shell_id + 1
         step_content += f"#{manifold_id} = SHELL_BASED_SURFACE_MODEL('{self.name}',(#{shell_id}));\n"
 

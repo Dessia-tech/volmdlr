@@ -74,7 +74,7 @@ class TestVolumeModel(unittest.TestCase):
 
     def test_from_step(self):
         file_path = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(volmdlr.__file__))),
-                                 "scripts\\step\\bracket2.step")
+                                 "scripts/step/bracket2.step")
         model = VolumeModel.from_step(step_file=file_path)
         self.assertTrue(model.primitives)
 

@@ -231,7 +231,7 @@ class TestCylindricalFace3D(unittest.TestCase):
         frame = gp_Ax3()
         cylinder = gp_Cylinder(frame, 8)
         cylindrical_face = BRepBuilderAPI_MakeFace(cylinder, 0, math.pi, 0, 15).Face()
-        volmdlr_face = faces.CylindricalFace3D.from_occt(cylindrical_face)
+        volmdlr_face = faces.CylindricalFace3D.from_ocp(cylindrical_face)
         self.assertAlmostEqual(volmdlr_face.surface2d.area(), math.pi * 15)
 
 
