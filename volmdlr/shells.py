@@ -1258,12 +1258,9 @@ class ClosedShell3D(Shell3D):
                     contours1, contours2 = face1.get_coincident_face_intersections(face2)
                     face_combinations1[face1].extend(contours1)
                     face_combinations2[face2].extend(contours2)
-
                 face_intersections = face1.face_intersections(face2, tol)
                 face_combinations1[face1].extend(face_intersections)
                 face_combinations2[face2].extend(face_intersections)
-                # if face_intersections:
-                #     face_combinations[(face1, face2)] = face_intersections
         return face_combinations1, face_combinations2
 
     @staticmethod

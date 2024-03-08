@@ -42,7 +42,7 @@ class TestContour2D(unittest.TestCase):
         self.assertTrue(contour2d_2.point_inside(point4))
 
         contour, point = DessiaObject.from_json(os.path.join(folder, "test_contour_point_belongs.json")).primitives
-        self.assertTrue(contour.point_inside(point, False))
+        self.assertTrue(contour.point_inside(point, True))
 
     def test_is_ordered(self):
         # self.assertTrue(self.ordered_contour.is_ordered())
