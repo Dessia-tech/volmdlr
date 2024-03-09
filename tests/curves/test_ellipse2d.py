@@ -114,17 +114,25 @@ class TestEllipse2D(unittest.TestCase):
         point = ellipse2d.point_at_polar_abscissa(polar_abscissa)
         self.assertTrue(point.is_close(volmdlr.Point2D(0.80650610281,0.91508850748)))
 
-    def test_intern_product(self):
+    def test__intern_product(self):
         ellipse2d = curves.Ellipse2D(2, 1, volmdlr.Frame2D(volmdlr.O2D, volmdlr.X2D, volmdlr.Y2D))
         point = volmdlr.Point2D(3,3)
         abscissa = math.pi/3
-        self.assertAlmostEqual(ellipse2d.intern_product(point,abscissa),-2.39711431703)
+        self.assertAlmostEqual(ellipse2d._intern_product(point,abscissa),-2.39711431703)
 
-    def test_vectorial_product(self):
+    def test__vectorial_product(self):
         ellipse2d = curves.Ellipse2D(2, 1, volmdlr.Frame2D(volmdlr.O2D, volmdlr.X2D, volmdlr.Y2D))
         point = volmdlr.Point2D(3, 3)
         abscissa = math.pi / 3
-        self.assertAlmostEqual(ellipse2d.vectorial_product(point, abscissa), -4.69615242271)
+        self.assertAlmostEqual(ellipse2d._vectorial_product(point, abscissa), -4.69615242271)
+
+    def test__bisection(self):
+        ellipse2d = curves.Ellipse2D(4, 2, volmdlr.Frame2D(volmdlr.Point2D(2, 1),
+                                                           volmdlr.Vector2D(1 / math.sqrt(2), 1 / math.sqrt(2)),
+                                                           volmdlr.Vector2D(-1 / math.sqrt(2), 1 / math.sqrt(2))))
+        point = volmdlr.Point2D(-2, -2)
+        self.assertAlmostEqual(ellipse2d._bisection(math.pi / 2,math.pi, point, ellipse2d._intern_product),
+                               2.9662579660591377)
 
     def test_nearest_point(self):
         ellipse2d = curves.Ellipse2D(2, 1, volmdlr.Frame2D(volmdlr.O2D, volmdlr.X2D, volmdlr.Y2D))

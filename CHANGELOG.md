@@ -46,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ellipse2D: point_distance optimization
 
 ### Unittests
+- Ellipse2D: test to the news functions
 
 ## v0.17.0 [Unreleased]
 ### New Features
@@ -74,8 +75,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### global
 - Add reference_path to a handful of classes
 
-#### curves.py
-- Ellipse2D: point_distance_1 and tangent_points
 
 ### Fixed
 ### curves.py
