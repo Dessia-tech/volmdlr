@@ -1,15 +1,19 @@
 """
 Unit testing of volmdlr.display.Mesh3D class.
 """
+
 import math
 import os
 import tempfile
 import unittest
 
 import numpy as np
+
 import trimesh
+import volmdlr
 from dessia_common.serialization import BinaryFile
 from volmdlr import Point3D
+from volmdlr.core import VolumeModel
 from volmdlr.display import Mesh3D
 from volmdlr.faces import Triangle3D
 from volmdlr.shells import ClosedTriangleShell3D, OpenTriangleShell3D
@@ -245,6 +249,38 @@ class TestMesh3D(unittest.TestCase):
         self.assertEqual(0.0, self.mesh3.minimum_distance(self.mesh1))
         self.assertEqual(1.0, self.mesh1.minimum_distance(self.mesh4))
         self.assertEqual(1.0, self.mesh4.minimum_distance(self.mesh1))
+
+    def test_rotation(self):
+        rotated_mesh3 = self.mesh3.rotation(volmdlr.O3D, volmdlr.Z3D, math.pi)
+        expected_vertices = np.array(
+            [[0, 0, 0], [0, 0, 1], [0, -1, 0], [0, -1, 1], [-1, 0, 0], [-1, 0, 1], [-1, -1, 0], [-1, -1, 1]]
+        )
+        np.testing.assert_array_almost_equal(expected_vertices, rotated_mesh3.vertices)
+
+        if SHOW_BABYLONJS:
+            VolumeModel([self.mesh3, rotated_mesh3]).babylonjs()
+
+    def test_translation(self):
+        translated_mesh3 = self.mesh3.translation(volmdlr.Z3D)
+        expected_vertices = self.mesh3.vertices + np.array([0, 0, 1])
+        np.testing.assert_array_almost_equal(expected_vertices, translated_mesh3.vertices)
+
+        if SHOW_BABYLONJS:
+            VolumeModel([self.mesh3, translated_mesh3]).babylonjs()
+
+    def test_frame_mapping(self):
+        frame = volmdlr.OXYZ.rotation(volmdlr.O3D, volmdlr.Z3D, math.pi / 4).translation(volmdlr.Vector3D(1, 1, 1))
+
+        mapped_mesh3_old = self.mesh3.frame_mapping(frame, "old")
+        for v1, v2 in zip(self.mesh3.vertices, mapped_mesh3_old.vertices):
+            np.testing.assert_array_almost_equal(np.array(Point3D(v1[0], v1[1], v1[2]).frame_mapping(frame, "old")), v2)
+
+        mapped_mesh3_new = self.mesh3.frame_mapping(frame, "new")
+        for v1, v2 in zip(self.mesh3.vertices, mapped_mesh3_new.vertices):
+            np.testing.assert_array_almost_equal(np.array(Point3D(v1[0], v1[1], v1[2]).frame_mapping(frame, "new")), v2)
+
+        if SHOW_BABYLONJS:
+            VolumeModel([self.mesh3, mapped_mesh3_old, mapped_mesh3_new]).babylonjs()
 
 
 class TestMesh3DImport(unittest.TestCase):

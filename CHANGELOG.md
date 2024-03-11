@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v0.18.0 [Future]
 ### New Features
+#### display.py
+- Mesh3D: rotation / translation / frame_mapping
+
 #### curves.py
 - Ellipse2D: tangent_points
 
