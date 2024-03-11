@@ -1,4 +1,5 @@
 """volmdlr shells module."""
+# pylint: disable=no-name-in-module
 import math
 import random
 import warnings

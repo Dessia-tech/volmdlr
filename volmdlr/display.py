@@ -665,18 +665,9 @@ class Mesh3D(MeshMixin, Primitive3D):
         # pylint: disable=too-many-arguments
 
         vertices, triangles = perform_decimation(
-            vertices=self.vertices,
-            triangles=self.triangles,
-            target_count=target_count,
-            update_rate=update_rate,
-            aggressiveness=aggressiveness,
-            max_iterations=max_iterations,
-            verbose=verbose,
-            lossless=lossless,
-            threshold_lossless=threshold_lossless,
-            alpha=alpha,
-            k=k,
-            preserve_border=preserve_border,
+            vertices=self.vertices, triangles=self.triangles, target_count=target_count, update_rate=update_rate,
+            aggressiveness=aggressiveness, max_iterations=max_iterations, verbose=verbose, lossless=lossless,
+            threshold_lossless=threshold_lossless, alpha=alpha, k=k, preserve_border=preserve_border,
         )
 
         return self.__class__(vertices, triangles)

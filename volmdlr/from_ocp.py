@@ -1,6 +1,7 @@
 """
 Module to translate objects in OCP to Volmdlr.
 """
+# pylint: disable=no-name-in-module
 from typing import Any
 from OCP.TColStd import TColStd_Array2OfReal, TColStd_Array1OfReal
 from OCP.BRep import BRep_Tool
