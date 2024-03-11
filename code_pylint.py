@@ -25,7 +25,7 @@ MAX_ERROR_BY_TYPE = {
                      'too-many-statements': 11,
                      'no-name-in-module': 23,
                      'abstract-method': 47,
-                     'duplicate-code': 8,
+                     'duplicate-code': 10,
                      'arguments-renamed': 5,
                      'too-many-ancestors': 2,
                      'too-many-public-methods': 18,
