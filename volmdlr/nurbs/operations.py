@@ -953,6 +953,7 @@ def link_curves(curves, tol: float = 1e-7, validate: bool = True):
             tmp_kv = [pdomain_end + k for k in curve.knotvector[1:-(curve.degree + 1)]]
             knotvector += tmp_kv
             cpts += curve.control_points[1:]
+            cpts += list(curve.control_points[1:])
             # Process control points
             if curve.rational:
                 wgts += list(curve.weights[1:])

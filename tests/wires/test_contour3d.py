@@ -1,7 +1,7 @@
 import os
 import unittest
 import volmdlr
-from volmdlr.wires import Contour3D
+from volmdlr.wires import Contour3D, Contour2D
 from volmdlr.step import Step
 from volmdlr import edges, core
 from volmdlr.models.contours import contour3d, contour3d_all_edges, contour3d_two_arcs, contour3d_two_arcs_of_ellipse
@@ -105,6 +105,31 @@ class TestContour3D(unittest.TestCase):
         self.assertIs(new_contour.primitives[1].end, new_contour.primitives[0].start)
 
         new_contour = contour3d_two_arcs_of_ellipse.translation(volmdlr.Z3D)
+        self.assertIs(new_contour.primitives[0].ellipse, new_contour.primitives[1].ellipse)
+        self.assertIs(new_contour.primitives[0].end, new_contour.primitives[1].start)
+        self.assertIs(new_contour.primitives[1].end, new_contour.primitives[0].start)
+
+    def test_to_3d(self):
+        contour = Contour2D.from_bounding_rectangle(-0.5, 0.5, -0.5, 0.5).to_3d(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D)
+        for prim1, prim2 in zip(contour.primitives, contour.primitives[1:] + [contour.primitives[0]]):
+            self.assertIs(prim2.start, prim1.end)
+
+    def test_copy(self):
+        contour = Contour2D.rectangle(-0.5, 0.5, -0.5, 0.5).to_3d(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D)
+        new_contour = contour.copy(deep=True, memo={})
+        for prim1, prim2 in zip(new_contour.primitives, new_contour.primitives[1:] + [new_contour.primitives[0]]):
+            self.assertIs(prim2.start, prim1.end)
+
+        contour = contour3d_all_edges.copy(deep=True, memo={})
+        for prim1, prim2 in zip(contour.primitives, contour.primitives[1:] + [contour.primitives[0]]):
+            self.assertIs(prim2.start, prim1.end)
+
+        new_contour = contour3d_two_arcs.copy(deep=True, memo={})
+        self.assertIs(new_contour.primitives[0].circle, new_contour.primitives[1].circle)
+        self.assertIs(new_contour.primitives[0].end, new_contour.primitives[1].start)
+        self.assertIs(new_contour.primitives[1].end, new_contour.primitives[0].start)
+
+        new_contour = contour3d_two_arcs_of_ellipse.copy(deep=True, memo={})
         self.assertIs(new_contour.primitives[0].ellipse, new_contour.primitives[1].ellipse)
         self.assertIs(new_contour.primitives[0].end, new_contour.primitives[1].start)
         self.assertIs(new_contour.primitives[1].end, new_contour.primitives[0].start)

@@ -1,7 +1,11 @@
+import os
 import unittest
+from dessia_common.core import DessiaObject
 
 import volmdlr
 from volmdlr import edges, curves
+
+folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'fullarc3d_objects')
 
 
 class TestFullArc3D(unittest.TestCase):
@@ -39,6 +43,13 @@ class TestFullArc3D(unittest.TestCase):
         self.assertEqual(len(fullarc_intersections), 2)
         self.assertTrue(fullarc_intersections[0], volmdlr.Point3D(0.1499999999999999, 0.0, -0.25))
         self.assertTrue(fullarc_intersections[1], volmdlr.Point3D(-0.1499999999999999, 0.0, -0.25))
+
+    def test_trim(self):
+        primitive, point1, point2 = DessiaObject.from_json(os.path.join(folder, 'test_fullarc3d_trim.json')).primitives
+        trim1 = primitive.trim(point1, point2)
+        self.assertAlmostEqual(trim1.length(), 0.0787288189748746)
+        trim2 = primitive.trim(point2, point1)
+        self.assertAlmostEqual(trim2.length(), 0.009047279766424231)
 
 
 if __name__ == '__main__':

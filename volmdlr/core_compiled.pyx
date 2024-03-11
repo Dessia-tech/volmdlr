@@ -1804,6 +1804,19 @@ cdef class Vector3D(Vector):
         normal_vector = self.deterministic_normal_vector()
         return normal_vector.unit_vector()
 
+    def copy(self, deep=True, memo=None):
+        """
+        Creates a copy of a 2-dimensional vector.
+
+        :param deep: *not used*
+        :param memo: *not used*
+        :return: A copy of the Vector2D-like object
+        :rtype: :class:`volmdlr.Vector2D`
+        """
+        if deep:
+            return deepcopy(self, memo=memo)
+        return copy(self)
+
     @classmethod
     def random(cls, xmin: float, xmax: float, ymin: float, ymax: float, zmin: float, zmax: float, name: str = ""):
         """
@@ -2256,6 +2269,12 @@ class Matrix22:
                         self.M21 * other_matrix.M11 + self.M22 * other_matrix.M21,
                         self.M21 * other_matrix.M12 + self.M22 * other_matrix.M22)
 
+    def __array__(self) -> npy.ndarray:
+        return npy.array([
+            [self.M11, self.M12],
+            [self.M21, self.M22],
+        ], dtype=npy.float64)
+
     def vector_multiplication(self, vector):
         """
         Multiplies the matrix by a 2-dimensional vector.
@@ -2365,6 +2384,13 @@ class Matrix33:
              f"[{self.M21} {self.M22} {self.M23}]\n"
              f"[{self.M31} {self.M32} {self.M33}]\n")
         return s
+
+    def __array__(self) -> npy.ndarray:
+        return npy.array([
+            [self.M11, self.M12, self.M13],
+            [self.M21, self.M22, self.M23],
+            [self.M31, self.M32, self.M33],
+        ], dtype=npy.float64)
 
     def float_multiplication(self, float_value: float):
         """

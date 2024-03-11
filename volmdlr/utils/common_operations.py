@@ -215,6 +215,7 @@ def get_point_distance_to_edge(edge, point, start, end):
     :return: distance to edge.
     """
     best_distance = math.inf
+    number_points = 10 if edge.length() > 5e-6 else 2
     if start != end:
         if start.is_close(end):
             if not edge.periodic:
