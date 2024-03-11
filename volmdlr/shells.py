@@ -1940,20 +1940,11 @@ class OpenTriangleShell3D(OpenShell3D):
 
         vertices, triangles = self.to_mesh_data(round_vertices=True, n_decimals=9)
 
-        vertices, faces = perform_decimation(
-            vertices=vertices,
-            triangles=triangles,
-            target_count=target_count,
-            update_rate=update_rate,
-            aggressiveness=aggressiveness,
-            max_iterations=max_iterations,
-            verbose=verbose,
-            lossless=lossless,
-            threshold_lossless=threshold_lossless,
-            alpha=alpha,
-            k=k,
-            preserve_border=preserve_border,
-        )
+        vertices, faces = perform_decimation(vertices=vertices, triangles=triangles, target_count=target_count,
+                                             update_rate=update_rate, aggressiveness=aggressiveness,
+                                             max_iterations=max_iterations, verbose=verbose, lossless=lossless,
+                                             threshold_lossless=threshold_lossless, alpha=alpha, k=k,
+                                             preserve_border=preserve_border)
 
         return self.__class__.from_mesh_data(vertices, faces)
 
