@@ -7,7 +7,7 @@ from dessia_common.core import DessiaObject
 import volmdlr
 from volmdlr import edges, wires, curves
 from volmdlr.models.contours import contour2d_1, contour2d_2, contour1_cut_by_wire, contour2_cut_by_wire,\
-    contour2_unittest, unordered_contour2_unittest, invalid_unordered_contour2_unittest
+    contour2_unittest, unordered_contour2_unittest, invalid_unordered_contour2_unittest, contour3d_all_edges
 
 
 folder = os.path.dirname(os.path.realpath(__file__))
@@ -178,6 +178,14 @@ class TestContour2D(unittest.TestCase):
         contour1, contour2 = contour.split_by_line(line)
         self.assertTrue(contour1.primitives[-1].end.is_close(intersection))
         self.assertTrue(contour2.primitives[0].start.is_close(intersection))
+        self.assertTrue(contour1.is_connected())
+        self.assertTrue(contour2.is_connected())
+
+        line = curves.Line2D(volmdlr.Point2D(-0.02, 0.015), volmdlr.Point2D(0.02, 0.015))
+        contour = contour3d_all_edges.to_2d(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D)
+        contour1, contour2 = contour.split_by_line(line)
+        self.assertTrue(contour1.is_connected())
+        self.assertTrue(contour2.is_connected())
 
     def test_closest_point_to_point2(self):
         point1 = volmdlr.Point2D(1.5, -1.5)
@@ -299,6 +307,10 @@ class TestContour2D(unittest.TestCase):
         self.assertEqual(b_rectangle.xmax, 0.5)
         self.assertEqual(b_rectangle.ymin, -0.5)
         self.assertEqual(b_rectangle.ymax, 0.5)
+
+    def test_to_2d(self):
+        contour2d = contour3d_all_edges.to_2d(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D)
+        self.assertTrue(contour2d.is_connected())
 
 
 if __name__ == '__main__':

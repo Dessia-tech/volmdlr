@@ -2034,6 +2034,24 @@ class ContourMixin(WireMixin):
         """
         return self.primitives[0].start.is_close(self.primitives[-1].end)
 
+    def is_connected(self):
+        """
+        Returns True if all connected edges share the same vertex and False otherwise.
+        """
+        return all(prim2.start is prim1.end
+                   for prim1, prim2 in zip(self.primitives, self.primitives[1:] + [self.primitives[0]]))
+
+    def is_wire_connected(self):
+        """
+        Returns True if all connected edges share the same vertex and False otherwise.
+
+        This a special case for degenerated for contours found in parametric space or in boolean operations.
+        """
+        if len(self.primitives) > 1:
+            return all(prim2.start is prim1.end
+                   for prim1, prim2 in zip(self.primitives[:-1], self.primitives[1:]))
+        return True
+
 
 class Contour2D(ContourMixin, Wire2D):
     """
