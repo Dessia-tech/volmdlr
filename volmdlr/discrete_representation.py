@@ -1,6 +1,7 @@
 """
 Class for discrete representations of volmdlr models (voxelization for 3D geometries, pixelization for 2D geometries).
 """
+
 import itertools
 import math
 import warnings
@@ -8,11 +9,11 @@ from typing import Dict, Iterable, List, Set, Tuple, TypeVar, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
-from dessia_common.core import DessiaObject, PhysicalObject
-from dessia_common.serialization import JsonSerializable
 from matplotlib import patches
 from numpy.typing import NDArray
 
+from dessia_common.core import DessiaObject, PhysicalObject
+from dessia_common.serialization import JsonSerializable
 from volmdlr import Point2D, Point3D, Vector3D
 from volmdlr.core import BoundingBox, BoundingRectangle, VolumeModel
 from volmdlr.discrete_representation_compiled import (
@@ -1831,7 +1832,7 @@ class OctreeBasedVoxelization(Voxelization):
         faces = np.array(faces)
 
         min_corner = np.amin(vertices, axis=0)
-        max_corner = np.amax(faces, axis=0)
+        max_corner = np.amax(vertices, axis=0)
 
         # Compute the corners in the implicit grid defined by the voxel size
         min_corner = (np.floor_divide(min_corner, voxel_size) - 2) * voxel_size
@@ -1851,6 +1852,48 @@ class OctreeBasedVoxelization(Voxelization):
         triangles = cls._mesh_data_to_triangles(vertices, faces)
 
         return cls(octree, center, max_depth, voxel_size, triangles, name)
+
+    @classmethod
+    def encode(
+        cls, vertices: Iterable[Iterable[float]], faces: Iterable[Iterable[int]], voxel_size: float, name: str = ""
+    ) -> NDArray[np.uint8]:
+        """
+        Encode an octree from mesh data.
+
+        :param vertices: The vertices of the mesh.
+        :type vertices: Iterable[Iterable[float]]
+        :param faces: The faces of the mesh, using vertices indexes.
+        :type faces: Iterable[Iterable[int]]
+        :param voxel_size: The size of each voxel.
+        :type voxel_size: float
+        :param name: Optional name for the voxelization.
+        :type name: str
+
+        :return: An octree encoded from the mesh data.
+        :rtype: np.ndarray
+        """
+        vertices = np.array(vertices)
+        faces = np.array(faces)
+
+        min_corner = np.amin(vertices, axis=0)
+        max_corner = np.amax(vertices, axis=0)
+
+        # Compute the corners in the implicit grid defined by the voxel size
+        min_corner = (np.floor_divide(min_corner, voxel_size) - 2) * voxel_size
+        max_corner = (np.floor_divide(max_corner, voxel_size) + 2) * voxel_size
+
+        root_size = round_to_digits(np.max(np.maximum(np.abs(min_corner), np.abs(max_corner))) * 2, DECIMALS)
+
+        # Compute the max depth corresponding the voxel_size
+        max_depth = math.ceil(math.log2(root_size // voxel_size))
+        center = (0.0, 0.0, 0.0)
+
+        sizes = [round_to_digits(voxel_size * 2**i, DECIMALS) for i in range(max_depth, -1, -1)]
+        sizes.append(round_to_digits(voxel_size * 1 / 2, DECIMALS))
+
+        octree = cls._encode_from_mesh_data(vertices, faces, list(range(len(faces))), center, sizes, 0, max_depth)
+
+        return octree #, center, max_depth, voxel_size
 
     @classmethod
     def from_point_based_voxelization(
@@ -2531,6 +2574,72 @@ class OctreeBasedVoxelization(Voxelization):
         return intersecting_indices
 
     @staticmethod
+    def _encode_from_mesh_data(
+        vertices: NDArray[float],
+        faces: NDArray[int],
+        intersecting_indices: List[int],
+        center: _Point3D,
+        sizes: List[float],
+        depth: int,
+        max_depth: int,
+    ) -> NDArray[np.uint8]:
+        """Recursive method to encode an Octree from mesh data."""
+        if depth < max_depth:  # not yet reached max depth
+            octree_array = np.array([0, 0], dtype=np.uint8)
+
+            half_size = sizes[depth + 1]
+            quarter_size = sizes[depth + 2]
+
+            for i in range(2):
+                for j in range(2):
+                    for k in range(2):
+                        # calculate the center of the sub-voxel
+                        sub_voxel_center = round_point_3d_to_digits(
+                            (
+                                center[0] + (i - 0.5) * half_size,
+                                center[1] + (j - 0.5) * half_size,
+                                center[2] + (k - 0.5) * half_size,
+                            ),
+                            DECIMALS,
+                        )
+
+                        # check for intersecting triangle with the sub-voxel
+                        sub_voxel_intersecting_indices = [
+                            i
+                            for i in intersecting_indices
+                            if triangle_intersects_voxel(
+                                (vertices[faces[i][0]], vertices[faces[i][1]], vertices[faces[i][2]]),
+                                sub_voxel_center,
+                                (quarter_size, quarter_size, quarter_size),
+                            )
+                        ]
+
+                        # Recursive process
+                        if sub_voxel_intersecting_indices:
+                            # If sub-voxel intersecting
+                            octree_array[0] |= 1 << i * 4 + j * 2 + k
+                            if depth < max_depth - 1:
+                                sub_voxel_array = OctreeBasedVoxelization._encode_from_mesh_data(
+                                    vertices=vertices,
+                                    faces=faces,
+                                    intersecting_indices=sub_voxel_intersecting_indices,
+                                    center=sub_voxel_center,
+                                    sizes=sizes,
+                                    depth=depth + 1,
+                                    max_depth=max_depth,
+                                )
+                                if len(sub_voxel_array) > 2 or sub_voxel_array[0] != 15:
+                                    # print(len(sub_voxel_array))
+                                    # print(sub_voxel_array[0])
+
+                                    octree_array[1] |= 1 << i * 4 + j * 2 + k
+                                    # a = len(octree_array) + len(sub_voxel_array)
+                                    octree_array = np.concatenate((octree_array, sub_voxel_array))
+                                    # print(len(octree_array)==a)
+
+            return octree_array
+
+    @staticmethod
     def _subdivide_from_points(
         points: List[_Point3D],
         center: _Point3D,
@@ -2641,6 +2750,58 @@ class OctreeBasedVoxelization(Voxelization):
         :rtype: dict[float, set[tuple[float, float, float]]]
         """
         return self._get_non_homogeneous_leaf_centers(0, self._root_voxel_size, self._root_center, self._octree)
+
+    def _get_non_homogeneous_leaf_centers(
+        self, current_depth: int, current_size: float, current_center: _Point3D, current_octree
+    ) -> Dict[float, Set[_Point3D]]:
+        """
+        Recursive method to extract all the non-homogeneous voxel centers.
+
+        This method maximize the voxel size without any less of information.
+
+        :return: A dictionary where the keys are voxel sizes and the values are sets of voxel centers.
+        :rtype: dict[float, set[tuple[float, float, float]]]
+        """
+        centers_by_voxel_size = {}
+
+        if current_depth == self._octree_depth:
+            # Return leaf nodes
+            centers_by_voxel_size[current_size] = {current_center}
+
+        else:
+            half_size = round_to_digits(current_size / 2, DECIMALS)
+
+            for i in range(2):
+                for j in range(2):
+                    for k in range(2):
+                        # if it is the octree
+                        if current_octree[i * 4 + j * 2 + k]:
+                            # calculate the center of the sub-voxel
+                            sub_voxel_center = round_point_3d_to_digits(
+                                (
+                                    current_center[0] + (i - 0.5) * half_size,
+                                    current_center[1] + (j - 0.5) * half_size,
+                                    current_center[2] + (k - 0.5) * half_size,
+                                ),
+                                DECIMALS,
+                            )
+                            # Recursive process
+                            sub_centers = self._get_non_homogeneous_leaf_centers(
+                                current_depth + 1, half_size, sub_voxel_center, current_octree[i * 4 + j * 2 + k]
+                            )
+
+                            # Merge sub-centers into the result dictionary, keeping track of voxel sizes
+                            for size, sub_voxel_centers in sub_centers.items():
+                                if size not in centers_by_voxel_size:
+                                    centers_by_voxel_size[size] = set()
+                                centers_by_voxel_size[size].update(sub_voxel_centers)
+
+            if len(centers_by_voxel_size.get(half_size, [])) == 8:
+                # Merge voxels if possible
+                del centers_by_voxel_size[half_size]
+                centers_by_voxel_size[current_size] = {current_center}
+
+        return centers_by_voxel_size
 
     def _get_non_homogeneous_leaf_centers(
         self, current_depth: int, current_size: float, current_center: _Point3D, current_octree

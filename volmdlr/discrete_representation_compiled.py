@@ -6,14 +6,15 @@ Helper Cython functions for discrete representation defined using the pure Pytho
 
 This module needs to be compiled!
 """
-from typing import List, Set, Tuple, Dict
+import math
+from typing import Dict, Iterable, List, Set, Tuple
 
 import cython
 import cython.cimports.libc.math as math_c
 import numpy as np
 from cython.cimports.libcpp import bool as bool_C
-from cython.cimports.libcpp.unordered_map import unordered_map
 from cython.cimports.libcpp.stack import stack
+from cython.cimports.libcpp.unordered_map import unordered_map
 from cython.cimports.libcpp.vector import vector
 
 # from cython.cimports.libcpp.memory import unique_ptr
@@ -30,79 +31,209 @@ _Triangle2D = Tuple[_Point2D, _Point2D, _Point2D]
 
 
 # DATA STRUCTURES
+# Node = cython.struct(
+#     child_states=cython.uchar,
+#     # child_nodes=cython.pointer(cython.pointer(Node)),
+#     # child_nodes=p_Node,
+# )
+# p_Node = cython.pointer(Node)
 
 
-@cython.cclass
-class OctreeNode:
-    child_states: cython.uchar  # Each bit indicates the non-nodes child type: 0 for void, 1 for leaf
-    child_nodes: unordered_map[cython.uchar : OctreeNode]
+# from cython.cimports import octree
+# from octree import OctreeNode
 
-    def __cinit__(self):
-        self.child_states = 0
-        self.child_nodes: unordered_map[cython.uchar : OctreeNode]()
 
-    def __init__(self):
-        self.child_states = 0
-        self.child_nodes: unordered_map[cython.uchar : OctreeNode]()
+# @cython.cclass
+# class OctreeNode:
+#     child_states: cython.uchar  # Each bit indicates the non-nodes child type: 0 for void, 1 for leaf
+#     # child_nodes: unordered_map[cython.uchar: OctreeNode]
+#     # child_nodes: Dict[cython.uchar, OctreeNode]
+#     # def __cinit__(self):
+#     #     self.child_states = 0
+#     #     self.child_nodes: unordered_map[cython.uchar : OctreeNode]()
+#
+#     def __init__(self):
+#         self.child_states: cython.uchar = 0
+#         # self.child_nodes = {}
+#
+#     # CHILD STATES OPERATIONS
+#     @cython.ccall
+#     def set_void_child(self, index: cython.uchar):
+#         self.child_states &= ~(1 << index)
+#
+#     @cython.ccall
+#     def set_leaf_child(self, index: cython.uchar):
+#         self.child_states |= 1 << index
+#
+#     # CHILD NODES OPERATIONS
+#     def create_child_node(self, index: cython.uchar):
+#         self.child_nodes[index] = OctreeNode()
+#         self.child_states &= ~(1 << index)
+#
+#     @cython.ccall
+#     def add_child_node(self, index: cython.uchar, child_node: OctreeNode):
+#         self.child_nodes[index] = child_node
+#         self.child_states &= ~(1 << index)
+#
+#     @cython.ccall
+#     def get_child_node(self, index: cython.uchar) -> OctreeNode:
+#         return self.child_nodes[index]
+#
+#     @cython.ccall
+#     def delete_child_node(self, index: cython.uchar):
+#         del self.child_nodes[index]
+#
+#     @cython.ccall
+#     def make_child_node_leaf(self, index: cython.uchar):
+#         del self.child_nodes[index]
+#         self.child_states |= 1 << index
+#
+#     # STATES GETTER
+#     def get_child_nodes(self) -> Dict[cython.uchar, OctreeNode]:
+#         return self.child_nodes
+#
+#     @cython.ccall
+#     def get_node_child_indices(self) -> vector[cython.uchar]:
+#         leaf_indices: vector[cython.uchar] = self.child_nodes.keys()
+#         return leaf_indices
+#
+#     @cython.ccall
+#     def get_leaf_child_indices(self) -> vector[cython.uchar]:
+#         leaf_indices: vector[cython.uchar]
+#         i: cython.uchar
+#         for i in range(8):
+#             if self.child_states & (1 << i):
+#                 leaf_indices.push_back(i)
+#         return leaf_indices
+#
+#     @property
+#     def nbytes(self):
+#         return cython.sizeof(self) + cython.sizeof(self.child_states) + cython.sizeof(self.child_nodes)
 
-    # CHILD STATES OPERATIONS
-    @cython.ccall
-    def set_void_child(self, index: cython.uchar):
-        self.child_states &= ~(1 << index)
 
-    @cython.ccall
-    def set_leaf_child(self, index: cython.uchar):
-        self.child_states |= 1 << index
+def encode(vertices: NDArray[float], faces: NDArray[int], voxel_size: float, name: str = "") -> NDArray[np.uint8]:
+    """
+    Encode an octree from mesh data.
 
-    # CHILD NODES OPERATIONS
-    @cython.ccall
-    def create_child_node(self, index: cython.uchar):
-        self.child_nodes.insert(index, OctreeNode())
-        self.child_states &= ~(1 << index)
+    :param vertices: The vertices of the mesh.
+    :type vertices: Iterable[Iterable[float]]
+    :param faces: The faces of the mesh, using vertices indexes.
+    :type faces: Iterable[Iterable[int]]
+    :param voxel_size: The size of each voxel.
+    :type voxel_size: float
+    :param name: Optional name for the voxelization.
+    :type name: str
 
-    @cython.ccall
-    def add_child_node(self, index: cython.uchar, child_node: OctreeNode):
-        self.child_nodes.insert(index, child_node)
-        self.child_states &= ~(1 << index)
+    :return: An octree encoded from the mesh data.
+    :rtype: np.ndarray
+    """
+    vertices = np.array(vertices)
+    faces = np.array(faces)
 
-    @cython.ccall
-    def get_child_node(self, index: cython.uchar) -> OctreeNode:
-        return self.child_nodes.find(index)
+    min_corner = np.amin(vertices, axis=0)
+    max_corner = np.amax(vertices, axis=0)
 
-    @cython.ccall
-    def delete_child_node(self, index: cython.uchar):
-        self.child_nodes.erase(index)
+    # Compute the corners in the implicit grid defined by the voxel size
+    min_corner = (np.floor_divide(min_corner, voxel_size) - 2) * voxel_size
+    max_corner = (np.floor_divide(max_corner, voxel_size) + 2) * voxel_size
 
-    @cython.ccall
-    def make_child_node_leaf(self, index: cython.uchar):
-        self.child_nodes.erase(index)
-        self.child_states |= 1 << index
+    root_size = _round_to_digits(np.max(np.maximum(np.abs(min_corner), np.abs(max_corner))) * 2, 9)
 
-    # STATES GETTER
-    def get_child_nodes(self) -> Dict[cython.uchar, OctreeNode]:
-        return self.child_nodes
+    # Compute the max depth corresponding the voxel_size
+    max_depth = math.ceil(math.log2(root_size // voxel_size))
+    center = (0.0, 0.0, 0.0)
 
-    @cython.cfunc
-    def get_node_child_indices(self) -> vector[cython.uchar]:
-        leaf_indices: vector[cython.uchar]
-        it: unordered_map[cython.uchar : OctreeNode].iterator = self.child_nodes.begin()
+    sizes = [_round_to_digits(voxel_size * 2**i, 9) for i in range(max_depth, -1, -1)]
+    sizes.append(round_to_digits(voxel_size * 1 / 2, 9))
 
-        while it != self.child_nodes.end():
-            print(it.first)
-            it.next()
+    return np.asarray(
+        _encode_from_mesh_data(vertices, faces, list(range(len(faces))), center, sizes, 0, max_depth),
+        np.uint8,
+    )
 
-    @cython.ccall
-    def get_leaf_child_indices(self) -> vector[cython.uchar]:
-        leaf_indices: vector[cython.uchar]
+
+@cython.cfunc
+def _encode_from_mesh_data(
+    vertices: vector[Tuple[cython.double, cython.double, cython.double]],
+    faces: vector[Tuple[cython.int, cython.int, cython.int]],
+    intersecting_indices: vector[cython.int],
+    center: Tuple[cython.double, cython.double, cython.double],
+    sizes: vector[cython.double],
+    depth: cython.int,
+    max_depth: cython.int,
+) -> vector[cython.uchar]:
+    """Recursive method to encode an Octree from mesh data."""
+    if depth < max_depth:  # not yet reached max depth
+        octree_array: vector[cython.uchar]
+
+        octree_array.push_back(0)
+        octree_array.push_back(0)
+
+        half_size = sizes[depth + 1]
+        quarter_size = sizes[depth + 2]
+
         i: cython.uchar
-        for i in range(8):
-            if self.child_states & (1 << i):
-                leaf_indices.push_back(i)
-        return leaf_indices
+        j: cython.uchar
+        k: cython.uchar
+        for i in range(2):
+            for j in range(2):
+                for k in range(2):
+                    if depth == 0:
+                        print(i * 4 + j * 2 + k)
 
-    @property
-    def nbytes(self):
-        return cython.sizeof(self) + cython.sizeof(self.child_states) + cython.sizeof(self.child_nodes)
+                    # calculate the center of the sub-voxel
+                    sub_voxel_center: Tuple[cython.double, cython.double, cython.double]
+                    sub_voxel_center = _round_point_3d_to_digits(
+                        (
+                            center[0] + (i - 0.5) * half_size,
+                            center[1] + (j - 0.5) * half_size,
+                            center[2] + (k - 0.5) * half_size,
+                        ),
+                        9,
+                    )
+
+                    # check for intersecting triangle with the sub-voxel
+                    sub_voxel_intersecting_indices: vector[cython.int]
+                    sub_voxel_intersecting_indices.clear()
+
+                    for u in range(intersecting_indices.size()):
+                        v = intersecting_indices[u]
+                        if _triangle_interfaces_voxel(
+                            (vertices[faces[v][0]], vertices[faces[v][1]], vertices[faces[v][2]]),
+                            sub_voxel_center,
+                            (quarter_size, quarter_size, quarter_size),
+                        ) or _triangle_intersects_voxel(
+                            (vertices[faces[v][0]], vertices[faces[v][1]], vertices[faces[v][2]]),
+                            sub_voxel_center,
+                            (quarter_size, quarter_size, quarter_size),
+                        ):
+                            sub_voxel_intersecting_indices.push_back(v)
+
+                    # Recursive process
+                    if sub_voxel_intersecting_indices.size() > 0:
+                        # If sub-voxel intersecting
+                        octree_array[0] |= 1 << i * 4 + j * 2 + k
+                        if depth < max_depth - 1:
+                            sub_voxel_array = _encode_from_mesh_data(
+                                vertices=vertices,
+                                faces=faces,
+                                intersecting_indices=sub_voxel_intersecting_indices,
+                                center=sub_voxel_center,
+                                sizes=sizes,
+                                depth=depth + 1,
+                                max_depth=max_depth,
+                            )
+                            if sub_voxel_array.size() > 2 or sub_voxel_array[0] != 15:
+                                # print(octree_array.size())
+                                # print(sub_voxel_array)
+
+                                octree_array[1] |= 1 << i * 4 + j * 2 + k
+                                # x = octree_array.size() + sub_voxel_array.size()
+                                octree_array.insert(octree_array.end(), sub_voxel_array.begin(), sub_voxel_array.end())
+                                # print(octree_array.size() == x)
+                                # print(octree_array)
+
+        return octree_array
 
 
 # PYTHON FUNCTIONS
@@ -542,6 +673,7 @@ def _calculate_axis_values(
 
 
 @cython.cfunc
+@cython.exceptval(check=False)
 def _triangle_interfaces_voxel(
     triangle: Tuple[
         Tuple[cython.double, cython.double, cython.double],
