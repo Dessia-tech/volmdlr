@@ -112,7 +112,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineSurface3D: improves _fix_start_end_singularity_point_at_parametric_domain
 
 #### wires.py
-- Fix some constructors: connected edges must share vertices.
+- Fix some constructors: connected edges must share vertices
+- copy(): copy saving data structure, such as data which is intended to be shared between copies (memo)
+
 
 #### step.py
 - Fixes in step translator to VolumeModel.
