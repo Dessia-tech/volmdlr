@@ -15,7 +15,6 @@ class TestWire(unittest.TestCase):
         wire = wires.Wire2D.from_edge(lns2d, 2)
         self.assertAlmostEqual(len(wire.primitives), 2)
 
-
     def test_wires_from_edges(self):
         primitives = [
             edges.LineSegment2D(volmdlr.Point2D(-0.2, -0.2),
@@ -36,6 +35,9 @@ class TestWire(unittest.TestCase):
         self.assertAlmostEqual(len(list_wires), 2)
         for wire in list_wires:
             self.assertAlmostEqual(len(wire.primitives), 3)
+            #TODO: uncomment this code when wires methods are refactored to share vertices between edges
+            # for prim1, prim2 in zip(wire.primitives[:-1], wire.primitives[1:]):
+            #     self.assertIs(prim1.end, prim2.start)
 
         primitives_1 = [
             edges.LineSegment2D(volmdlr.Point2D(-0.2, 0.2),

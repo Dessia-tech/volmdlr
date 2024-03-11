@@ -15,6 +15,7 @@ import random
 import sys
 import warnings
 from typing import List, Text, Tuple
+from copy import deepcopy, copy
 
 import matplotlib.pyplot as plt
 import numpy as npy
@@ -1787,7 +1788,9 @@ cdef class Vector3D(Vector):
         :return: A copy of the Vector2D-like object
         :rtype: :class:`volmdlr.Vector2D`
         """
-        return self.__class__(self.x, self.y, self.z)
+        if deep:
+            return deepcopy(self, memo=memo)
+        return copy(self)
 
     @classmethod
     def random(cls, xmin: float, xmax: float, ymin: float, ymax: float, zmin: float, zmax: float, name: str = ""):
