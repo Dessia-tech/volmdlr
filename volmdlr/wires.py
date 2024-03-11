@@ -2029,6 +2029,12 @@ class ContourMixin(WireMixin):
         """
         return self.primitives[0].start.is_close(self.primitives[-1].end)
 
+    def geometries(self):
+        """
+        Gets the set of geometric objects that compose the topological shape.
+        """
+        return set(geometry for primitive in self.primitives for geometry in primitive.geometries())
+
     def translation(self, offset: Union[volmdlr.Vector2D, volmdlr.Vector3D]):
         """
         Contour translation.
@@ -2037,20 +2043,9 @@ class ContourMixin(WireMixin):
         :return: A new translated Contour.
         """
         self_copy = self.copy(memo={})
-        for edge in self_copy.primitives:
-            edge.start.translation_inplace(offset=offset)
-            if edge.__class__.__name__[:-2] == "LineSegment":
-                continue
-            if edge.__class__.__name__[:-2] == "BSplineCurve":
-                for point in edge.control_points[1:-1]:
-                    point.translation_inplace(offset=offset)
-            elif edge.__class__.__name__[:-2] == "Arc":
-                edge.circle.translation_inplace(offset=offset)
-            elif edge.__class__.__name__[:-2] == "ArcEllipse":
-                edge.ellipse.translation_inplace(offset=offset)
-        # special case when treating a degenerate 2D contour from contou3d_to_2d transformation
-        if not self_copy.primitives[-1].end.is_close(self_copy.primitives[0].start):
-            self_copy.primitives[-1].end.translation_inplace(offset=offset)
+        geometries = self_copy.geometries()
+        for geometry in geometries:
+            geometry.translation_inplace(offset=offset)
         return self_copy
 
     def is_connected(self):
