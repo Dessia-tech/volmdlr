@@ -665,6 +665,12 @@ class Edge(dc.DessiaObject):
         content += start_content + end_content + curve_content
         return content, current_id
 
+    def geometries(self):
+        """
+        Gets the list of geometric objects that compose the topological shape.
+        """
+        return self.curve(), self.start, self.end
+
 
 class LineSegment(Edge):
     """
@@ -887,6 +893,21 @@ class LineSegment(Edge):
                 return True
         return False
 
+    def translation_inplace(self, offset: Union[volmdlr.Vector2D, volmdlr.Vector3D]):
+        """
+        LineSegment translation in-place.
+
+        :param offset: translation vector.
+        """
+        self.start.translation_inplace(offset)
+        self.end.translation_inplace(offset)
+
+    def geometries(self):
+        """
+        Gets the list of geometric objects that compose the topological shape.
+        """
+        return [self]
+
 
 class BSplineCurve(Edge):
     """
@@ -907,9 +928,6 @@ class BSplineCurve(Edge):
     :param weights: The weight vector applied to the knot vector. Default
         value is None
     :type weights: List[float], optional
-    :param periodic: If `True` the B-spline curve is periodic. Default value
-        is False
-    :type periodic: bool, optional
     :param name: The name of the B-spline curve. Default value is ''
     :type name: str, optional
     """
@@ -1598,6 +1616,17 @@ class BSplineCurve(Edge):
                               self.knot_multiplicities, self.knots,
                               self.weights)
 
+    def translation_inplace(self, offset: Union[volmdlr.Vector2D, volmdlr.Vector3D]):
+        """
+        Translates the B-spline curve in-place.
+
+        :param offset: The translation vector
+        :type offset: Union[:class:`volmdlr.Vector2D`,
+            :class:`volmdlr.Vector3D`]
+        """
+        for point in self.control_points:
+            point.translation_inplace(offset)
+
     def point_belongs(self, point: Union[volmdlr.Point2D, volmdlr.Point3D], abs_tol: float = 1e-6):
         """
         Checks if a 2D or 3D point belongs to the B-spline curve or not. It uses the point_distance.
@@ -2145,6 +2174,12 @@ class BSplineCurve(Edge):
         curve1 = bspline_curve.split(point1)[1]
         curve2 = bspline_curve.split(point2)[0]
         return curve1.merge_with(curve2)
+
+    def geometries(self):
+        """
+        Gets the list of geometric objects that compose the topological shape.
+        """
+        return [self]
 
 
 class BSplineCurve2D(BSplineCurve):

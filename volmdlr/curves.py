@@ -437,6 +437,17 @@ class Line2D(Line):
         """
         return Line2D(*[point.translation(offset) for point in [self.point1, self.point2]])
 
+    def translation_inplace(self, offset: volmdlr.Vector2D):
+        """
+        Line2D translation in-place.
+
+        :param offset: translation vector.
+        :return: A new translated Line2D.
+        """
+        # TODO: RESET CACHE
+        self.point1.translation_inplace(offset)
+        self.point2.translation_inplace(offset)
+
     def point_belongs(self, point2d, abs_tol: float = 1e-6):
         """
         Verifies if the point 2D belongs to the line.
@@ -819,6 +830,17 @@ class Line3D(Line):
         return Line3D(*[point.translation(offset) for point in
                         [self.point1, self.point2]])
 
+    def translation_inplace(self, offset: volmdlr.Vector3D):
+        """
+        Line3D translation in-place.
+
+        :param offset: translation vector.
+        :return: A new translated Line3D.
+        """
+        # TODO: RESET CACHE
+        self.point1.translation_inplace(offset)
+        self.point2.translation_inplace(offset)
+
     def point_belongs(self, point3d, tol: float = 1e-6):
         """
         Verifies if a point belongs to the Line 3D.
@@ -1083,6 +1105,16 @@ class CircleMixin:
         if point1.is_close(point2, abs_tol):
             return fullar_arc_class_(circle, point1)
         return arc_class_(circle, point1, point2)
+
+    def translation_inplace(self, offset: Union[volmdlr.Vector2D, volmdlr.Vector3D]):
+        """
+        Circle translation in-place.
+
+        :param offset: translation vector
+        :return: A new translated Circle
+        """
+        #TODO: RESET CACHE
+        self.frame = self.frame.translation(offset)
 
 
 class Circle2D(CircleMixin, ClosedCurve):
@@ -2151,6 +2183,14 @@ class EllipseMixin:
         return math.pi * (self.major_axis + self.minor_axis) * \
             (1 + (3 * perimeter_formular_h / (10 + math.sqrt(4 - 3 * perimeter_formular_h))))
 
+    def translation_inplace(self, offset: Union[volmdlr.Vector2D, volmdlr.Vector3D]):
+        """
+        Translation of ellipse from an offset vector in-place.
+
+        :param offset: corresponding translation vector.
+        :return: translated new ellipse.
+        """
+        self.frame = self.frame.translation(offset)
 
 class Ellipse2D(EllipseMixin, ClosedCurve):
     """

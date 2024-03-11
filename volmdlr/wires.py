@@ -11,7 +11,7 @@ import warnings
 from collections import deque
 from functools import cached_property
 from statistics import mean
-from typing import List
+from typing import List, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -714,6 +714,23 @@ class WireMixin:
                     intersections_points.append(crossing)
         return intersections_points
 
+    def geometries(self):
+        """
+        Gets the set of geometric objects that compose the topological shape.
+        """
+        return set(geometry for primitive in self.primitives for geometry in primitive.geometries())
+
+    def translation(self, offset: Union[volmdlr.Vector2D, volmdlr.Vector3D]):
+        """
+        Contour translation.
+
+        :param offset: translation vector.
+        :return: A new translated Contour.
+        """
+        self_copy = self.copy(memo={})
+        for geometry in self_copy.geometries():
+            geometry.translation_inplace(offset=offset)
+        return self_copy
 
 class EdgeCollection3D(WireMixin, PhysicalObject):
     """
@@ -1290,16 +1307,6 @@ class Wire2D(WireMixin, PhysicalObject):
         """
         return self.__class__([point.rotation(center, angle)
                                for point in self.primitives])
-
-    def translation(self, offset: volmdlr.Vector2D):
-        """
-        Translates the Wire 2D.
-
-        :param offset: translation vector
-        :return: A new translated Wire 2D.
-        """
-        return self.__class__([primitive.translation(offset)
-                               for primitive in self.primitives])
 
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
         """
@@ -2029,6 +2036,8 @@ class ContourMixin(WireMixin):
         :returns: True is closed, False if Open.
         """
         return self.primitives[0].start.is_close(self.primitives[-1].end)
+
+
 
     def is_connected(self):
         """
@@ -4402,17 +4411,6 @@ class Contour3D(ContourMixin, Wire3D):
         """
         new_edges = [edge.rotation(center, axis, angle) for edge
                      in self.primitives]
-        return Contour3D(new_edges, self.name)
-
-    def translation(self, offset: volmdlr.Vector3D):
-        """
-        Contour3D translation.
-
-        :param offset: translation vector.
-        :return: A new translated Contour3D.
-        """
-        new_edges = [edge.translation(offset) for edge in
-                     self.primitives]
         return Contour3D(new_edges, self.name)
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
