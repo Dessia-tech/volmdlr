@@ -32,7 +32,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Edge: delete_shared_section (use abs_tol)
 - Bspline: get_shared_section (update abs_tol for is_shared_section_possible)
 #### wires.py
-- 
+- Fix some constructors: connected edges must share vertices.
+
 #### surfaces.py
 - 
 #### faces.py

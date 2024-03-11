@@ -227,6 +227,8 @@ class TestContour2D(unittest.TestCase):
             areas = []
             lengths = []
             for contour in contours:
+                for prim1, prim2 in zip(contour.primitives, contour.primitives[1:] + [contour.primitives[0]]):
+                    self.assertIs(prim1.end, prim2.start)
                 areas.append(contour.area())
                 lengths.append(contour.length())
             contour_lengths.append(lengths)
