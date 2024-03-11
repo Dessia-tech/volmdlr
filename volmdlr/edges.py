@@ -895,7 +895,7 @@ class LineSegment(Edge):
 
     def translation_inplace(self, offset: Union[volmdlr.Vector2D, volmdlr.Vector3D]):
         """
-        LineSegment translation in-place.
+        Line segment translation in-place.
 
         :param offset: translation vector.
         """

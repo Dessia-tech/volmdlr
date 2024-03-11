@@ -30,6 +30,14 @@ from volmdlr.core import EdgeStyle
 
 
 def merge_primitives_points(primitives, abs_tol: float = 1e-6):
+    """
+    Mutualizes the points of connected edges.
+
+    This function iterates over the list of primitives and adjusts the start and end points
+    of each edge where necessary to ensure connectedness. If the end point of one edge is
+    very close to the start point of the subsequent edge, they are considered connected,
+    and adjustments are made to ensure seamless connectivity.
+    """
     ordered_edges = WireMixin.order_primitives(primitives, abs_tol)
     for i, primitive in enumerate(ordered_edges[1:]):
         if primitive == ordered_edges[-1] and primitive.end.is_close(ordered_edges[0].start):
@@ -731,6 +739,7 @@ class WireMixin:
         for geometry in self_copy.geometries():
             geometry.translation_inplace(offset=offset)
         return self_copy
+
 
 class EdgeCollection3D(WireMixin, PhysicalObject):
     """
