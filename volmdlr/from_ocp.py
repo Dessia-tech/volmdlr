@@ -549,7 +549,18 @@ downcast_LUT = {
 
 
 def shapetype(obj: TopoDS_Shape) -> TopAbs_ShapeEnum:
+    """
+    Returns a number from 0 to 7, representing the type of the shape.
 
+    COMPOUND = 0
+    COMPSOLID = 1
+    SHELL = 2
+    FACE = 3
+    WIRE = 4
+    EDGE = 5
+    VERTEX = 6
+    SHAPE = 7
+    """
     if obj.IsNull():
         raise ValueError("Null TopoDS_Shape object")
 
@@ -558,7 +569,7 @@ def shapetype(obj: TopoDS_Shape) -> TopAbs_ShapeEnum:
 
 def downcast(obj: TopoDS_Shape) -> TopoDS_Shape:
     """
-    Downcasts a TopoDS object to suitable specialized type
+    Downcasts a TopoDS object to suitable specialized type.
     """
 
     f_downcast: Any = downcast_LUT[shapetype(obj)]
