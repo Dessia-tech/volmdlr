@@ -1,0 +1,245 @@
+{
+  "object_class": "volmdlr.core.VolumeModel",
+  "name": "",
+  "primitives": [
+    {
+      "object_class": "volmdlr.faces.CylindricalFace3D",
+      "name": "",
+      "radius": 0.003,
+      "center": {
+        "object_class": "volmdlr.Point3D",
+        "x": -0.04,
+        "y": 0.027,
+        "z": 0.007
+      },
+      "normal": {
+        "object_class": "volmdlr.Vector3D",
+        "x": 1.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "surface3d": {
+        "object_class": "volmdlr.surfaces.CylindricalSurface3D",
+        "name": "",
+        "radius": 0.003,
+        "frame": {
+          "object_class": "volmdlr.Frame3D",
+          "name": "",
+          "origin": {
+            "object_class": "volmdlr.Point3D",
+            "x": -0.04,
+            "y": 0.027,
+            "z": 0.007
+          },
+          "u": {
+            "object_class": "volmdlr.Vector3D",
+            "x": 0.0,
+            "y": 0.0,
+            "z": 1.0
+          },
+          "v": {
+            "object_class": "volmdlr.Vector3D",
+            "x": 0.0,
+            "y": -1.0,
+            "z": 0.0
+          },
+          "w": {
+            "object_class": "volmdlr.Vector3D",
+            "x": 1.0,
+            "y": 0.0,
+            "z": 0.0
+          }
+        }
+      },
+      "surface2d": {
+        "object_class": "volmdlr.surfaces.Surface2D",
+        "name": "name",
+        "outer_contour": {
+          "object_class": "volmdlr.wires.Contour2D",
+          "name": "",
+          "primitives": [
+            {
+              "object_class": "volmdlr.edges.LineSegment2D",
+              "name": "parametric.linesegment",
+              "start": {
+                "object_class": "volmdlr.Point2D",
+                "x": 0.0,
+                "y": 0.077
+              },
+              "end": {
+                "object_class": "volmdlr.Point2D",
+                "x": 0.0,
+                "y": 0.0030000000000000027
+              }
+            },
+            {
+              "object_class": "volmdlr.edges.LineSegment2D",
+              "name": "parametric.arc",
+              "start": {
+                "object_class": "volmdlr.Point2D",
+                "x": 0.0,
+                "y": 0.0030000000000000027
+              },
+              "end": {
+                "object_class": "volmdlr.Point2D",
+                "x": -1.5707963267948966,
+                "y": 0.0030000000000000027
+              }
+            },
+            {
+              "object_class": "volmdlr.edges.LineSegment2D",
+              "name": "parametric.linesegment",
+              "start": {
+                "object_class": "volmdlr.Point2D",
+                "x": -1.5707963267948966,
+                "y": 0.0030000000000000027
+              },
+              "end": {
+                "object_class": "volmdlr.Point2D",
+                "x": -1.5707963267948966,
+                "y": 0.077
+              }
+            },
+            {
+              "object_class": "volmdlr.edges.LineSegment2D",
+              "name": "parametric.arc",
+              "start": {
+                "object_class": "volmdlr.Point2D",
+                "x": -1.5707963267948966,
+                "y": 0.077
+              },
+              "end": {
+                "object_class": "volmdlr.Point2D",
+                "x": 0.0,
+                "y": 0.077
+              }
+            }
+          ]
+        },
+        "inner_contours": []
+      },
+      "color": null,
+      "alpha": 1.0
+    },
+    {
+      "object_class": "volmdlr.faces.CylindricalFace3D",
+      "name": "",
+      "radius": 0.003,
+      "center": {
+        "object_class": "volmdlr.Point3D",
+        "x": -0.03300156854227386,
+        "y": 0.027,
+        "z": 0.02366213164001926
+      },
+      "normal": {
+        "object_class": "volmdlr.Vector3D",
+        "x": 0.9009688679024191,
+        "y": 0.0,
+        "z": -0.4338837391175581
+      },
+      "surface3d": {
+        "object_class": "volmdlr.surfaces.CylindricalSurface3D",
+        "name": "",
+        "radius": 0.003,
+        "frame": {
+          "object_class": "volmdlr.Frame3D",
+          "name": "",
+          "origin": {
+            "object_class": "volmdlr.Point3D",
+            "x": -0.03300156854227386,
+            "y": 0.027,
+            "z": 0.02366213164001926
+          },
+          "u": {
+            "object_class": "volmdlr.Vector3D",
+            "x": 0.4338837391175581,
+            "y": 0.0,
+            "z": 0.9009688679024191
+          },
+          "v": {
+            "object_class": "volmdlr.Vector3D",
+            "x": 0.0,
+            "y": -1.0,
+            "z": 0.0
+          },
+          "w": {
+            "object_class": "volmdlr.Vector3D",
+            "x": 0.9009688679024191,
+            "y": 0.0,
+            "z": -0.4338837391175581
+          }
+        }
+      },
+      "surface2d": {
+        "object_class": "volmdlr.surfaces.Surface2D",
+        "name": "name",
+        "outer_contour": {
+          "object_class": "volmdlr.wires.Contour2D",
+          "name": "",
+          "primitives": [
+            {
+              "object_class": "volmdlr.edges.LineSegment2D",
+              "name": "parametric.linesegment",
+              "start": {
+                "object_class": "volmdlr.Point2D",
+                "x": 0.0,
+                "y": 0.077
+              },
+              "end": {
+                "object_class": "volmdlr.Point2D",
+                "x": 0.0,
+                "y": 0.0030000000000000027
+              }
+            },
+            {
+              "object_class": "volmdlr.edges.LineSegment2D",
+              "name": "parametric.arc",
+              "start": {
+                "object_class": "volmdlr.Point2D",
+                "x": 0.0,
+                "y": 0.0030000000000000027
+              },
+              "end": {
+                "object_class": "volmdlr.Point2D",
+                "x": -1.5707963267948966,
+                "y": 0.0030000000000000027
+              }
+            },
+            {
+              "object_class": "volmdlr.edges.LineSegment2D",
+              "name": "parametric.linesegment",
+              "start": {
+                "object_class": "volmdlr.Point2D",
+                "x": -1.5707963267948966,
+                "y": 0.0030000000000000027
+              },
+              "end": {
+                "object_class": "volmdlr.Point2D",
+                "x": -1.5707963267948966,
+                "y": 0.077
+              }
+            },
+            {
+              "object_class": "volmdlr.edges.LineSegment2D",
+              "name": "parametric.arc",
+              "start": {
+                "object_class": "volmdlr.Point2D",
+                "x": -1.5707963267948966,
+                "y": 0.077
+              },
+              "end": {
+                "object_class": "volmdlr.Point2D",
+                "x": 0.0,
+                "y": 0.077
+              }
+            }
+          ]
+        },
+        "inner_contours": []
+      },
+      "color": null,
+      "alpha": 1.0
+    }
+  ],
+  "_references": {}
+}

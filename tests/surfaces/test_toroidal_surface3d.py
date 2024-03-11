@@ -359,6 +359,7 @@ class TestToroidalSurface3D(unittest.TestCase):
             volmdlr.Point3D(1.817953260018375, -1.1400067506585763, -1.1400067506585763)))
 
     def test_conicalsurface_intersections(self):
+
         conical_surface = surfaces.ConicalSurface3D(volmdlr.OXYZ, math.pi / 7)
         conical_surface = conical_surface.translation(volmdlr.Vector3D(2, 2, -3))
         toroidal_surface1 = surfaces.ToroidalSurface3D(volmdlr.OXYZ, 3, 1)
