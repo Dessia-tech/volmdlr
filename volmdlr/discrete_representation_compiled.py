@@ -91,8 +91,8 @@ def _encode_from_mesh_data(
         for i in range(2):
             for j in range(2):
                 for k in range(2):
-                    if depth == 0:
-                        print(i * 4 + j * 2 + k)
+                    # if depth == 0:
+                    #     print(i * 4 + j * 2 + k)
 
                     # calculate the center of the sub-voxel
                     sub_voxel_center: Tuple[cython.double, cython.double, cython.double]
@@ -111,11 +111,11 @@ def _encode_from_mesh_data(
 
                     for u in range(intersecting_indices.size()):
                         v = intersecting_indices[u]
-                        if _triangle_interfaces_voxel(
+                        if _triangle_intersects_voxel(
                             (vertices[faces[v][0]], vertices[faces[v][1]], vertices[faces[v][2]]),
                             sub_voxel_center,
                             (quarter_size, quarter_size, quarter_size),
-                        ) or _triangle_intersects_voxel(
+                        ) or _triangle_interfaces_voxel(
                             (vertices[faces[v][0]], vertices[faces[v][1]], vertices[faces[v][2]]),
                             sub_voxel_center,
                             (quarter_size, quarter_size, quarter_size),
