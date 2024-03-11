@@ -30,6 +30,7 @@ from volmdlr.core import EdgeStyle
 
 
 def merge_primitives_points(primitives, abs_tol: float = 1e-6):
+    """Merge connected primitives vertices."""
     ordered_edges = WireMixin.order_primitives(primitives, abs_tol)
     for i, primitive in enumerate(ordered_edges[1:]):
         if primitive == ordered_edges[-1] and primitive.end.is_close(ordered_edges[0].start):
