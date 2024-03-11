@@ -194,19 +194,6 @@ class WireMixin:
     _non_serializable_attributes = ['primitive_to_index',
                                     'basis_primitives']
 
-    # @staticmethod
-    # def merge_primitives_points(primitives, abs_tol: float = 1e-6):
-    #     ordered_edges = WireMixin.order_primitives(primitives, abs_tol)
-    #     for i, primitive in enumerate(ordered_edges[1:]):
-    #         if primitive == ordered_edges[-1] and primitive.end.is_close(ordered_edges[0].start):
-    #             primitive.end = ordered_edges[0].start
-    #         primitive.start = ordered_edges[i].end
-    #     return ordered_edges
-
-    def add_primitives(self, primitives):
-        primitives_with_merged_points = merge_primitives_points(primitives)
-        self.primitives = primitives_with_merged_points
-
     def _data_hash(self):
         return sum(hash(e) for e in self.primitives) + len(self.primitives)
 
