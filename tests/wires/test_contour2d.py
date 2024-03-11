@@ -178,14 +178,14 @@ class TestContour2D(unittest.TestCase):
         contour1, contour2 = contour.split_by_line(line)
         self.assertTrue(contour1.primitives[-1].end.is_close(intersection))
         self.assertTrue(contour2.primitives[0].start.is_close(intersection))
-        self.assertTrue(contour1.is_connected())
-        self.assertTrue(contour2.is_connected())
+        self.assertTrue(contour1.is_wire_connected())
+        self.assertTrue(contour2.is_wire_connected())
 
         line = curves.Line2D(volmdlr.Point2D(-0.02, 0.015), volmdlr.Point2D(0.02, 0.015))
         contour = contour3d_all_edges.to_2d(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D)
         contour1, contour2 = contour.split_by_line(line)
-        self.assertTrue(contour1.is_connected())
-        self.assertTrue(contour2.is_connected())
+        self.assertTrue(contour1.is_wire_connected())
+        self.assertTrue(contour2.is_wire_connected())
 
     def test_closest_point_to_point2(self):
         point1 = volmdlr.Point2D(1.5, -1.5)
