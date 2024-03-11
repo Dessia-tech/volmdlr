@@ -14,11 +14,7 @@ import cython.cimports.libc.math as math_c
 import numpy as np
 from cython.cimports.libcpp import bool as bool_C
 from cython.cimports.libcpp.stack import stack
-from cython.cimports.libcpp.unordered_map import unordered_map
 from cython.cimports.libcpp.vector import vector
-
-# from cython.cimports.libcpp.memory import unique_ptr
-# from cython.operator import dereference, postincrement
 from numpy.typing import NDArray
 
 # CUSTOM TYPES
@@ -30,88 +26,7 @@ _Segment2D = Tuple[_Point2D, _Point2D]
 _Triangle2D = Tuple[_Point2D, _Point2D, _Point2D]
 
 
-# DATA STRUCTURES
-# Node = cython.struct(
-#     child_states=cython.uchar,
-#     # child_nodes=cython.pointer(cython.pointer(Node)),
-#     # child_nodes=p_Node,
-# )
-# p_Node = cython.pointer(Node)
-
-
-# from cython.cimports import octree
-# from octree import OctreeNode
-
-
-# @cython.cclass
-# class OctreeNode:
-#     child_states: cython.uchar  # Each bit indicates the non-nodes child type: 0 for void, 1 for leaf
-#     # child_nodes: unordered_map[cython.uchar: OctreeNode]
-#     # child_nodes: Dict[cython.uchar, OctreeNode]
-#     # def __cinit__(self):
-#     #     self.child_states = 0
-#     #     self.child_nodes: unordered_map[cython.uchar : OctreeNode]()
-#
-#     def __init__(self):
-#         self.child_states: cython.uchar = 0
-#         # self.child_nodes = {}
-#
-#     # CHILD STATES OPERATIONS
-#     @cython.ccall
-#     def set_void_child(self, index: cython.uchar):
-#         self.child_states &= ~(1 << index)
-#
-#     @cython.ccall
-#     def set_leaf_child(self, index: cython.uchar):
-#         self.child_states |= 1 << index
-#
-#     # CHILD NODES OPERATIONS
-#     def create_child_node(self, index: cython.uchar):
-#         self.child_nodes[index] = OctreeNode()
-#         self.child_states &= ~(1 << index)
-#
-#     @cython.ccall
-#     def add_child_node(self, index: cython.uchar, child_node: OctreeNode):
-#         self.child_nodes[index] = child_node
-#         self.child_states &= ~(1 << index)
-#
-#     @cython.ccall
-#     def get_child_node(self, index: cython.uchar) -> OctreeNode:
-#         return self.child_nodes[index]
-#
-#     @cython.ccall
-#     def delete_child_node(self, index: cython.uchar):
-#         del self.child_nodes[index]
-#
-#     @cython.ccall
-#     def make_child_node_leaf(self, index: cython.uchar):
-#         del self.child_nodes[index]
-#         self.child_states |= 1 << index
-#
-#     # STATES GETTER
-#     def get_child_nodes(self) -> Dict[cython.uchar, OctreeNode]:
-#         return self.child_nodes
-#
-#     @cython.ccall
-#     def get_node_child_indices(self) -> vector[cython.uchar]:
-#         leaf_indices: vector[cython.uchar] = self.child_nodes.keys()
-#         return leaf_indices
-#
-#     @cython.ccall
-#     def get_leaf_child_indices(self) -> vector[cython.uchar]:
-#         leaf_indices: vector[cython.uchar]
-#         i: cython.uchar
-#         for i in range(8):
-#             if self.child_states & (1 << i):
-#                 leaf_indices.push_back(i)
-#         return leaf_indices
-#
-#     @property
-#     def nbytes(self):
-#         return cython.sizeof(self) + cython.sizeof(self.child_states) + cython.sizeof(self.child_nodes)
-
-
-def encode(vertices: NDArray[float], faces: NDArray[int], voxel_size: float, name: str = "") -> NDArray[np.uint8]:
+def encode(vertices: NDArray[float], faces: NDArray[int], voxel_size: float) -> NDArray[np.uint8]:
     """
     Encode an octree from mesh data.
 
@@ -121,8 +36,6 @@ def encode(vertices: NDArray[float], faces: NDArray[int], voxel_size: float, nam
     :type faces: Iterable[Iterable[int]]
     :param voxel_size: The size of each voxel.
     :type voxel_size: float
-    :param name: Optional name for the voxelization.
-    :type name: str
 
     :return: An octree encoded from the mesh data.
     :rtype: np.ndarray
@@ -224,14 +137,8 @@ def _encode_from_mesh_data(
                                 max_depth=max_depth,
                             )
                             if sub_voxel_array.size() > 2 or sub_voxel_array[0] != 15:
-                                # print(octree_array.size())
-                                # print(sub_voxel_array)
-
                                 octree_array[1] |= 1 << i * 4 + j * 2 + k
-                                # x = octree_array.size() + sub_voxel_array.size()
                                 octree_array.insert(octree_array.end(), sub_voxel_array.begin(), sub_voxel_array.end())
-                                # print(octree_array.size() == x)
-                                # print(octree_array)
 
         return octree_array
 
