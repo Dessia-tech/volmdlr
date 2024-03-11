@@ -227,3 +227,8 @@ circle = curves.Circle3D(volmdlr.OXYZ, 1)
 arc1 = edges.Arc3D(circle, point1, point2)
 arc2 = edges.Arc3D(circle, point2, point1)
 contour3d_two_arcs = wires.Contour3D([arc1, arc2])
+
+ellipse = curves.Ellipse3D(frame=volmdlr.OXYZ, major_axis=1.0, minor_axis=0.5)
+arc1 = edges.ArcEllipse3D(ellipse, point1, point2)
+arc2 = edges.ArcEllipse3D(ellipse, point2, point1)
+contour3d_two_arcs_of_ellipse = wires.Contour3D([arc1, arc2])

@@ -4,8 +4,7 @@ import volmdlr
 from volmdlr.wires import Contour3D
 from volmdlr.step import Step
 from volmdlr import edges, core
-from volmdlr.models.contours import contour3d, contour3d_all_edges, contour3d_two_arcs
-
+from volmdlr.models.contours import contour3d, contour3d_all_edges, contour3d_two_arcs, contour3d_two_arcs_of_ellipse
 
 folder = os.path.dirname(os.path.realpath(__file__))
 
@@ -99,8 +98,14 @@ class TestContour3D(unittest.TestCase):
         new_contour = contour3d_all_edges.translation(volmdlr.Z3D)
         for prim1, prim2 in zip(new_contour.primitives, new_contour.primitives[1:] + [new_contour.primitives[0]]):
             self.assertIs(prim1.end, prim2.start)
+
         new_contour = contour3d_two_arcs.translation(volmdlr.Z3D)
         self.assertIs(new_contour.primitives[0].circle, new_contour.primitives[1].circle)
+        self.assertIs(new_contour.primitives[0].end, new_contour.primitives[1].start)
+        self.assertIs(new_contour.primitives[1].end, new_contour.primitives[0].start)
+
+        new_contour = contour3d_two_arcs_of_ellipse.translation(volmdlr.Z3D)
+        self.assertIs(new_contour.primitives[0].ellipse, new_contour.primitives[1].ellipse)
         self.assertIs(new_contour.primitives[0].end, new_contour.primitives[1].start)
         self.assertIs(new_contour.primitives[1].end, new_contour.primitives[0].start)
 
