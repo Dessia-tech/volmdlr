@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v0.18.0 [Future]
 ### New Features
+#### display.py
+- Mesh3D: rotation / translation / frame_mapping
+
 #### curves.py
 - 
 #### edges.py
@@ -49,6 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - occt integration: surface intersections.
 - Commented some surface intersectios methods.
+- fix missing docstrings
 
 #### curves.py
 - Ellipse3D: to_step
@@ -67,6 +71,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### surfaces.py
 - u_iso/v_iso: Returns the u-iso/v-iso curve of the surface.
 - Plane3D/CylindricalSurface/ConicalSurface/SphericalSurface3D : normal_at_point
+
+#### shells.py
+- first version boolean operations with any faces.
 
 #### global
 - Add reference_path to a handful of classes
@@ -100,7 +107,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineSurface3D: improves _fix_start_end_singularity_point_at_parametric_domain
 
 #### wires.py
-- Fix some constructors: connected edges must share vertices.
+- Fix some constructors: connected edges must share vertices
+- copy(): copy saving data structure, such as data which is intended to be shared between copies (memo)
+
 
 #### step.py
 - Fixes in step translator to VolumeModel.

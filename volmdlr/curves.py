@@ -789,10 +789,6 @@ class Line3D(Line):
         point2 = point1 + direction
         return cls(point1, point2, arguments[0][1:-1])
 
-    def copy(self, *args, **kwargs):
-        """Creates a Copy of Line3D and returns it."""
-        return Line3D(*[point.copy() for point in [self.point1, self.point2]])
-
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
         Changes vector frame_mapping and return a new Line3D.
@@ -1240,14 +1236,6 @@ class Circle2D(CircleMixin, ClosedCurve):
 
         circle = cls(frame, point1.point_distance(center), name=name)
         return circle
-
-    def copy(self, *args, **kwargs):
-        """
-        Create a copy of the arc 2d.
-
-        :return: copied circle 2d.
-        """
-        return Circle2D(self.frame.copy(), self.radius)
 
     def reverse(self):
         """Gets the circle in the reverse direction."""
@@ -3313,8 +3301,6 @@ class ParabolaMixin(Curve):
         lineseg1 = _line_class(point1, point1 + tangent_vector1)
         lineseg2 = _line_class(point2, point2 + tangent_vector2)
         line_inters = lineseg1.line_intersections(lineseg2)
-        if not line_inters:
-            print(True)
         bezier_parabola = _bspline_class(2, [point1, line_inters[0], point2])
         return bezier_parabola
 
