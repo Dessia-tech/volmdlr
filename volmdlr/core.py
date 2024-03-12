@@ -24,6 +24,7 @@ from numpy.typing import NDArray
 from OCP.Interface import Interface_Static
 import OCP.IFSelect
 from OCP.STEPControl import STEPControl_Reader
+from OCP.TopoDS import TopoDS_Shape
 
 import dessia_common.core as dc
 from dessia_common.errors import ConsistencyError
@@ -1339,7 +1340,7 @@ class VolumeModel(dc.PhysicalObject):
         stream.write(step_content)
 
     @classmethod
-    def from_step(cls, step_file: str):
+    def from_step(cls, step_file: str, name: str = ""):
         """
         Translates a STEP file into a volume model using Open CASCADE Technology (OCCT).
 
@@ -1360,12 +1361,19 @@ class VolumeModel(dc.PhysicalObject):
         occ_shapes = []
         for i in range(reader.NbShapes()):
             occ_shapes.append(reader.Shape(i + 1))
+        return cls.from_ocp(occ_shapes, name=name)
 
+
+    @classmethod
+    def from_ocp(cls, ocp_shapes:List[TopoDS_Shape], name: str = ""):
+        """
+        Instanciate a volume model from a list of OCCT shapes.
+        """
         # pylint: disable=cyclic-import, import-outside-toplevel
         from volmdlr.shells import Shell3D
         # Make sure that we extract all the solids
         solids = []
-        for shape in occ_shapes:
+        for shape in ocp_shapes:
             shape_type = from_ocp.shapetype(shape)
             # TODO: we get only the shells inside the Compound because circular imports
             if shape_type in (0, 1, 2):
@@ -1375,7 +1383,7 @@ class VolumeModel(dc.PhysicalObject):
             elif from_ocp.shapetype(shape) == 3:
                 Shell3D.from_ocp(shape)
 
-        return cls(solids)
+        return cls(primitives=solids, name=name)
 
     def volmdlr_volume_model(self):
         """
