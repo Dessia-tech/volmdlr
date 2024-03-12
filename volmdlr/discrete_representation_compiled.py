@@ -111,6 +111,12 @@ def _encode_from_mesh_data(
 
                     for u in range(intersecting_indices.size()):
                         v = intersecting_indices[u]
+
+                        # if _triangle_bbox_intersects_voxel(
+                        #     (vertices[faces[v][0]], vertices[faces[v][1]], vertices[faces[v][2]]),
+                        #     sub_voxel_center,
+                        #     (quarter_size, quarter_size, quarter_size),
+                        # ):
                         if _triangle_intersects_voxel(
                             (vertices[faces[v][0]], vertices[faces[v][1]], vertices[faces[v][2]]),
                             sub_voxel_center,
@@ -141,6 +147,43 @@ def _encode_from_mesh_data(
                                 octree_array.insert(octree_array.end(), sub_voxel_array.begin(), sub_voxel_array.end())
 
         return octree_array
+
+
+@cython.cfunc
+def _triangle_bbox_intersects_voxel(
+    triangle: Tuple[
+        Tuple[cython.double, cython.double, cython.double],
+        Tuple[cython.double, cython.double, cython.double],
+        Tuple[cython.double, cython.double, cython.double],
+    ],
+    voxel_center: Tuple[cython.double, cython.double, cython.double],
+    voxel_extents: Tuple[cython.double, cython.double, cython.double],
+) -> bool_C:
+    """
+    Check if the bounding box of a triangle intersects with the voxel defined by the voxel center and voxel size.
+    """
+    min_x: cython.double = voxel_center[0] - voxel_extents[0]
+    max_x: cython.double = voxel_center[0] + voxel_extents[0]
+    min_y: cython.double = voxel_center[1] - voxel_extents[1]
+    max_y: cython.double = voxel_center[1] + voxel_extents[1]
+    min_z: cython.double = voxel_center[2] - voxel_extents[2]
+    max_z: cython.double = voxel_center[2] + voxel_extents[2]
+
+    tri_min_x: cython.double = min(triangle[0][0], min(triangle[1][0], triangle[2][0]))
+    tri_max_x: cython.double = max(triangle[0][0], max(triangle[1][0], triangle[2][0]))
+    tri_min_y: cython.double = min(triangle[0][1], min(triangle[1][1], triangle[2][1]))
+    tri_max_y: cython.double = max(triangle[0][1], max(triangle[1][1], triangle[2][1]))
+    tri_min_z: cython.double = min(triangle[0][2], min(triangle[1][2], triangle[2][2]))
+    tri_max_z: cython.double = max(triangle[0][2], max(triangle[1][2], triangle[2][2]))
+
+    return (
+        tri_min_x <= max_x
+        and tri_max_x >= min_x
+        and tri_min_y <= max_y
+        and tri_max_y >= min_y
+        and tri_min_z <= max_z
+        and tri_max_z >= min_z
+    )
 
 
 # PYTHON FUNCTIONS
