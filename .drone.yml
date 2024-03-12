@@ -97,8 +97,7 @@ steps:
 
   commands:
   - git fetch --tags
-  - apt-get update  # Add this line to update package information
-  - apt-get install -y libgl1  # Add this line to install libgl1
+  - apt-get update && apt-get install -y libgl1  # Add this line to install libgl1
   - pip install .[doc,test]
   - python setup.py build_ext --inplace
   - cd tests
@@ -134,6 +133,7 @@ steps:
 
   commands:
     - apt-get update && apt-get install -y jq
+    - apt-get install -y libgl1
     - |
       api_url="https://api.github.com/repos/${DRONE_REPO}/pulls/${DRONE_PULL_REQUEST}"
       source_repo=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "$api_url" | jq -r .head.repo.full_name)

@@ -1,22 +1,20 @@
 # Contributing to volmdlr
 
-First off, thanks for taking the time to contribute! 
+Thank you for considering contributing to volmdlr! Your contributions are highly appreciated and valued by the community.
 
-All types of contributions are encouraged and valued. The community looks forward to your contributions. 
-
-> And if you like the project, but just don't have time to contribute, that's fine. There are other easy ways to support the project and show your appreciation, which we would also be very happy about:
+> If you find the project valuable, but you are unable to contribute directly, there are other ways you can show your support:
 > - Use volmdlr in your projects!
-> - Star the project
-> - Talk about it
-> - Refer this project in your project's readme
-> - Mention the project at local meetups and tell your friends/colleagues
+> - Star the project on GitHub.
+> - Spread the word about the project.
+> - Include a reference to the project in your project's README file.
+> - Mention the project during local meetups and share it with your friends and colleagues.
 
 
 ## I want to contribute to the code
 
 ### Ask before coding
 
-If you are not sure about your contribution you can ask the question on the issues or MP the project leader.
+If you're uncertain about your contribution, feel free to reach out by opening an issue or sending a message to the project leader.
 
 ### Process
 
@@ -26,10 +24,11 @@ We have a process based on three branches:
 - testing that is regularly a freeze of testing. Release candidate (RC) can be made on testing
 - master that receive the code from testing before the release. Release are made on master
 
-Before coding, think of where to start from. You should start your branch for pull request where the pull request will point at:
+To contribute code:
 
-- if your contribution is trivial or has low risk of negative impact, start from master branch: simple and urgent bug fixes, docs, build...
-- in most other case, start from dev and submit your pull request to dev
+1. Fork the project to your GitHub repository following the instructions [here.](https://git-scm.com/book/en/v2/GitHub-Contributing-to-a-Project)
+2. Create a thematic branch where you'll add your contribution.
+3. Open a pull request once you've added your contribution to your branch, ensuring that you select the 'dev' branch as the target branch in volmdlr repository.
 
 ### CI
 
