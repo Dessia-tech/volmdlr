@@ -1005,12 +1005,8 @@ class Wire2D(WireMixin, PhysicalObject):
 
         Returns a list of crossings in the form of a tuple (point, primitive).
         """
-        results = self.line_crossings(linesegment.line)
-        crossings_points = []
-        for result in results:
-            if linesegment.point_belongs(result[0]):
-                crossings_points.append(result)
-        return crossings_points
+        return [(point, primitive) for point, primitive in self.line_crossings(linesegment.line) if
+                linesegment.point_belongs(point)]
 
     def validate_edge_crossings(self, crossings):
         """
@@ -1019,30 +1015,28 @@ class Wire2D(WireMixin, PhysicalObject):
         :param crossings: list of crossing points found.
         :return: list of valid crossing points.
         """
-        crossings_ = []
         first_primitive = self.primitives[0]
         last_primitive = self.primitives[-1]
-        for point in crossings:
-            if not first_primitive.start.is_close(point) and not last_primitive.end.is_close(point):
-                crossings_.append(point)
-        return crossings_
+        return [point for point in crossings if
+                not first_primitive.start.is_close(point) and not last_primitive.end.is_close(point)]
 
     def edge_crossings(self, edge):
         """
-        Gets the crossings between an edge and a Wire.
+        Finds valid crossing points between the edge and wire primitives.
 
-        :param edge: edge to search for crossings.
-        :return: list of points containing all crossing points.
+        :param edge: the edge to find crossings with the wire
+        :return: list of valid crossing points
         """
         edge_crossings = []
         start_equal_to_end = self.primitives[0].start.is_close(self.primitives[-1].end)
         for primitive in self.primitives:
             crossings = primitive.intersections(edge)
+
             if not start_equal_to_end:
                 crossings = self.validate_edge_crossings(crossings)
+
             for crossing in crossings:
-                if not edge.is_point_edge_extremity(crossing) and \
-                        not crossing.in_list(edge_crossings):
+                if not edge.is_point_edge_extremity(crossing) and not crossing.in_list(edge_crossings):
                     edge_crossings.append(crossing)
         return edge_crossings
 
@@ -1133,15 +1127,17 @@ class Wire2D(WireMixin, PhysicalObject):
 
     def point_distance(self, point):
         """
-        Copied from Contour2D.
+        Calculates the minimum distance between the wire and a given point.
 
+        :param point: the point to calculate the distance from
+        :return: the minimum distance between the wire and the point
         """
-
         min_distance = self.primitives[0].point_distance(point)
+
         for primitive in self.primitives[1:]:
             distance = primitive.point_distance(point)
-            if distance < min_distance:
-                min_distance = distance
+            min_distance = min(min_distance, distance)
+
         return min_distance
 
     def nearest_primitive_to(self, point):
@@ -1205,20 +1201,20 @@ class Wire2D(WireMixin, PhysicalObject):
                 crossings_points.extend(crossings_linesegment)
         return crossings_points
 
-    def bsplinecurve_intersections(self,
-                                   bsplinecurve: 'volmdlr.edges.BSplineCurve2D'):
+    def bsplinecurve_intersections(self, bsplinecurve: 'volmdlr.edges.BSplineCurve2D'):
         """
-        Gets the wire primitives intersections with the bsplinecurve.
+        Finds intersections between the wire primitives and the B-spline curve.
 
-        Returns a list of intersections in the form of a tuple (point, primitive).
+        :param bsplinecurve: the B-spline curve to find intersections with
+        :return: list of intersections in the form of a tuple (point, primitive)
         """
-
         linesegments = Wire2D.from_edge(bsplinecurve, 25).primitives
         intersections_points = []
+
         for linesegment in linesegments:
             intersections_linesegments = self.linesegment_intersections(linesegment)
-            if intersections_linesegments:
-                intersections_points.extend(intersections_linesegments)
+            intersections_points.extend(intersections_linesegments)
+
         return intersections_points
 
     @property
@@ -1277,8 +1273,7 @@ class Wire2D(WireMixin, PhysicalObject):
         :param angle: angle rotation.
         :return: a new rotated Wire 2D.
         """
-        return self.__class__([point.rotation(center, angle)
-                               for point in self.primitives])
+        return self.__class__([point.rotation(center, angle) for point in self.primitives])
 
     def translation(self, offset: volmdlr.Vector2D):
         """
@@ -1287,8 +1282,7 @@ class Wire2D(WireMixin, PhysicalObject):
         :param offset: translation vector
         :return: A new translated Wire 2D.
         """
-        return self.__class__([primitive.translation(offset)
-                               for primitive in self.primitives])
+        return self.__class__([primitive.translation(offset) for primitive in self.primitives])
 
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
         """
@@ -1296,8 +1290,7 @@ class Wire2D(WireMixin, PhysicalObject):
 
         side = 'old' or 'new'
         """
-        return self.__class__([primitive.frame_mapping(frame, side)
-                               for primitive in self.primitives])
+        return self.__class__([primitive.frame_mapping(frame, side) for primitive in self.primitives])
 
     def plot(self, ax=None, edge_style=EdgeStyle()):
         """Wire 2D plot using Matplotlib."""
@@ -1429,24 +1422,25 @@ class Wire3D(WireMixin, PhysicalObject):
 
     def get_primitives_2d(self, plane_origin, x, y):
         """
-        Pass primitives to 2d.
+        Projects primitives onto a 2D plane.
 
-        :param plane_origin: plane origin.
+        :param plane_origin: origin of the plane.
         :param x: vector u.
         :param y: vector v.
-        :return: list of 2d primitives.
+        :return: list of 2D primitives.
         """
         z = x.cross(y)
         plane3d = volmdlr.surfaces.Plane3D(volmdlr.Frame3D(plane_origin, x, y, z))
         primitives2d = []
+
         for primitive in self.primitives:
             primitive2d = plane3d.point3d_to_2d(primitive)
             if primitive2d:
                 primitives2d.append(primitive2d)
+
         for prim1, prim2 in zip(primitives2d, primitives2d[1:] + [primitives2d[0]]):
             prim2.start = prim1.end
-        for prim1, prim2 in zip(primitives2d, primitives2d[1:] + [primitives2d[0]]):
-            prim2.start = prim1.end
+
         return primitives2d
 
     def to_2d(self, plane_origin, x, y):
@@ -1499,8 +1493,7 @@ class Wire3D(WireMixin, PhysicalObject):
         :param angle: angle rotation.
         :return: a new rotated Wire3D.
         """
-        new_edges = [edge.rotation(center, axis, angle) for edge
-                     in self.primitives]
+        new_edges = [edge.rotation(center, axis, angle) for edge in self.primitives]
         return Wire3D(new_edges, self.name)
 
     def _get_plot_ax(self):
