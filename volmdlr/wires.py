@@ -702,7 +702,7 @@ class WireMixin:
                     edge_intersections.append(intersection)
         return edge_intersections
 
-    def wire_intersections(self, wire, abs_tol:float = 1e-6):
+    def wire_intersections(self, wire, abs_tol: float = 1e-6):
         """
         Compute intersections between two wire 2d.
 
@@ -876,8 +876,7 @@ class Wire2D(WireMixin, PhysicalObject):
                     offset_intersections.append(intersections[0])
                 else:
                     end = self.primitives[i].end
-                    if intersections[0].point_distance(end) > intersections[
-                        1].point_distance(end):
+                    if intersections[0].point_distance(end) > intersections[1].point_distance(end):
                         intersections.reverse()
                     offset_intersections.append(intersections[0])
 
@@ -930,8 +929,7 @@ class Wire2D(WireMixin, PhysicalObject):
                 intersection_points.append((point, primitive))
         return intersection_points
 
-    def linesegment_intersections(self,
-                                  linesegment: 'volmdlr.edges.LineSegment2D'):
+    def linesegment_intersections(self, linesegment: 'volmdlr.edges.LineSegment2D'):
         """
         Returns a list of intersection of the wire primitives intersecting with the line segment.
 
@@ -1202,8 +1200,7 @@ class Wire2D(WireMixin, PhysicalObject):
             return True
         return False
 
-    def bsplinecurve_crossings(self,
-                               bsplinecurve: 'volmdlr.edges.BSplineCurve2D'):
+    def bsplinecurve_crossings(self, bsplinecurve: 'volmdlr.edges.BSplineCurve2D'):
         """
         Gets the wire primitives crossings with the bsplinecurve.
 
@@ -1218,8 +1215,7 @@ class Wire2D(WireMixin, PhysicalObject):
                 crossings_points.extend(crossings_linesegment)
         return crossings_points
 
-    def bsplinecurve_intersections(self,
-                                   bsplinecurve: 'volmdlr.edges.BSplineCurve2D'):
+    def bsplinecurve_intersections(self, bsplinecurve: 'volmdlr.edges.BSplineCurve2D'):
         """
         Gets the wire primitives intersections with the bsplinecurve.
 
@@ -2048,8 +2044,7 @@ class ContourMixin(WireMixin):
         This a special case for degenerated for contours found in parametric space or in boolean operations.
         """
         if len(self.primitives) > 1:
-            return all(prim2.start is prim1.end
-                   for prim1, prim2 in zip(self.primitives[:-1], self.primitives[1:]))
+            return all(prim2.start is prim1.end for prim1, prim2 in zip(self.primitives[:-1], self.primitives[1:]))
         return True
 
 
@@ -3777,8 +3772,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         # point_intersection.plot(ax=ax2d)
 
         if point_intersection.point_distance(
-                line_segment.start) < point_intersection.point_distance(
-            line_segment.end):
+                line_segment.start) < point_intersection.point_distance(line_segment.end):
             closing_point = line_segment.start
         else:
             closing_point = line_segment.end
@@ -4684,8 +4678,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
                 new_polygon1.points + [new_polygon1.points[0]]):
             if i != 0:
                 mean_point2d = 0.5 * (
-                        new_polygon1_2d_points[i] + new_polygon1_2d_points[
-                    i - 1])
+                        new_polygon1_2d_points[i] + new_polygon1_2d_points[i - 1])
                 closing_point = new_polygon2_2d.line_intersecting_closing_point(
                     mean_point2d)
                 closing_point_index = new_polygon2_2d.points.index(
