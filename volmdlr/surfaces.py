@@ -877,7 +877,7 @@ class Surface3D(DessiaObject):
         primitives2d[i] = primitives2d[i].translation(delta)
         primitives_mapping[primitives2d[i]] = primitives_mapping.pop(old_primitive)
 
-    def connect_contours(self, outer_contour, inner_contours, tol: float = 1e-6):
+    def connect_contours(self, outer_contour, inner_contours, abs_tol: float = 1e-6):
         """
         Abstract method. Repair 2D contours of a face on the parametric domain.
 
@@ -885,7 +885,7 @@ class Surface3D(DessiaObject):
         :type inner_contours: wires.Contour2D
         :param inner_contours: List of 2D contours.
         :type inner_contours: list
-        :param tol: tolerance.
+        :param abs_tol: tolerance.
         :return: NotImplementedError: If the method is not implemented in the subclass.
         """
         raise NotImplementedError(f'connect_contours is abstract and should be implemented in '
@@ -10208,7 +10208,7 @@ class BSplineSurface3D(Surface3D):
             raise NotImplementedError
         return outer_contour_param, inner_contour_param
 
-    def connect_contours(self, outer_contour, inner_contours, tol: float = 1e-6):
+    def connect_contours(self, outer_contour, inner_contours, abs_tol: float = 1e-6):
         """
         Create connections between contours on parametric domain.
 
