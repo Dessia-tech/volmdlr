@@ -2088,21 +2088,25 @@ class Contour2D(ContourMixin, Wire2D):
             return False
         if len(self.primitives) != len(other_.primitives) or abs(self.length() - other_.length()) > 1e-6:
             return False
-        equal = 0
-        for prim1 in self.primitives:
-            reverse1 = prim1.reverse()
-            found = False
-            for prim2 in other_.primitives:
-                reverse2 = prim2.reverse()
-                if (prim1 == prim2 or reverse1 == prim2
-                        or reverse2 == prim1 or reverse1 == reverse2):
-                    equal += 1
-                    found = True
-            if not found:
+        # equal = 0
+        # for prim1 in self.primitives:
+        #     reverse1 = prim1.reverse()
+        #     found = False
+        #     for prim2 in other_.primitives:
+        #         reverse2 = prim2.reverse()
+        #         if (prim1 == prim2 or reverse1 == prim2
+        #                 or reverse2 == prim1 or reverse1 == reverse2):
+        #             equal += 1
+        #             found = True
+        #     if not found:
+        #         return False
+        # if equal == len(self.primitives):
+        #     return True
+        # return False
+        for i, edge1 in enumerate(self.primitives):
+            if not edge1 == other_.primitives[i]:
                 return False
-        if equal == len(self.primitives):
-            return True
-        return False
+        return True
 
     @property
     def edge_polygon(self):

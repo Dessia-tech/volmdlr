@@ -105,7 +105,7 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def __hash__(self):
         """Computes the hash."""
-        return hash(self.surface3d) + hash(self.surface2d)
+        return hash((self.surface3d, self.surface2d))
 
     def __eq__(self, other_):
         """Computes the equality to another face."""
@@ -1423,6 +1423,8 @@ class Face3D(volmdlr.core.Primitive3D):
         :return: list of intersecting primitives for current face
         """
         face_intersecting_primitives2d = []
+        if self not in dict_intersecting_combinations:
+            print(True)
         intersections = dict_intersecting_combinations[self]
         for intersection_wire in intersections:
             wire2d = self.surface3d.contour3d_to_2d(intersection_wire)
