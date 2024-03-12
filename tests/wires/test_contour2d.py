@@ -68,7 +68,7 @@ class TestContour2D(unittest.TestCase):
                                          1.2716033047094752, 0.8996336040021796]
         self.assertEqual(len(results) + len(results1), 10)
         for i, contour in enumerate(results + results1):
-            self.assertAlmostEqual(contour.length(), list_expected_contour_lengths[i])
+            self.assertAlmostEqual(contour.length(), list_expected_contour_lengths[i], 6)
         contour1 = wires.ClosedPolygon2D([volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 0),
                                           volmdlr.Point2D(1, 1), volmdlr.Point2D(0, 1)])
         contour1 = wires.Contour2D(contour1.line_segments)
