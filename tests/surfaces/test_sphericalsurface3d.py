@@ -251,9 +251,9 @@ class TestSphericalSurface3D(unittest.TestCase):
         arcellipse = edges.ArcEllipse3D(ellipse, point1, point2)
         arcellipse_intersections = spherical_surface3d.arcellipse_intersections(arcellipse)
         self.assertEqual(len(arcellipse_intersections), 2)
-        self.assertTrue(arcellipse_intersections[0].is_close(
-            volmdlr.Point3D(0.908248233153, 0.295875797457, 0.295875797457)))
         self.assertTrue(arcellipse_intersections[1].is_close(
+            volmdlr.Point3D(0.908248233153, 0.295875797457, 0.295875797457)))
+        self.assertTrue(arcellipse_intersections[0].is_close(
             volmdlr.Point3D(0.091751652225, 0.704124087921, 0.704124087921)))
 
     def test_sphericalsurface_intersections(self):
@@ -264,8 +264,9 @@ class TestSphericalSurface3D(unittest.TestCase):
         spherical_surface2 = spherical_surface1.translation(volmdlr.Vector3D(1, 1, 1))
 
         inters = spherical_surface1.surface_intersections(spherical_surface2)
-        self.assertEqual(len(inters), 1)
-        self.assertAlmostEqual(inters[0].length(), 11.327173398039175)
+        self.assertEqual(len(inters), 2)
+        self.assertAlmostEqual(inters[0].length(), 1.2496117944319336)
+        self.assertAlmostEqual(inters[1].length(), 10.077561604707045)
 
         #test2
         spherical_surface2 = surfaces.SphericalSurface3D(

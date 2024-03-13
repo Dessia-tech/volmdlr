@@ -321,6 +321,12 @@ class PointCloud3D(dc.DessiaObject):
         return ax
 
     def extended_cloud(self, distance_extended: float):
+        """
+        Extends cloud of point by a given distance.
+
+        :param distance_extended: distance to extend cloud by.
+        :return: extended points.
+        """
         # it works if distance_extended >= 0
         spheres, extended_points = [], []
         for point in self.points:
@@ -342,7 +348,7 @@ class PointCloud3D(dc.DessiaObject):
     @staticmethod
     def offset_to_shell(positions_plane: List[surfaces.Plane3D],
                         polygons2d: List[vmw.ClosedPolygon2D], offset: float):
-
+        """Adds offset to a shell."""
         origin_f, origin_l = positions_plane[0], positions_plane[-1]
 
         new_position_plane = [origin_f - offset] + positions_plane[1:-1] + [origin_l + offset]

@@ -42,7 +42,7 @@ class TestContour2D(unittest.TestCase):
         self.assertTrue(contour2d_2.point_inside(point4))
 
         contour, point = DessiaObject.from_json(os.path.join(folder, "test_contour_point_belongs.json")).primitives
-        self.assertTrue(contour.point_inside(point, False))
+        self.assertTrue(contour.point_inside(point, True))
 
     def test_is_ordered(self):
         # self.assertTrue(self.ordered_contour.is_ordered())
@@ -227,6 +227,9 @@ class TestContour2D(unittest.TestCase):
             areas = []
             lengths = []
             for contour in contours:
+                # TODO: uncomment this code when wires methods are refactored to share vertices between edges
+                # for prim1, prim2 in zip(contour.primitives, contour.primitives[1:] + [contour.primitives[0]]):
+                #     self.assertIs(prim1.end, prim2.start)
                 areas.append(contour.area())
                 lengths.append(contour.length())
             contour_lengths.append(lengths)
@@ -278,6 +281,27 @@ class TestContour2D(unittest.TestCase):
         cut_by_line = contour.cut_by_line(line)
         self.assertEqual(len(cut_by_line), 1)
         self.assertEqual(cut_by_line[0], contour)
+
+    def test_from_points(self):
+        contour = wires.Contour2D.from_points([volmdlr.Point2D(-0.5, -0.5), volmdlr.Point2D(0.5, -0.5),
+                                             volmdlr.Point2D(0.5, 0.5), volmdlr.Point2D(-0.5, 0.5)])
+        for prim1, prim2 in zip(contour.primitives, contour.primitives[1:] + [contour.primitives[0]]):
+            self.assertIs(prim1.end, prim2.start)
+
+    def test_rectangle(self):
+        contour = wires.Contour2D.rectangle(-0.5, 0.5, -0.5, 0.5)
+        for prim1, prim2 in zip(contour.primitives, contour.primitives[1:] + [contour.primitives[0]]):
+            self.assertIs(prim1.end, prim2.start)
+
+    def test_rectangle_from_center_and_sides(self):
+        contour = wires.Contour2D.rectangle_from_center_and_sides(volmdlr.O2D, 1.0, 1.0)
+        b_rectangle = contour.bounding_rectangle
+        for prim1, prim2 in zip(contour.primitives, contour.primitives[1:] + [contour.primitives[0]]):
+            self.assertIs(prim1.end, prim2.start)
+        self.assertEqual(b_rectangle.xmin, -0.5)
+        self.assertEqual(b_rectangle.xmax, 0.5)
+        self.assertEqual(b_rectangle.ymin, -0.5)
+        self.assertEqual(b_rectangle.ymax, 0.5)
 
 
 if __name__ == '__main__':

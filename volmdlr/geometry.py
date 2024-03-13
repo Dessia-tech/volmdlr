@@ -7,6 +7,7 @@ Geometry functions.
 import math
 from typing import Tuple
 
+import numpy as np
 from numpy import array, zeros
 from numpy.linalg import solve as np_solve
 
@@ -260,3 +261,34 @@ def clockwise_angle(vector1, vector2):
         return inner_angle
 
     return vm.TWO_PI - inner_angle
+
+
+def rotation_matrix(axis: vm.Vector3D, angle: float) -> np.array:
+    """
+    Helper function that compute a rotation matrix from an axis and a radians angle.
+
+    :param axis: The rotation axis.
+    :type axis: Vector3D
+    :param angle: The rotation angle.
+    :type angle: float
+
+    :return: The computed rotation matrix.
+    :rtype: numpy.array
+    """
+    # pylint: disable=invalid-name,too-many-locals
+    axis = np.array([axis.x, axis.y, axis.z])
+
+    axis = axis / np.linalg.norm(axis)
+    a = np.cos(angle / 2.0)
+
+    b, c, d = -axis * np.sin(angle / 2.0)
+    aa, bb, cc, dd = a * a, b * b, c * c, d * d
+    bc, ad, ac, ab, bd, cd = b * c, a * d, a * c, a * b, b * d, c * d
+
+    return np.array(
+        [
+            [aa + bb - cc - dd, 2 * (bc + ad), 2 * (bd - ac)],
+            [2 * (bc - ad), aa + cc - bb - dd, 2 * (cd + ab)],
+            [2 * (bd + ac), 2 * (cd - ab), aa + dd - bb - cc],
+        ]
+    )

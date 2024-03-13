@@ -215,16 +215,16 @@ def get_point_distance_to_edge(edge, point, start, end):
     :return: distance to edge.
     """
     best_distance = math.inf
+    number_points = 10 if edge.length() > 5e-6 else 2
     if start != end:
         if start.is_close(end):
             if not edge.periodic:
                 return point.point_distance(start)
-            number_points = 10 if abs(0 - edge.length()) > 5e-6 else 2
+            number_points = 10 if edge.length() > 5e-6 else 2
         else:
             number_points = 10 if abs(edge.abscissa(start) - edge.abscissa(end)) > 5e-6 else 2
-        # number_points = 10 if abs(0 - edge.length()) > 5e-6 else 2
     elif edge.periodic:
-        number_points = 10 if abs(0 - edge.length()) > 5e-6 else 2
+        number_points = 10 if edge.length() > 5e-6 else 2
     distance = best_distance
     point1_ = start
     point2_ = end
@@ -246,8 +246,6 @@ def get_point_distance_to_edge(edge, point, start, end):
         if not point1_ or math.isclose(distance, best_distance, abs_tol=1e-7):
             break
         best_distance = distance
-        # if math.isclose(abscissa1, abscissa2, abs_tol=1e-6):
-        #     break
     return distance
 
 

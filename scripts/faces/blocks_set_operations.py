@@ -1,5 +1,8 @@
 import volmdlr as vm
 import volmdlr.primitives3d as primitives3D
+from time import perf_counter
+
+t1_start = perf_counter()
 
 resolution = 0.0010
 
@@ -74,3 +77,7 @@ for battery_layout_max_enclosing_box in [block1.union(block2)[0], block1.union(b
     battery_layout_max_enclosing_box.color = (1, 0.2, 0.2)
     battery_layout_max_enclosing_box.alpha = 0.6
     battery_layout_max_enclosing_box.babylonjs()
+
+t1_stop = perf_counter()
+step_read_time = t1_stop - t1_start
+print("Elapsed time:", step_read_time, "s")

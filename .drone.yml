@@ -3,12 +3,15 @@ kind: pipeline
 type: docker
 name: default
 
+
+
 steps:
 - name: merge master on testing
   image: alpine/git
   when:
     event: push
     branch: master
+
   commands:
   - cd /tmp
   - git clone $DRONE_GIT_HTTP_URL
@@ -19,11 +22,13 @@ steps:
   - git merge master
   - git push
 
+
 - name: merge testing on dev
   image: alpine/git
   when:
     event: push
     branch: testing
+
   commands:
   - cd /tmp
   - git clone $DRONE_GIT_HTTP_URL
@@ -34,34 +39,17 @@ steps:
   - git merge testing
   - git push
 
-- name: notify by email
-  when:
-    event: push
-    branch:
-      - master
-      - dev
-    status:
-    - failure
-  image: drillster/drone-email
-  settings:
-    host: mail.dessia.tech
-    username: technical@dessia.tech
-    password:
-      from_secret: email_password
-    from: technical@dessia.tech
-
-  volumes:
-    # Mount pip cache from host
-    - name: cache
-      path: /root/.cache
 
 - name: check changelog update
   image: python:3.9
   when:
     event: pull_request
+
   commands:
-    - git fetch origin "$DRONE_TARGET_BRANCH" "$DRONE_SOURCE_BRANCH"
+    - git fetch origin "$DRONE_TARGET_BRANCH":"refs/remotes/origin/$DRONE_TARGET_BRANCH"
+    - git fetch origin pull/$DRONE_PULL_REQUEST/head:refs/remotes/origin/pr/$DRONE_PULL_REQUEST
     - bash code_changelog.sh
+
 
 - name: check pep8 formatting
   image: python:3.9
@@ -69,7 +57,8 @@ steps:
     event:
       exclude:
       - tag
-      - pull_request
+      - push
+
   commands:
     - pip3 install -U pip autopep8==2.0.0
     - bash code_pep8.sh
@@ -79,13 +68,15 @@ steps:
     - name: pip_cache
       path: /root/.cache/pip
 
+
 - name: check code complexity
   image: dessia/python-ci:3.9
   when:
     event:
       exclude:
       - tag
-      - pull_request
+      - push
+
   commands:
   - pip install numpy Cython>3
   - pip install pylint==2.17.3 pydocstyle==6.3.0 pre-commit shellcheck-py cython-lint pyenchant==3.2.2
@@ -98,17 +89,20 @@ steps:
     - name: pip_cache
       path: /root/.cache/pip
 
+
 - name: install, build doc run scripts and tutorials
   image: python:3.9
   when:
-    event: pull_request
+    event: push
+
   commands:
   - git fetch --tags
+  - apt-get update && apt-get install -y libgl1  # Add this line to install libgl1
   - pip install .[doc,test]
   - python setup.py build_ext --inplace
   - cd tests
   - coverage run --rcfile=../.coveragerc --data-file=../.coverage --source volmdlr -m unittest discover -v
-  - cd ../scripts  
+  - cd ../scripts
   - coverage run --rcfile=../.coveragerc --data-file=../.coverage --source volmdlr -a ci_scripts.py
   - cd ../tutorials
   - coverage run --rcfile=../.coveragerc --data-file=../.coverage --source volmdlr -a ci_tutorials.py
@@ -126,10 +120,60 @@ steps:
       path: /root/.cache/pip
 
 
+# Special step for fork pull request
+- name: Fork only; install, build doc run scripts and tutorials
+  image: python:3.9
+  when:
+    event:
+      - pull_request
+
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+
+  commands:
+    - apt-get update && apt-get install -y jq
+    - apt-get install -y libgl1
+    - |
+      api_url="https://api.github.com/repos/${DRONE_REPO}/pulls/${DRONE_PULL_REQUEST}"
+      source_repo=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "$api_url" | jq -r .head.repo.full_name)
+
+      echo "Source Repository: $source_repo"
+      
+      if [ -z "$source_repo" ] || [ "$source_repo" = "null" ]; then
+        echo "Failed to fetch source repository. The GitHub token may have expired or lacks the necessary permissions."
+        exit 1
+      fi
+      
+      if [ "$source_repo" = "${DRONE_REPO}" ]; then
+        echo "Source repo is ${DRONE_REPO}. Skipping step..."
+      else
+        echo "Source repo is a fork. Performing install, build doc run scripts and tutorials..."
+      
+        git fetch --tags
+        pip install .[doc,test]
+        python setup.py build_ext --inplace
+        cd tests
+        coverage run --rcfile=../.coveragerc --data-file=../.coverage --source volmdlr -m unittest discover -v
+        cd ../scripts
+        coverage run --rcfile=../.coveragerc --data-file=../.coverage --source volmdlr -a ci_scripts.py
+        cd ../tutorials
+        coverage run --rcfile=../.coveragerc --data-file=../.coverage --source volmdlr -a ci_tutorials.py
+        cd ../doc
+        make html
+        cd ..
+        coverage json
+        coverage report
+        coverage html
+        python coverage.py
+      fi
+      
+
 - name: generate sdist
   image: python:3.9
   when:
     branch: master
+
   commands:
   - git fetch --tags
   - pip install .
@@ -139,6 +183,7 @@ steps:
     # Mount pip cache from host
     - name: pip_cache
       path: /root/.cache/pip
+
 
 - name: generate bdist_wheel
   image: python:3.9
@@ -156,15 +201,18 @@ steps:
     - name: pip_cache
       path: /root/.cache/pip
 
+
 - name: upload to pypi
   image: plugins/pypi
   when:
       event: tag
+
   settings:
     skip_build: True
     username: dessia_tech
     password:
         from_secret: pypi_password
+
 
 - name: upload_doc_master
   image: appleboy/drone-scp
@@ -180,10 +228,11 @@ steps:
     password:
       from_secret: ssh_drone_password
 
+
 - name: upload coverage
   image: appleboy/drone-scp
   when:
-    event: pull_request
+    event: push
   failure: ignore
   settings:
     host: magenta.dessia.tech
@@ -193,6 +242,29 @@ steps:
     username: drone
     password:
       from_secret: ssh_drone_password
+
+
+
+- name: notify by email
+  when:
+    event: push
+    branch:
+      - master
+      - dev
+    status:
+    - failure
+
+  image: drillster/drone-email
+  settings:
+    host: mail.dessia.tech
+    username: technical@dessia.tech
+    password:
+      from_secret: email_password
+    from: technical@dessia.tech
+
+  volumes:
+    - name: cache
+      path: /root/.cache
 
 
 

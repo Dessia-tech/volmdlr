@@ -5,13 +5,83 @@ import numpy
 
 import dessia_common.core
 import volmdlr
-from volmdlr import edges, faces, primitives3d, wires, surfaces, shells
+from volmdlr import edges, faces, primitives3d, wires, surfaces, shells, step
 
 
 folder = os.path.join(os.path.dirname(os.path.realpath(__file__)))
+objects_folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), "closedshell_objects")
 
 
 class TestClosedShell3D(unittest.TestCase):
+
+    def test_union(self):
+        stepfile1 = step.Step.from_file(os.path.join(objects_folder, 'test_faces.step'))
+        volume1 = stepfile1.to_volume_model()
+        closed_shell = volume1.primitives[0]
+        closed_shell1 = closed_shell.rotation(volmdlr.O3D, volmdlr.Y3D, math.pi / 7)
+        union = closed_shell.union(closed_shell1)[0]
+        expected_shell_faces_areas = dessia_common.core.DessiaObject.from_json(os.path.join(
+            objects_folder, 'test_union_expected_faces_areas.json')).primitives
+        self.assertEqual(len(union.faces), len(expected_shell_faces_areas))
+        for i, area in enumerate(sorted([face.area() for face in union.faces])):
+            self.assertAlmostEqual(area, expected_shell_faces_areas[i], 4)
+
+    def test_intersection(self):
+        extrusion1, extrusion2 = dessia_common.core.DessiaObject.from_json(
+            os.path.join(objects_folder, 'test_closedshell_intersection.json'))
+        intersection = extrusion1.intersection(extrusion2)
+        expected_areas = [0.0001603762338471547, 0.0001603762338598547, 0.0002258060000078384, 0.0005865250644030277,
+                          0.0005865250644053065, 0.0005865256929828994, 0.0005865256929851797, 0.0006507280562579344,
+                          0.0006507281997243776, 0.0006507287536446724, 0.0006507288971112704, 0.002079815726730889,
+                          0.0020798157267342588, 0.0027911081188436927, 0.002791109662733529, 0.0037635988992237926,
+                          0.0037635988992285145, 0.0038394588771942153, 0.0038394588771985295, 0.0046984506173449216,
+                          0.004698453152620571, 0.005812094842241624, 0.005812103536328831, 0.0058121998046592235,
+                          0.005812200540825445, 0.00581220473314671, 0.005812204737898536, 0.00581220602916541,
+                          0.005812206548041761, 0.005812209253899912, 0.005812210963215569, 0.005812210964111839,
+                          0.005812210965759321, 0.010283114506497748, 0.010283123293653551, 0.0102831564624514,
+                          0.010283183708478005, 0.012309686730356234, 0.012309686730356262, 0.021026086509749957,
+                          0.02775624156108652, 0.027756241561086553, 0.027756279461254495, 0.0277562794612545,
+                          0.04320287693191287, 0.04320287693191288, 0.04710646280458197, 0.047106508562932636,
+                          0.07318715514507368, 0.0797964534011808, 0.07979645340118091, 0.14314330722704466]
+        self.assertEqual(len(intersection.faces), len(expected_areas))
+        for i, area in enumerate(sorted([face.area() for face in intersection.faces])):
+            self.assertAlmostEqual(area, expected_areas[i])
+
+    def test_consecutive_boolean_operations(self):
+        block = primitives3d.Block(volmdlr.OXYZ, color=(1, 0.3, 0.3), alpha=0.6)
+        sphere = primitives3d.Sphere(volmdlr.O3D, 0.68, color=(0.2, 1, 0.3), alpha=.6)
+
+        block_inters_sphere = block.intersection(sphere)[0]
+        expected_areas1 = [0.6672300326944091, 0.6672300326944091, 0.6672300326944091, 0.6672300326944091,
+                           0.6672300326944091, 0.6672742796224723, 3.2330061945128783]
+        self.assertEqual(len(block_inters_sphere.faces), len(expected_areas1))
+        for i, face_area in enumerate(sorted([f.area() for f in block_inters_sphere.faces])):
+            self.assertAlmostEqual(face_area, expected_areas1[i])
+
+        cyl1 = primitives3d.Cylinder(volmdlr.OXYZ, 0.3, 2, color=(1, 0, 0))
+        cyl2 = primitives3d.Cylinder(volmdlr.OYZX, 0.3, 2, color=(1, 1, 0))
+        cyl3 = primitives3d.Cylinder(volmdlr.OZXY, 0.3, 2, color=(0, 1, 1))
+
+        cyl1_union_cyl2 = cyl1.union(cyl2)[0]
+        union_cyl3 = cyl1_union_cyl2.union(cyl3)[0]
+
+        expected_areas2 = [0.28272459012474943, 0.28272459012474943, 0.28272459012474943, 0.28272459012474943,
+                           0.28272459012474943, 0.28272459012474943, 4.586132621569709, 4.58613262156971,
+                           4.586135300242545, 4.586137982316728, 4.5861380209112195, 4.586140703735797]
+        self.assertEqual(len(union_cyl3.faces), len(expected_areas2))
+        for i, face_area in enumerate(sorted([f.area() for f in union_cyl3.faces])):
+            self.assertAlmostEqual(face_area, expected_areas2[i])
+
+        substraction = block_inters_sphere.subtract_to_closed_shell(union_cyl3)[0]
+        expected_areas3 = [0.38450544256965963, 0.38450544256965963, 0.38450544256965963, 0.38450544256965963,
+                           0.38450544256965963, 0.3845496894977229, 1.4445399679799156, 1.4445399679799158,
+                           1.4445426466527518, 1.444545328726934, 1.4445453673214272, 1.4445480501460044,
+                           3.2330061945128783]
+
+        self.assertEqual(len(substraction.faces), len(expected_areas3))
+        for i, face_area in enumerate(sorted([f.area() for f in substraction.faces])):
+            self.assertAlmostEqual(face_area, expected_areas3[i])
+
     def test_union_adjacent_blocks(self):
         frame1 = volmdlr.Frame3D(volmdlr.Point3D(0, 0, 0), volmdlr.X3D, volmdlr.Y3D, volmdlr.Z3D)
         frame2 = volmdlr.Frame3D(volmdlr.Point3D(0, 1, 0), volmdlr.X3D, volmdlr.Y3D, 3 * volmdlr.Z3D)

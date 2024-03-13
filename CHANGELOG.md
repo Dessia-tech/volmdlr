@@ -7,8 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v0.18.0 [Future]
 ### New Features
+#### display.py
+- Mesh3D: rotation / translation / frame_mapping
+
 #### curves.py
-- 
+- Ellipse2D: tangent_points
+
 #### edges.py
 - 
 #### wires.py
@@ -18,15 +22,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineSurface3D: is_coincident
 
 #### faces.py
-- 
+- Face3D: from_contours3d (add abs_tol as parameter)
 #### shells.py
 - 
 ### Fixed
 
+- Updates CONTRIBUTING.md.
+
 #### curves.py
 - 
 #### edges.py
-- 
+- Edge: delete_shared_section (use abs_tol)
+- Bspline: get_shared_section (update abs_tol for is_shared_section_possible)
 #### wires.py
 - 
 #### surfaces.py
@@ -40,10 +47,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+#### curves.py
+- Ellipse2D: point_distance optimization
+
 ### Unittests
+- Ellipse2D: test to the news functions
 
 ## v0.17.0 [Unreleased]
 ### New Features
+
+- occt integration: surface intersections.
+- Commented some surface intersectios methods.
+- fix missing docstrings
 
 #### curves.py
 - Ellipse3D: to_step
@@ -65,6 +80,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### core_compiled
 - Add custom Schemas for Vectors & Points
+
+#### shells.py
+- first version boolean operations with any faces.
+
 
 #### global
 - Add reference_path to a handful of classes
@@ -99,6 +118,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineSurface3D: improves _fix_start_end_singularity_point_at_parametric_domain
 
 #### wires.py
+- Fix some constructors: connected edges must share vertices
+- copy(): copy saving data structure, such as data which is intended to be shared between copies (memo)
+
 
 #### step.py
 - Fixes in step translator to VolumeModel.
@@ -130,6 +152,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Avoid `pip install .` in drone as it is redundant with `python setup.py build_ext --inplace`
 - Re-order CI steps to build doc in the end / perform shortest test first
 - Avoid duplication of test between push and PR
+- Fix `upload coverage` step
+- Fix CI for PR from fork repo
 
 
 ### Updates
