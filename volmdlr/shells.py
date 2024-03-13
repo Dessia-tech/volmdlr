@@ -1,4 +1,5 @@
 """volmdlr shells module."""
+# pylint: disable=no-name-in-module
 import math
 import random
 import warnings
@@ -8,11 +9,12 @@ from typing import Iterable, List, Tuple, Union
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
-import pyfqmr
 from dessia_common.core import DessiaObject
 from dessia_common.typings import JsonSerializable
 from numpy.typing import NDArray
 from trimesh import Trimesh
+
+from OCP.BRep import BRep_Tool
 
 import volmdlr.core
 import volmdlr.core_compiled
@@ -21,7 +23,8 @@ import volmdlr.geometry
 from volmdlr import curves, display, edges, surfaces, wires
 from volmdlr.core import edge_in_list, get_edge_index_in_list, get_point_index_in_list, point_in_list
 from volmdlr.utils.step_writer import geometric_context_writer, product_writer, step_ids_to_str
-
+from volmdlr import from_ocp
+from volmdlr.utils.mesh_helpers import perform_decimation
 # pylint: disable=unused-argument
 
 
@@ -479,7 +482,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
 
         shell_id = current_id
         step_content += f"#{current_id} = {self.STEP_FUNCTION}('{self.name}'," \
-                        f"({volmdlr.core.step_ids_to_str(face_ids)}));\n"
+                        f"({step_ids_to_str(face_ids)}));\n"
         manifold_id = shell_id + 1
         step_content += f"#{manifold_id} = SHELL_BASED_SURFACE_MODEL('{self.name}',(#{shell_id}));\n"
 
@@ -1051,6 +1054,32 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
                 shells_list.append(ClosedShell3D(faces_list, name=name + f'_{index}'))
 
         return shells_list
+
+    @classmethod
+    def from_ocp(cls, occt_shell) -> "Shell3D":
+        """
+        Builds a shell from an OCP shell.
+        """
+        occt_surface_to_volmdlr_face_map = {
+            "Geom_SphericalSurface": volmdlr.faces.SphericalFace3D,
+            "Geom_CylindricalSurface": volmdlr.faces.CylindricalFace3D,
+            "Geom_Plane": volmdlr.faces.PlaneFace3D,
+            "Geom_ToroidalSurface": volmdlr.faces.ToroidalFace3D,
+            "Geom_ConicalSurface": volmdlr.faces.ConicalFace3D,
+            "Geom_BSplineSurface": volmdlr.faces.BSplineFace3D,
+            "Geom_SurfaceOfLinearExtrusion": volmdlr.faces.ExtrusionFace3D,
+            "Geom_SurfaceOfRevolution": volmdlr.faces.RevolutionFace3D}
+        occt_faces = from_ocp.get_faces(occt_shell)
+        faces = []
+        for occt_face in occt_faces:
+            surface = BRep_Tool().Surface_s(occt_face)
+            if surface.get_type_name_s() == 'Geom_RectangularTrimmedSurface':
+                surface = surface.BasisSurface()
+            face_cls = occt_surface_to_volmdlr_face_map[surface.get_type_name_s()]
+            faces.append(face_cls.from_ocp(occt_face))
+        if occt_shell.Closed():
+            return ClosedShell3D(faces)
+        return OpenShell3D(faces)
 
     def is_disjoint_from(self, shell2, tol=1e-8):
         """
@@ -1912,22 +1941,11 @@ class OpenTriangleShell3D(OpenShell3D):
 
         vertices, triangles = self.to_mesh_data(round_vertices=True, n_decimals=9)
 
-        simplifier = pyfqmr.Simplify()
-        simplifier.setMesh(vertices, triangles)
-        simplifier.simplify_mesh(
-            target_count=target_count,
-            update_rate=update_rate,
-            aggressiveness=aggressiveness,
-            max_iterations=max_iterations,
-            verbose=verbose,
-            lossless=lossless,
-            threshold_lossless=threshold_lossless,
-            alpha=alpha,
-            K=k,
-            preserve_border=preserve_border,
-        )
-
-        vertices, faces, _ = simplifier.getMesh()
+        vertices, faces = perform_decimation(vertices=vertices, triangles=triangles, target_count=target_count,
+                                             update_rate=update_rate, aggressiveness=aggressiveness,
+                                             max_iterations=max_iterations, verbose=verbose, lossless=lossless,
+                                             threshold_lossless=threshold_lossless, alpha=alpha, k=k,
+                                             preserve_border=preserve_border)
 
         return self.__class__.from_mesh_data(vertices, faces)
 

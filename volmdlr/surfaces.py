@@ -446,6 +446,19 @@ class Surface2D(PhysicalObject):
                 surface2d_inner_contours.append(inner_contour)
         return cls(surface2d_outer_contour, surface2d_inner_contours)
 
+    @classmethod
+    def from_ocp_face(cls, occt_face):
+        """
+        Extract a surface 2D from an OCP face.
+        """
+        occt_to_volmdlr = {"Geom2d_Line": curves.Line2D,
+                           "Geom2d_Circle": curves.Circle2D,
+                           "Geom2d_Ellipse": curves.Ellipse2D,
+                           "Geom2d_Parabola": curves.Parabola2D,
+                           "Geom2d_Hyperbola": curves.Hyperbola2D,
+                           "Geom2d_BSplineCurve": edges.BSplineCurve2D}
+        return from_ocp.surface2d_from_ocp_face(cls, wires.Contour2D, occt_face, occt_to_volmdlr)
+
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(color='grey', alpha=0.5, equal_aspect=False), **kwargs):
         """Plot surface 2d using Matplotlib."""
 

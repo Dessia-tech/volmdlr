@@ -19,6 +19,10 @@ import plot_data.core as plot_data
 from scipy.spatial.qhull import ConvexHull, Delaunay
 from triangle import triangulate
 
+from OCP.BRep import BRep_Tool
+from OCP.BRepTools import BRepTools_WireExplorer
+from OCP.TopoDS import TopoDS
+
 from dessia_common.core import PhysicalObject
 import volmdlr
 import volmdlr.core
@@ -27,6 +31,8 @@ import volmdlr.geometry
 from volmdlr import curves, edges, PATH_ROOT
 from volmdlr.core_compiled import polygon_point_belongs, points_in_polygon
 from volmdlr.core import EdgeStyle
+from volmdlr import from_ocp
+from volmdlr.utils import step_writer
 
 
 def argmax(list_of_numbers):
@@ -174,6 +180,14 @@ def reorder_contour3d_edges_from_step(raw_edges, step_data):
 
         new_edges.append(last_edge)
     return new_edges
+
+
+OCCT_TO_VOLMDLR = {"Geom_Line": curves.Line3D,
+                   "Geom_Circle": curves.Circle3D,
+                   "Geom_Ellipse": curves.Ellipse3D,
+                   "Geom_Parabola": curves.Parabola3D,
+                   "Geom_Hyperbola": curves.Hyperbola3D,
+                   "Geom_BSplineCurve": edges.BSplineCurve3D}
 
 
 class WireMixin:
@@ -702,6 +716,30 @@ class WireMixin:
                 if not crossing.in_list(intersections_points):
                     intersections_points.append(crossing)
         return intersections_points
+
+    @classmethod
+    def from_ocp(cls, occt_wire):
+        """
+        Instanciates a volmdlr wire, from occt object.
+        """
+        exp = BRepTools_WireExplorer(occt_wire)
+        list_edges = []
+        while exp.Current():
+            occt_edge = TopoDS.Edge_s(exp.Current())
+            u_start, u_end = BRep_Tool().Range_s(occt_edge)
+            occt_curve = BRep_Tool().Curve_s(occt_edge, u_start, u_end)
+            if occt_curve is None:
+                exp.Next()
+                continue
+            orientation = occt_edge.Orientation()
+            if orientation == 1:
+                u_start, u_end = u_end, u_start
+            list_edges.append(from_ocp.volmdlr_edge_from_ocp_curve(OCCT_TO_VOLMDLR[occt_curve.get_type_name_s()],
+                              occt_curve, u_start, u_end, orientation))
+            exp.Next()
+        if not cls(list_edges).is_ordered(1e-4):
+            print("Contour not ordered")
+        return cls(list_edges)
 
 
 class EdgeCollection3D(WireMixin, PhysicalObject):
@@ -1485,7 +1523,7 @@ class Wire3D(WireMixin, PhysicalObject):
 
         current_id += 1
         content += (f"#{current_id} = COMPOSITE_CURVE('{self.name}',"
-                    f"({volmdlr.core.step_ids_to_str(composite_curve_segment_ids)}),.U.);\n")
+                    f"({step_writer.step_ids_to_str(composite_curve_segment_ids)}),.U.);\n")
 
         return content, current_id
 
@@ -4335,7 +4373,7 @@ class Contour3D(ContourMixin, Wire3D):
             edge_ids.append(current_id)
 
         current_id += 1
-        content += f"#{current_id} = EDGE_LOOP('{self.name}',({volmdlr.core.step_ids_to_str(edge_ids)}));\n"
+        content += f"#{current_id} = EDGE_LOOP('{self.name}',({step_writer.step_ids_to_str(edge_ids)}));\n"
         return content, current_id
 
     def average_center_point(self):

@@ -1,5 +1,6 @@
 import unittest
 import os
+from OCP.BRepPrimAPI import BRepPrimAPI_MakeCylinder
 
 from dessia_common.core import DessiaObject
 import volmdlr
@@ -17,6 +18,12 @@ class TestShell3D(unittest.TestCase):
         from_faces = shells.Shell3D.from_faces(openshell.faces + fm_closedshell.faces)
         self.assertEqual(from_faces[0], openshell)
         self.assertEqual(from_faces[1], fm_closedshell)
+
+    def test_from_occt(self):
+        cylinder = BRepPrimAPI_MakeCylinder(0.5, 2).Cylinder()
+        shell = cylinder.Shell()
+        volmdlr_shell = shells.Shell3D.from_ocp(shell)
+        self.assertEqual(len(volmdlr_shell.primitives), 3)
 
 
 if __name__ == '__main__':
