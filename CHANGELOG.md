@@ -35,7 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Edge: delete_shared_section (use abs_tol)
 - Bspline: get_shared_section (update abs_tol for is_shared_section_possible)
 #### wires.py
-- 
+- translation: keep data structure after translation.
 #### surfaces.py
 - 
 #### faces.py
@@ -46,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 
 
 ### Changed
+- Force wires to share same points between two edges.
 
 #### curves.py
 - Ellipse2D: point_distance optimization

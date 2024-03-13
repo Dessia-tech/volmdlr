@@ -11,7 +11,7 @@ import warnings
 from collections import deque
 from functools import cached_property
 from statistics import mean
-from typing import List
+from typing import List, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -27,6 +27,23 @@ import volmdlr.geometry
 from volmdlr import curves, edges, PATH_ROOT
 from volmdlr.core_compiled import polygon_point_belongs, points_in_polygon
 from volmdlr.core import EdgeStyle
+
+
+def merge_primitives_points(primitives, abs_tol: float = 1e-6):
+    """
+    Mutualizes the points of connected edges.
+
+    This function iterates over the list of primitives and adjusts the start and end points
+    of each edge where necessary to ensure connectedness. If the end point of one edge is
+    very close to the start point of the subsequent edge, they are considered connected,
+    and adjustments are made to ensure seamless connectivity.
+    """
+    ordered_edges = WireMixin.order_primitives(primitives, abs_tol)
+    for i, primitive in enumerate(ordered_edges[1:]):
+        if primitive == ordered_edges[-1] and primitive.end.is_close(ordered_edges[0].start):
+            primitive.end = ordered_edges[0].start
+        primitive.start = ordered_edges[i].end
+    return ordered_edges
 
 
 def argmax(list_of_numbers):
@@ -306,13 +323,19 @@ class WireMixin:
         return True
 
     def ordering_primitives(self, tol: float = 1e-6):
+        """Gets contour/wires ordered primitives."""
+        return self.order_primitives(self.primitives, tol)
+
+    @staticmethod
+    def order_primitives(primitives, tol: float = 1e-6):
         """
         Ordering wire / contour primitives.
 
+        :param primitives: primitives.
         :param tol: tolerance.
         :return:
         """
-        primitives = [prim for prim in self.primitives[:] if not math.isclose(prim.length(), 0.0, abs_tol=tol)]
+        primitives = [prim for prim in primitives[:] if not math.isclose(prim.length(), 0.0, abs_tol=tol)]
         new_primitives = [primitives[0]]
         primitives.remove(primitives[0])
         while True:
@@ -347,7 +370,7 @@ class WireMixin:
 
         if self.is_ordered(tol=tol):
             return self
-        return self.__class__(self.ordering_primitives(tol), name=self.name)
+        return self.__class__(merge_primitives_points(self.primitives), name=self.name)
 
     @classmethod
     def from_wires(cls, wires, name: str = ''):
@@ -360,10 +383,7 @@ class WireMixin:
         for wire in wires:
             primitives.extend(wire.primitives)
 
-        wire = cls(primitives, name=name)
-
-        if not wire.is_ordered():
-            return wire.order_wire()
+        wire = cls(merge_primitives_points(primitives), name=name)
         return wire
 
     def inverted_primitives(self):
@@ -440,6 +460,7 @@ class WireMixin:
         primitives = []
         for i in range(0, len(points) - 1):
             primitives.append(getattr(edges, linesegment_name)(points[i], points[i + 1]))
+        primitives = merge_primitives_points(primitives)
         contour = cls(primitives, name=name)
         return contour
 
@@ -479,10 +500,10 @@ class WireMixin:
         new_primitives = contour.extract_with_points(point1, point2, inside)
 
         if cls.__name__[:-2] in ['Contour', 'Wire']:
-            wires = [cls(new_primitives, name=name)]
+            wires = [cls(merge_primitives_points(new_primitives), name=name)]
         else:
             wire_class_ = getattr(sys.modules[__name__], 'Wire' + cls.__name__[-2:])
-            wires = [wire_class_(new_primitives, name=name)]
+            wires = [wire_class_(merge_primitives_points(new_primitives), name=name)]
         return wires
 
     def split_with_sorted_points(self, sorted_points):
@@ -511,11 +532,9 @@ class WireMixin:
                 zip(sorted_points, sorted_points[1:] + [sorted_points[0]])):
             if i == len_sorted_points - 1:
                 if self_start_equal_to_end:
-                    split_wires.extend([wire.order_wire() for wire in
-                                        self.__class__.extract(self, point1, point2, False)])
+                    split_wires.extend(self.__class__.extract(self, point1, point2, False))
             else:
-                split_wires.extend([wire.order_wire() for wire in
-                                    self.__class__.extract(self, point1, point2, True)])
+                split_wires.extend(self.__class__.extract(self, point1, point2, True))
         return split_wires
 
     @classmethod
@@ -572,7 +591,7 @@ class WireMixin:
                 if ((not broke) and (len(list_edges) == index_primitive + 1)) or len(list_edges) == 0:
                     to_continue = False
 
-        wires = [cls(primitives_wire) for primitives_wire in new_primitives]
+        wires = [cls(merge_primitives_points(primitives_wire)) for primitives_wire in new_primitives]
 
         return wires
 
@@ -594,7 +613,7 @@ class WireMixin:
                     edge=primitive, number_segments=number_segments).primitives)
             else:
                 primitives.append(primitive)
-
+        primitives = merge_primitives_points(primitives)
         return class_(primitives)
 
     def get_connected_wire(self, list_wires):
@@ -689,7 +708,7 @@ class WireMixin:
                     edge_intersections.append(intersection)
         return edge_intersections
 
-    def wire_intersections(self, wire, abs_tol: float = 1e-6):
+    def wire_intersections(self, wire, abs_tol:float = 1e-6):
         """
         Compute intersections between two wire 2d.
 
@@ -702,6 +721,24 @@ class WireMixin:
                 if not crossing.in_list(intersections_points):
                     intersections_points.append(crossing)
         return intersections_points
+
+    def geometries(self):
+        """
+        Gets the set of geometric objects that compose the topological shape.
+        """
+        return set(geometry for primitive in self.primitives for geometry in primitive.geometries())
+
+    def translation(self, offset: Union[volmdlr.Vector2D, volmdlr.Vector3D]):
+        """
+        Contour translation.
+
+        :param offset: translation vector.
+        :return: A new translated Contour.
+        """
+        self_copy = self.copy(memo={})
+        for geometry in self_copy.geometries():
+            geometry.translation_inplace(offset=offset)
+        return self_copy
 
 
 class EdgeCollection3D(WireMixin, PhysicalObject):
@@ -898,7 +935,7 @@ class Wire2D(WireMixin, PhysicalObject):
                 cutted_primitive = infinite_primitives[i + 1].trim(point1, point2)
             offset_primitives.append(cutted_primitive)
 
-        return self.__class__(offset_primitives)
+        return self.__class__(merge_primitives_points(offset_primitives))
 
     def plot_data(self, *args, **kwargs):
         """Plot data for Wire2D."""
@@ -1129,7 +1166,7 @@ class Wire2D(WireMixin, PhysicalObject):
             primitives = self.primitives
             primitives.append(volmdlr.edges.LineSegment2D(self.primitives[-1].end, point))
 
-        return Wire2D(primitives)
+        return Wire2D(merge_primitives_points(primitives))
 
     def point_distance(self, point):
         """
@@ -1279,16 +1316,6 @@ class Wire2D(WireMixin, PhysicalObject):
         """
         return self.__class__([point.rotation(center, angle)
                                for point in self.primitives])
-
-    def translation(self, offset: volmdlr.Vector2D):
-        """
-        Translates the Wire 2D.
-
-        :param offset: translation vector
-        :return: A new translated Wire 2D.
-        """
-        return self.__class__([primitive.translation(offset)
-                               for primitive in self.primitives])
 
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
         """
@@ -1614,7 +1641,8 @@ class ContourMixin(WireMixin):
                     list_edges.pop(i)
                     break
             else:
-                list_contours.append(cls(contour_primitives))
+                cntr = cls(merge_primitives_points(contour_primitives))
+                list_contours.append(cntr)
                 if not list_edges:
                     break
                 points = [list_edges[0].start, list_edges[0].end]
@@ -1625,16 +1653,17 @@ class ContourMixin(WireMixin):
                     spliting_primitives_index = volmdlr.core.get_point_index_in_list(
                         validating_point, validating_points)
                     if validating_point == points[0]:
-                        new_contour = cls(contour_primitives[:spliting_primitives_index + 1])
+                        new_contour = cls(merge_primitives_points(
+                            contour_primitives[:spliting_primitives_index + 1]))
                         contour_primitives = contour_primitives[spliting_primitives_index + 1:]
                         points = points[spliting_primitives_index + 1:]
                     else:
-                        new_contour = cls(contour_primitives[spliting_primitives_index:])
+                        new_contour = cls(merge_primitives_points(contour_primitives[spliting_primitives_index:]))
                         contour_primitives = contour_primitives[:spliting_primitives_index]
                         points = points[:spliting_primitives_index + 1]
                     list_contours.append(new_contour)
                 else:
-                    list_contours.append(cls(contour_primitives))
+                    list_contours.append(cls(merge_primitives_points(contour_primitives)))
                     if list_edges:
                         points = [list_edges[0].start, list_edges[0].end]
                         contour_primitives = [list_edges.pop(0)]
@@ -2016,6 +2045,26 @@ class ContourMixin(WireMixin):
         :returns: True is closed, False if Open.
         """
         return self.primitives[0].start.is_close(self.primitives[-1].end)
+
+
+
+    def is_connected(self):
+        """
+        Returns True if all connected edges share the same vertex and False otherwise.
+        """
+        return all(prim2.start is prim1.end
+                   for prim1, prim2 in zip(self.primitives, self.primitives[1:] + [self.primitives[0]]))
+
+    def is_wire_connected(self):
+        """
+        Returns True if all connected edges share the same vertex and False otherwise.
+
+        This a special case for degenerated for contours found in parametric space or in boolean operations.
+        """
+        if len(self.primitives) > 1:
+            return all(prim2.start is prim1.end
+                   for prim1, prim2 in zip(self.primitives[:-1], self.primitives[1:]))
+        return True
 
 
 class Contour2D(ContourMixin, Wire2D):
@@ -2523,10 +2572,8 @@ class Contour2D(ContourMixin, Wire2D):
             primitives2 = cutting_contour_new.primitives + extracted_innerpoints_contour1.primitives
         elif extracted_innerpoints_contour1.primitives[0].start.is_close(closing_contour.primitives[-1].end, abs_tol):
             primitives2 = closing_contour.primitives + extracted_innerpoints_contour1.primitives
-        contour1 = Contour2D(primitives1)
-        contour1.order_contour(abs_tol)
-        contour2 = Contour2D(primitives2)
-        contour2.order_contour(abs_tol)
+        contour1 = Contour2D(merge_primitives_points(primitives1, abs_tol))
+        contour2 = Contour2D(merge_primitives_points(primitives2, abs_tol))
         return contour1, contour2
 
     def divide(self, contours, abs_tol: float = 1e-6):
@@ -2621,7 +2668,7 @@ class Contour2D(ContourMixin, Wire2D):
             if prim.start != prim.end:
                 new_primitives.append(prim)
 
-        return Contour2D(new_primitives)
+        return Contour2D(merge_primitives_points(new_primitives))
 
     def merge_with(self, contour2d, abs_tol: float = 1e-6):
         """
@@ -2673,7 +2720,7 @@ class Contour2D(ContourMixin, Wire2D):
                 resulting_primitives.extend(primitives2_outside)
             else:
                 resulting_primitives.extend(primitives2_inside)
-            return [Contour2D(resulting_primitives).order_contour()]
+            return [Contour2D(merge_primitives_points(resulting_primitives))]
         merged_contours = self.merge_with(contour2)[::-1]
         merged_contours = sorted(merged_contours, key=lambda contour: contour.area(),
                                  reverse=True)
@@ -4373,17 +4420,6 @@ class Contour3D(ContourMixin, Wire3D):
         """
         new_edges = [edge.rotation(center, axis, angle) for edge
                      in self.primitives]
-        return Contour3D(new_edges, self.name)
-
-    def translation(self, offset: volmdlr.Vector3D):
-        """
-        Contour3D translation.
-
-        :param offset: translation vector.
-        :return: A new translated Contour3D.
-        """
-        new_edges = [edge.translation(offset) for edge in
-                     self.primitives]
         return Contour3D(new_edges, self.name)
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
