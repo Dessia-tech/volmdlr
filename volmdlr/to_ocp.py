@@ -2,12 +2,13 @@
 Module to translate objects in Volmdlr to OCP.
 """
 from OCP.Geom import (Geom_BSplineSurface, Geom_CylindricalSurface, Geom_ConicalSurface, Geom_ToroidalSurface,
-                      Geom_SphericalSurface, Geom_Plane, Geom_BSplineCurve, Geom_Line)
-from OCP.Geom2d import Geom2d_BSplineCurve
+                      Geom_SphericalSurface, Geom_Plane, Geom_BSplineCurve, Geom_Line, Geom_Circle, Geom_Ellipse)
+from OCP.Geom2d import Geom2d_BSplineCurve, Geom2d_Circle, Geom2d_Line, Geom2d_Ellipse
 from OCP.TColStd import TColStd_Array1OfReal, TColStd_Array1OfInteger
 # from OCP.TColStd import TColStd_Array1OfReal, TColStd_Array1OfInteger
 from OCP.TColgp import TColgp_Array2OfPnt, TColgp_Array1OfPnt, TColgp_Array1OfPnt2d
-from OCP.gp import gp_Pnt, gp_Ax3, gp_Dir, gp_Pnt2d, gp_Dir2d
+from OCP.gp import gp_Pnt, gp_Ax2, gp_Ax3, gp_Dir, gp_Pnt2d, gp_Dir2d, gp_Ax2d
+from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeEdge, BRepBuilderAPI_MakeWire
 
 
 def list_to_tcolstd_array1ofinteger(list_of_int):
@@ -94,17 +95,33 @@ def vector2d_to_ocp(vector):
     return gp_Dir2d(*vector)
 
 
-def frame3d_to_ocp(frame):
+def frame3d_to_ocp(frame, right_handed: bool = False):
     """
     Create an OCP Frame3D from a voldmlr Frame3D.
 
     :param frame: volmdlr Frame3D.
+    :param right_handed: (Optional) If set to True returns a gp_Ax2, that is right-handed coordinate system in 3D space. If
+    set to False (default) returns a gp_Ax3 can be right-handed ("direct sense") or left-handed ("indirect sense").
     :return: OCP Frame3D.
     """
     point = point3d_to_ocp(frame.origin)
     z_vector = vector3d_to_ocp(frame.w)
     x_vector = vector3d_to_ocp(frame.u)
+    if right_handed:
+        return gp_Ax2(point, z_vector, x_vector)
     return gp_Ax3(point, z_vector, x_vector)
+
+
+def frame2d_to_ocp(frame):
+    """
+    Create an OCP Frame2D from a voldmlr Frame2D.
+
+    :param frame: volmdlr Frame2D.
+    :return: OCP Frame2D.
+    """
+    point = point2d_to_ocp(frame.origin)
+    x_vector = vector2d_to_ocp(frame.u)
+    return gp_Ax2d(point, x_vector)
 
 
 def line3d_to_ocp(line):
@@ -112,11 +129,33 @@ def line3d_to_ocp(line):
     Create an OCP Line from a voldmlr Line3D.
 
     :param line: volmdlr Line3D.
-    :return: OCP Frame3D.
+    :return: OCP Geom_Line.
     """
     point = point3d_to_ocp(line.point1)
     direction = vector3d_to_ocp(line.unit_direction_vector())
     return Geom_Line(point, direction)
+
+
+def circle3d_to_ocp(circle):
+    """
+    Create an OCP Circle from a voldmlr Circle3D.
+
+    :param circle: volmdlr Circle3D.
+    :return: OCP Geom_Circle.
+    """
+    frame_ax2 = frame3d_to_ocp(circle.frame, right_handed=True)
+    return Geom_Circle(frame_ax2, circle.radius)
+
+
+def ellipse3d_to_ocp(ellipse):
+    """
+    Create an OCP ellipse from a voldmlr Ellipse3D.
+
+    :param ellipse: volmdlr Ellipse3D.
+    :return: OCP Geom_Ellipse.
+    """
+    frame_ax2 = frame3d_to_ocp(ellipse.frame, right_handed=True)
+    return Geom_Ellipse(frame_ax2, ellipse.major_axis, ellipse.minor_axis)
 
 
 def bsplinecurve3d_to_ocp(bsplinecurve):
@@ -124,7 +163,7 @@ def bsplinecurve3d_to_ocp(bsplinecurve):
     Creates a Bspline Curve 3D from a volmdlr object.
 
     :param bsplinecurve: volmdlr BSpline Curve 3D.
-    :return:
+    :return: Geom_BSplineCurve
     """
     if bsplinecurve.weights is None:
         return Geom_BSplineCurve(list_to_tcolgp_array10fpnt(bsplinecurve.control_points),
@@ -138,12 +177,46 @@ def bsplinecurve3d_to_ocp(bsplinecurve):
                              bsplinecurve.degree)
 
 
+def line2d_to_ocp(line):
+    """
+    Create an OCP Line from a voldmlr Line3D.
+
+    :param line: volmdlr Line3D.
+    :return: OCP Geom_Line.
+    """
+    point = point2d_to_ocp(line.point1)
+    direction = vector2d_to_ocp(line.unit_direction_vector())
+    return Geom2d_Line(point, direction)
+
+
+def circle2d_to_ocp(circle):
+    """
+    Create an OCP Circle from a voldmlr Circle3D.
+
+    :param circle: volmdlr Circle3D.
+    :return: OCP Geom_Circle.
+    """
+    frame_ax2d = frame2d_to_ocp(circle.frame)
+    return Geom2d_Circle(frame_ax2d, circle.radius, circle.is_trigo)
+
+
+def ellipse2d_to_ocp(ellipse):
+    """
+    Create an OCP ellipse from a voldmlr Ellipse3D.
+
+    :param ellipse: volmdlr Ellipse3D.
+    :return: OCP Geom_Ellipse.
+    """
+    frame_ax2d = frame2d_to_ocp(ellipse.frame)
+    return Geom2d_Ellipse(frame_ax2d, ellipse.major_axis, ellipse.minor_axis)
+
+
 def bsplinecurve2d_to_ocp(bsplinecurve):
     """
     Creates a Bspline Curve 3D from a volmdlr object.
 
     :param bsplinecurve: volmdlr BSpline Curve 2D.
-    :return:
+    :return: Geom2d_BSplineCurve
     """
     if not bsplinecurve.weights:
         return Geom2d_BSplineCurve(list_to_tcolgp_array10fpnt2d(bsplinecurve.control_points),
@@ -155,6 +228,65 @@ def bsplinecurve2d_to_ocp(bsplinecurve):
                                list_to_tcolstd_array1ofreal(bsplinecurve.knots),
                                list_to_tcolstd_array1ofinteger(bsplinecurve.knot_multiplicities),
                                bsplinecurve.degree)
+
+
+def edge2d_to_ocp(edge2d, ocp_surface=None):
+    """
+    Creates a OCCT edge from a volmdlr object.
+
+    :param edge2d: volmdlr Contour3D.
+    :param ocp_surface: (Optional) OCCT surface if the edge is a parametric representaion of the surface.
+    :return:
+    """
+    volmdlr_curve = edge2d.curve()
+    curve = globals()[volmdlr_curve.__class__.__name__.lower()+'_to_ocp'](volmdlr_curve)
+    start = point2d_to_ocp(edge2d.start)
+    end = point2d_to_ocp(edge2d.end)
+    if ocp_surface:
+        return BRepBuilderAPI_MakeEdge(curve, ocp_surface, volmdlr_curve.abscissa(edge2d.start),
+                                       volmdlr_curve.abscissa(edge2d.end)).Edge()
+    return BRepBuilderAPI_MakeEdge(curve, start, end).Edge()
+
+
+def edge3d_to_ocp(edge3d):
+    """
+    Creates a OCCT edge from a volmdlr object.
+
+    :param edge3d: volmdlr edge 3D.
+    :return:
+    """
+    volmdlr_curve = edge3d.curve()
+    curve = globals()[volmdlr_curve.__class__.__name__.lower()+'_to_ocp'](volmdlr_curve)
+    start = point3d_to_ocp(edge3d.start)
+    end = point3d_to_ocp(edge3d.end)
+    return BRepBuilderAPI_MakeEdge(curve, start, end).Edge()
+
+
+def contour3d_to_ocp(contour3d):
+    """
+    Creates a OCCT wire from a volmdlr object.
+
+    :param contour3d: volmdlr Contour3D.
+    :return:
+    """
+    builder = BRepBuilderAPI_MakeWire()
+    for primitive in contour3d.primitives:
+        builder.Add(edge3d_to_ocp(primitive))
+    return builder.Wire()
+
+
+def contour2d_to_ocp(contour2d, ocp_surface=None):
+    """
+    Creates a OCCT wire from a volmdlr object.
+
+    :param contour2d: volmdlr Contour2D.
+    :param ocp_surface: (Optional) OCCT surface if the edge is a parametric representaion of the surface.
+    :return:
+    """
+    builder = BRepBuilderAPI_MakeWire()
+    for primitive in contour2d.primitives:
+        builder.Add(edge2d_to_ocp(primitive, ocp_surface=ocp_surface))
+    return builder.Wire()
 
 
 def plane_to_ocp(surface):
@@ -244,3 +376,14 @@ def bsplinesurface_to_ocp(surface):
         vmult.SetValue(i + 1, value)
 
     return Geom_BSplineSurface(poles, uknots, vknots, umult, vmult, u_deg, v_deg, False, False)
+
+
+VOLMDLR_TO_OCP = {"Line3D": line3d_to_ocp,
+                  "BSplineCurve3D": bsplinecurve3d_to_ocp,
+                  "Circle3D": circle3d_to_ocp,
+                  "Ellipse3D": ellipse3d_to_ocp,
+                  "Line2D": line2d_to_ocp,
+                  "BSplineCurve2D": bsplinecurve2d_to_ocp,
+                  "Circle2D": circle2d_to_ocp,
+                  "Ellipse2D": ellipse2d_to_ocp
+                  }

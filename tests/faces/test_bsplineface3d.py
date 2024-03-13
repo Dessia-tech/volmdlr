@@ -177,6 +177,10 @@ class TestBSplineFace3D(unittest.TestCase):
         self.assertLessEqual(len(mesh.vertices), 2750)
         self.assertLessEqual(total_time, 2)
 
+    def test_to_ocp(self):
+        ocp_face = self.bspline_face.to_ocp()
+        self.assertFalse(ocp_face.IsNull())
+
 
 if __name__ == '__main__':
     unittest.main()

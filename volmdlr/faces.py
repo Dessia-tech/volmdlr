@@ -10,6 +10,10 @@ from typing import List
 import matplotlib.pyplot as plt
 import numpy as np
 import triangle as triangle_lib
+from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeFace
+from OCP.BRepMesh import BRepMesh_IncrementalMesh
+from OCP.TopLoc import TopLoc_Location
+from OCP.BRep import BRep_Tool
 
 from dessia_common.core import DessiaObject
 
@@ -24,6 +28,7 @@ import volmdlr.grid
 from volmdlr import surfaces
 from volmdlr.utils.parametric import update_face_grid_points_with_inner_polygons
 import volmdlr.wires
+from volmdlr import to_ocp
 
 warnings.simplefilter("once")
 
@@ -4054,3 +4059,41 @@ class BSplineFace3D(Face3D):
         :param abs_tol: tolerance.
         """
         return super().divide_face(list_cutting_contours, abs_tol)
+
+    def to_ocp(self):
+        """
+        Returns a OCCT shape equivalent to the volmdlr object.
+        """
+        occt_surface = getattr(to_ocp, self.surface3d.__class__.__name__.lower()[:-2] + '_to_ocp')(self.surface3d)
+        contour_type_name = self.surface2d.outer_contour.__class__.__name__.lower()
+        wire_traduction_fuction = getattr(to_ocp, contour_type_name + '_to_ocp')
+        outer_wire = wire_traduction_fuction(self.surface2d.outer_contour, ocp_surface=occt_surface)
+        inner_wires = [wire_traduction_fuction(contour, ocp_surface=occt_surface)
+                       for contour in self.surface2d.inner_contours]
+        builder = BRepBuilderAPI_MakeFace(occt_surface, outer_wire)
+        for wire in inner_wires:
+            builder.Add(wire)
+        return builder.Face()
+
+    def triangulation(self):
+        """
+        Use OCP to calculate the mesh.
+        """
+        deflection = 0.1
+        is_relative = False
+        an_angle = 0.5
+        is_in_parallel = True
+
+        face = self.to_ocp()
+        BRepMesh_IncrementalMesh(face, deflection, is_relative, an_angle, is_in_parallel)
+        location = TopLoc_Location()
+        facing = BRep_Tool().Triangulation_s(face, location)
+        tri = facing.Triangles()
+        nodes_occ = [facing.Node(i) for i in range(1, facing.NbNodes() + 1)]
+        nodes_array = np.array([[point.X(), point.Y(), point.Z()] for point in nodes_occ], dtype=np.float64)
+        triangles = []
+        for i in range(1, facing.NbTriangles() + 1):
+            trian = tri.Value(i)
+            triangles.append(trian.Get())
+
+        return volmdlr.display.Mesh3D(nodes_array, np.array(triangles, dtype=np.int16) - 1)
