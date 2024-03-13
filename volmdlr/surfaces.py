@@ -877,7 +877,7 @@ class Surface3D(DessiaObject):
         primitives2d[i] = primitives2d[i].translation(delta)
         primitives_mapping[primitives2d[i]] = primitives_mapping.pop(old_primitive)
 
-    def connect_contours(self, outer_contour, inner_contours):
+    def connect_contours(self, outer_contour, inner_contours, abs_tol: float = 1e-6):
         """
         Abstract method. Repair 2D contours of a face on the parametric domain.
 
@@ -885,6 +885,7 @@ class Surface3D(DessiaObject):
         :type inner_contours: wires.Contour2D
         :param inner_contours: List of 2D contours.
         :type inner_contours: list
+        :param abs_tol: tolerance.
         :return: NotImplementedError: If the method is not implemented in the subclass.
         """
         raise NotImplementedError(f'connect_contours is abstract and should be implemented in '
@@ -1910,7 +1911,7 @@ class UPeriodicalSurface(Surface3D):
         """
         raise NotImplementedError(f'v_iso is abstract and should be implemented in {self.__class__.__name__}')
 
-    def _align_contours(self, inner_contour, theta_contours, z_outer_contour, z_inner_contour):
+    def _align_contours(self, inner_contour, theta_contours, z_outer_contour, z_inner_contour, abs_tol: float = 1e-6):
         """
         Helper function to align contours' BREP on periodical surfaces that need to be connected.
         """
@@ -1920,7 +1921,7 @@ class UPeriodicalSurface(Surface3D):
             inner_contour_theta)
         line = curves.Line2D(volmdlr.Point2D(overlapping_theta, z_outer_contour),
                              volmdlr.Point2D(overlapping_theta, z_inner_contour))
-        cutted_contours = inner_contour.split_by_line(line)
+        cutted_contours = inner_contour.split_by_line(line, abs_tol)
         number_contours = len(cutted_contours)
         if number_contours == 2:
             contour1, contour2 = cutted_contours
@@ -1991,7 +1992,7 @@ class UPeriodicalSurface(Surface3D):
 
         return point1, point2, point3, point4
 
-    def connect_contours(self, outer_contour, inner_contours):
+    def connect_contours(self, outer_contour, inner_contours, abs_tol: float = 1e-6):
         """
         Repair contours on parametric domain.
 
@@ -1999,6 +2000,7 @@ class UPeriodicalSurface(Surface3D):
         :type inner_contours: wires.Contour2D
         :param inner_contours: List of 2D contours.
         :type inner_contours: list
+        :param abs_tol: tolerance.
         """
         new_inner_contours = []
         point1 = outer_contour.primitives[0].start
@@ -2019,8 +2021,9 @@ class UPeriodicalSurface(Surface3D):
                     old_innner_contour_positioned = inner_contour
 
                 else:
-                    old_innner_contour_positioned = self._align_contours(inner_contour, [[theta1, theta2],
-                                                                                         [theta3, theta4]], z1, z3)
+                    old_innner_contour_positioned = self._align_contours(inner_contour,
+                                                                         [[theta1, theta2], [theta3, theta4]],
+                                                                         z1, z3, abs_tol)
                 point1, point2, point3, point4 = self._get_closing_points(outer_contour,
                                                                           old_innner_contour_positioned)
                 closing_linesegment1 = edges.LineSegment2D(point2, point3)
@@ -10205,7 +10208,7 @@ class BSplineSurface3D(Surface3D):
             raise NotImplementedError
         return outer_contour_param, inner_contour_param
 
-    def connect_contours(self, outer_contour, inner_contours):
+    def connect_contours(self, outer_contour, inner_contours, abs_tol: float = 1e-6):
         """
         Create connections between contours on parametric domain.
 
