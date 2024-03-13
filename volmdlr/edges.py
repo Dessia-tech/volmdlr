@@ -22,6 +22,9 @@ import scipy.integrate as scipy_integrate
 from scipy.optimize import least_squares, minimize
 from geomdl import NURBS, BSpline
 
+from OCP.Geom2dAPI import Geom2dAPI_InterCurveCurve
+from OCP.Precision import Precision
+
 from volmdlr.nurbs.operations import split_curve, decompose_curve, link_curves
 from volmdlr.nurbs.core import evaluate_curve, derivatives_curve
 from volmdlr.nurbs import fitting
@@ -30,6 +33,7 @@ import volmdlr.nurbs.helpers as nurbs_helpers
 import volmdlr.core
 import volmdlr.core_compiled
 import volmdlr.geometry
+from volmdlr import to_ocp, from_ocp
 from volmdlr import curves as volmdlr_curves
 from volmdlr import get_minimum_distance_points_lines, PATH_ROOT
 import volmdlr.utils.common_operations as vm_common_operations
@@ -912,27 +916,23 @@ class BSplineCurve(Edge):
 
     def __init__(self,
                  degree: int,
-                 control_points: Union[List[volmdlr.Point2D], List[volmdlr.Point3D], NDArray],
+                 control_points: Union[List[volmdlr.Point2D], List[volmdlr.Point3D]],
                  knot_multiplicities: Union[List[int], NDArray],
                  knots: Union[List[float], NDArray],
                  weights: Union[List[float], NDArray] = None,
                  name: str = ''):
-        self.ctrlpts = np.asarray(control_points)
+        self._control_points = control_points
         self.degree = degree
         self.knots = np.asarray(nurbs_helpers.standardize_knot_vector(knots))
         self.knot_multiplicities = np.asarray(knot_multiplicities, dtype=np.int16)
         self.weights = weights
-        self.ctrlptsw = None
         self.rational = False
         if self.weights is not None:
             self.weights = np.asarray(weights, dtype=np.float64)
             self.rational = self.weights.any()
-            if self.rational:
-                self.ctrlptsw = np.hstack((self.ctrlpts * self.weights[:, np.newaxis], self.weights[:, np.newaxis]))
-            else:
+            if not self.rational:
                 self.weights = None
-        point_class = getattr(volmdlr, "Point" + self.__class__.__name__[-2:])
-        Edge.__init__(self, point_class(*control_points[0]), point_class(*control_points[-1]), name=name)
+        Edge.__init__(self, start=self._control_points[0], end=self._control_points[-1], name=name)
         self._simplified = None
         self._delta = 0.01
         self._length = None
@@ -945,7 +945,7 @@ class BSplineCurve(Edge):
         """
         Return a hash value for the B-spline curve.
         """
-        control_points = tuple(tuple(point) for point in self.ctrlpts)
+        control_points = tuple(self.control_points)
         if self.weights is None:
             return hash((control_points, self.degree, tuple(self.knot_multiplicities), tuple(self.knots)))
         return hash((control_points, self.degree, tuple(self.knot_multiplicities),
@@ -957,7 +957,7 @@ class BSplineCurve(Edge):
         """
         if isinstance(other, self.__class__) and self.rational == other.rational:
             common_check = (
-                    tuple(tuple(point) for point in self.ctrlpts) == tuple(tuple(point) for point in other.ctrlpts)
+                    tuple(self.control_points) == tuple(other.control_points)
                     and self.degree == other.degree
                     and tuple(self.knots) == tuple(other.knots)
                     and tuple(self.knot_multiplicities) == tuple(other.knot_multiplicities))
@@ -974,9 +974,23 @@ class BSplineCurve(Edge):
 
     @property
     def control_points(self):
-        """Return the control points of the bspline curve."""
-        point_name = "Point" + self.__class__.__name__[-2:]
-        return [getattr(volmdlr, point_name)(*point) for point in self.ctrlpts]
+        """Return the control points of the bspline curve updating start and end points."""
+        self._control_points[0] = self.start
+        self._control_points[-1] = self.end
+        return self._control_points
+
+
+    @property
+    def ctrlpts(self):
+        """Return the control points of the bspline curve as an array."""
+        return np.asarray(self.control_points)
+
+    @property
+    def ctrlptsw(self):
+        """Return the control points of the bspline curve as an array."""
+        if self.rational:
+            return np.hstack((self.ctrlpts * self.weights[:, np.newaxis], self.weights[:, np.newaxis]))
+        return None
 
     @property
     def knotvector(self):
@@ -1093,19 +1107,21 @@ class BSplineCurve(Edge):
         """Gets bounding box if a 3D object, or bounding rectangle if 2D."""
         raise NotImplementedError("get_bounding_element method should be implemeted by child class.")
 
-    def copy(self, deep: bool = True, **kwargs):
+    def copy(self, deep: bool = True, memo=None):
         """
         Returns a copy of the instance.
 
         :param deep: If False, perform a shallow copy. If True, perform a deep copy.
+        :param memo: (Optional) A dicionary to keep track of objects that have been already copied.
         """
         if deep:
             weights = None
             if self.rational:
                 weights = self.weights.copy()
-            return self.__class__(self.degree, self.control_points, self.knot_multiplicities.copy(),
+            return self.__class__(self.degree, [point.copy(memo=memo) for point in self.control_points],
+                                  self.knot_multiplicities.copy(),
                                   self.knots.copy(), weights, name=self.name + "_copy")
-        return self.__class__(self.degree, self.ctrlpts, self.knot_multiplicities,
+        return self.__class__(self.degree, self.control_points, self.knot_multiplicities,
                               self.knots, self.weights, name=self.name + "_copy")
 
     def to_geomdl(self):
@@ -1248,12 +1264,14 @@ class BSplineCurve(Edge):
             curve
         :rtype: List[:class:`volmdlr.edges.BSplineCurve`]
         """
-        if split_point.is_close(self.start, tol):
-            return [None, self.copy()]
-        if split_point.is_close(self.end, tol):
-            return [self.copy(), None]
         parameter = self.point_to_parameter(split_point)
         parameter = next((knot for knot in self.knots if abs(knot - parameter) < 1e-12), parameter)
+        umin, umax = self.domain
+        if split_point.is_close(self.start, tol) or parameter == umin:
+            return [None, self.copy()]
+        if split_point.is_close(self.end, tol) or parameter == umax:
+            return [self.copy(), None]
+
         return split_curve(self, parameter)
 
     def cut_before(self, parameter: float):
@@ -1474,7 +1492,7 @@ class BSplineCurve(Edge):
         initial_condition_list = [u_min + index * (u_max - u_min) / (self.sample_size - 1) for index in indexes[:3]]
         for u0 in initial_condition_list:
             res = minimize(objective_function, np.array(u0), bounds=[(u_min, u_max)], jac=True)
-            if res.fun < 1e-6: # or (res.success and abs(res.fun - distance) <= 1e-8):
+            if res.fun < 1e-6 or (res.success and abs(res.fun - distance) <= 1e-12):
                 return float(res.x[0] * length)
 
         for patch, param in self.decompose(True):
@@ -2332,7 +2350,11 @@ class BSplineCurve2D(BSplineCurve):
         """
         if self.bounding_rectangle.distance_to_b_rectangle(bspline.bounding_rectangle) > abs_tol:
             return []
-        return self._generic_edge_intersections(bspline, abs_tol)
+        bspline_ocp1 = to_ocp.bsplinecurve2d_to_ocp(self)
+        bspline_ocp2 = to_ocp.bsplinecurve2d_to_ocp(bspline)
+        api_inters = Geom2dAPI_InterCurveCurve(bspline_ocp1, bspline_ocp2, Precision.Intersection_s())
+        intersections = [from_ocp.point2d_from_ocp(api_inters.Point(i + 1)) for i in range(api_inters.NbPoints())]
+        return intersections
 
     def axial_symmetry(self, line):
         """
@@ -2416,15 +2438,8 @@ class LineSegment2D(LineSegment):
         self._bounding_rectangle = None
         LineSegment.__init__(self, start, end, reference_path=reference_path, name=name)
 
-    def copy(self, deep=True, memo=None):
-        """
-        A specified copy of a LineSegment2D.
-        """
-        return self.__class__(start=self.start.copy(deep, memo), end=self.end.copy(deep, memo),
-                              reference_path=self.reference_path, name=self.name)
-
     def __hash__(self):
-        return hash(('linesegment2d', self.start, self.end, self.line))
+        return hash(('linesegment2d', self.start, self.end))
 
     def _data_hash(self):
         return self.start._data_hash() + self.end._data_hash()
@@ -2829,8 +2844,6 @@ class ArcMixin:
     def _arc_point_angle(self, point):
         """Helper function to calculate the angle of point on a trigonometric arc."""
         local_start_point = self.circle.frame.global_to_local_coordinates(point)
-        if self.radius == 0.0:
-            print(True)
         u1, u2 = local_start_point.x / self.radius, local_start_point.y / self.radius
         point_angle = volmdlr.geometry.sin_cos_angle(u1, u2)
         return point_angle
@@ -3596,18 +3609,6 @@ class Arc2D(ArcMixin, Edge):
                                reference_path=self.reference_path,
                                name=self.name)
 
-    def copy(self, *args, **kwargs):
-        """
-        Creates and returns a deep copy of the Arc2D object.
-
-        :param *args: Variable-length argument list.
-        :param **kwargs: Arbitrary keyword arguments.
-        :return: A new Arc2D object that is a deep copy of the original.
-
-        """
-        return Arc2D(circle=self.circle.copy(), start=self.start.copy(), end=self.end.copy(),
-                     reference_path=self.reference_path, name=self.name)
-
     def infinite_primitive(self, offset):
         """Create an offset curve from a distance of the original curve."""
         vector_start_center = self.start - self.circle.center
@@ -3673,11 +3674,6 @@ class FullArc2D(FullArcMixin, Arc2D):
         if not arc.point_belongs(point2):
             return cls(circle=circle.reverse(), start_end=point1, reference_path=reference_path, name=name)
         return arc
-
-    def copy(self, *args, **kwargs):
-        """Creates a copy of a fullarc 2d."""
-        return FullArc2D(circle=self.circle.copy(), start_end=self.start.copy(),
-                         reference_path=self.reference_path, name=self.name)
 
     @classmethod
     def dict_to_object(cls, dict_, *args, **kwargs):
@@ -4237,7 +4233,7 @@ class ArcEllipse2D(ArcEllipseMixin, Edge):
         ellipse = self.ellipse.__class__(self.ellipse.major_axis, self.ellipse.minor_axis,
                                          volmdlr.Frame2D(self.ellipse.center, self.ellipse.frame.u,
                                                          -self.ellipse.frame.v))
-        return self.__class__(ellipse, self.end.copy(), self.start.copy(), name=self.name + '_reverse')
+        return self.__class__(ellipse, self.end, self.start)
 
     def line_intersections(self, line2d: volmdlr_curves.Line2D, tol: float = 1e-6):
         """
@@ -4724,11 +4720,6 @@ class LineSegment3D(LineSegment):
             return LineSegment3D(*[frame.global_to_local_coordinates(point) for point in [self.start, self.end]],
                                  reference_path=self.reference_path, name=self.name)
         raise ValueError('Please Enter a valid side: old or new')
-
-    def copy(self, *args, **kwargs):
-        """Returns a copy of the line segment."""
-        return LineSegment3D(start=self.start.copy(), end=self.end.copy(),
-                             reference_path=self.reference_path, name=self.name)
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         """Plots the Line segment 3d using matplotlib."""
@@ -5900,13 +5891,6 @@ class Arc3D(ArcMixin, Edge):
 
         return ax
 
-    def copy(self, *args, **kwargs):
-        """
-        Create a Copy of an Arc 3D.
-
-        """
-        return Arc3D(self.circle.copy(), self.start.copy(), self.end.copy())
-
     def to_2d(self, plane_origin, x, y):
         """
         Transforms a Arc3D into an Arc2D, given a plane origin and an u and v plane vector.
@@ -6200,10 +6184,6 @@ class FullArc3D(FullArcMixin, Arc3D):
     def __eq__(self, other_arc):
         return (self.circle == other_arc.circle) \
             and (self.start == other_arc.start)
-
-    def copy(self, *args, **kwargs):
-        """Returns a new instance with the same parameters."""
-        return FullArc3D(self.circle.copy(), self.end.copy())
 
     def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
         """Object serialization."""

@@ -781,10 +781,6 @@ class Line3D(Line):
         point2 = point1 + direction
         return cls(point1, point2, arguments[0][1:-1])
 
-    def copy(self, *args, **kwargs):
-        """Creates a Copy of Line3D and returns it."""
-        return Line3D(*[point.copy() for point in [self.point1, self.point2]])
-
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
         Changes vector frame_mapping and return a new Line3D.
@@ -1225,14 +1221,6 @@ class Circle2D(CircleMixin, ClosedCurve):
 
         circle = cls(frame, point1.point_distance(center), name=name)
         return circle
-
-    def copy(self, *args, **kwargs):
-        """
-        Create a copy of the arc 2d.
-
-        :return: copied circle 2d.
-        """
-        return Circle2D(self.frame.copy(), self.radius)
 
     def reverse(self):
         """Gets the circle in the reverse direction."""
@@ -2371,17 +2359,164 @@ class Ellipse2D(EllipseMixin, ClosedCurve):
         """
         return self.point_belongs(point, abs_tol)
 
+    def point_at_polar_abscissa(self, angle):
+        """
+        Given an angle as abscissa return a point on ellipse in global coordinates.
+
+        :param angle: Angle to calculate the point on ellipse.
+        :type angle: float.
+        :return: Point2D.
+        """
+        a = self.major_axis
+        b = self.minor_axis
+        local_point = volmdlr.Point2D(a * math.cos(angle), b * math.sin(angle))
+        return self.frame.local_to_global_coordinates(local_point)
+
+    def _intern_product(self, point, abscissa):
+        """
+        Return the intern product between the tangent vector on ellipse and the vector to the other point.
+
+        :param abscissa: Angle to calculate the point on ellipse.
+        :type abscissa: float.
+        :param point: Other point in global coordinates
+        :type point: Point2D.
+        :return: float
+        """
+        local_point = self.frame.global_to_local_coordinates(point)
+        a = self.major_axis
+        b = self.minor_axis
+        x = local_point.x
+        y = local_point.y
+        return (-a * x * math.sin(abscissa) + b * y * math.cos(abscissa)
+                + a * a * math.sin(abscissa) * math.cos(abscissa) - b * b * math.sin(abscissa) * math.cos(abscissa))
+
+    def _vectorial_product(self, point, abscissa):
+        """
+        Return the vectorial product between the tangent vector on ellipse and the vector to the other point.
+
+        :param abscissa: Angle to calculate the point on ellipse.
+        :type abscissa: float.
+        :param point: Other point in global coordinates
+        :type point: Point2D.
+        :return: float
+        """
+        local_point = self.frame.global_to_local_coordinates(point)
+        a = self.major_axis
+        b = self.minor_axis
+        x = local_point.x
+        y = local_point.y
+        return -a * y * math.sin(abscissa) - x * b * math.cos(abscissa) + a * b
+
+    def _bisection(self,positive_limit, negative_limit,point, function, iterations=100, error=1e-7):
+        """
+        Solve a function by bisection method.
+
+        :positive_limit: limit of domain where the function is positive.
+        :type positive_limit: float.
+        :negative_limit: limit of domain where the function is negative.
+        :type positive_limit: float.
+        :point: Point2D used as function parameter
+        :function: the function to be solved
+        :return: function's root
+        :rtype: float.
+        """
+        j=0
+        while j < iterations:
+            new_value = (positive_limit + negative_limit) / 2
+            product = function(point, new_value)
+            if product > 0:
+                positive_limit = new_value
+            else:
+                negative_limit = new_value
+            if abs(product) <= error:
+                break
+            j += 1
+        return new_value
+
+    def nearest_point(self, point):
+        """
+        Calculates the nearest point on ellipse.
+
+        :param point: Other point to calculate the point on ellipse.
+        :type point: volmdlr.Point2D.
+        :return: The point on ellipse
+        :rtype: Point2D.
+        """
+        local_point = self.frame.global_to_local_coordinates(point)
+        x = local_point.x
+        y = local_point.y
+
+        if x >= 0:
+            if y >= 0:
+                initial_angle = 0
+                final_angle = math.pi / 2
+            else:
+                initial_angle = (3 / 2) * math.pi
+                final_angle = 2 * math.pi
+        else:
+            if y > 0:
+                initial_angle = math.pi / 2
+                final_angle = math.pi
+            else:
+                initial_angle = math.pi
+                final_angle = (3 / 2) * math.pi
+
+        return self.point_at_polar_abscissa(self._bisection(initial_angle,
+                                                            final_angle, point, self._intern_product))
+
     def point_distance(self, point):
         """
         Calculates the distance between an Ellipse 2d and point 2d.
 
         :param point: Other point to calculate distance.
-        :type point: volmdlr.Point3D.
+        :type point: volmdlr.Point2D.
         :return: The distance between ellipse and point
         :rtype: float.
         """
-        start = self.point_at_abscissa(0.0)
-        return vm_common_operations.get_point_distance_to_edge(self, point, start, start)
+        point_local = self.frame.global_to_local_coordinates(point)
+        a = self.major_axis
+        b = self.minor_axis
+        x = point_local.x
+        y = point_local.y
+
+        if x >= 0:
+            initial_angle = 0
+        else:
+            initial_angle = math.pi
+
+        if y == 0 and abs(x) < (a * a - b * b) / a:
+            if x == 0:
+                return b
+            abscissa = math.acos((a * x) / (a * a - b * b))
+            ellipse_point0 = self.point_at_polar_abscissa(abscissa)
+            ellipse_point1 = self.point_at_polar_abscissa(initial_angle)
+            if ellipse_point0.point_distance(point) < ellipse_point1.point_distance(point):
+                return ellipse_point0.point_distance(point)
+            return ellipse_point1.point_distance(point)
+
+        ellipse_point_ = self.nearest_point(point)
+        return ellipse_point_.point_distance(point)
+
+    def tangent_points(self, point):
+        """
+        Calculates the points which form a tangent line between the ellipse and another point.
+
+        :param point: Other point to calculate distance.
+        :type point: volmdlr.Point2D.
+        :return: Two points on ellipse
+        :rtype: [Point2D, Point2D].
+        """
+        if self.point_inside(point) or self.point_belongs(point):
+            return [point, point]
+        a = self.major_axis
+        b = self.minor_axis
+        local_nearest_point = self.frame.global_to_local_coordinates(self.nearest_point(point))
+        nearest_angle = math.atan2(local_nearest_point.y / b, local_nearest_point.x / a)
+        point_1 = self.point_at_polar_abscissa(self._bisection(nearest_angle + math.pi,
+                                                               nearest_angle, point, self._vectorial_product))
+        point_2 = self.point_at_polar_abscissa(self._bisection(nearest_angle - math.pi,
+                                                               nearest_angle, point, self._vectorial_product))
+        return [point_1, point_2]
 
     def line_intersections(self, line: 'Line2D', abs_tol: float = 1e-6):
         """
@@ -3262,8 +3397,6 @@ class ParabolaMixin(Curve):
         lineseg1 = _line_class(point1, point1 + tangent_vector1)
         lineseg2 = _line_class(point2, point2 + tangent_vector2)
         line_inters = lineseg1.line_intersections(lineseg2)
-        if not line_inters:
-            print(True)
         bezier_parabola = _bspline_class(2, [point1, line_inters[0], point2])
         return bezier_parabola
 

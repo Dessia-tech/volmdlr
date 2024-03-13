@@ -192,6 +192,14 @@ class TestCylindricalFace3D(unittest.TestCase):
                 # for curve_solution, expected_result in zip(list_curves, expected_results[i][j]):
                 #     self.assertAlmostEqual(curve_solution.length(), expected_result, 6)
 
+    def test_cylindricalface_intersections(self):
+        face1, face2 = DessiaObject.from_json(os.path.join(folder,
+            'test_cylindrical_face_intersections.json')).primitives
+        intersections = face1.face_intersections(face2)
+        self.assertTrue(len(intersections), 1)
+        self.assertAlmostEqual(intersections[0].primitives[0].length(), 0.004773175304187915)
+        self.assertTrue(isinstance(intersections[0].primitives[0], edges.ArcEllipse3D))
+
     def test_normal_at_point(self):
         cylindricalsurface = surfaces.CylindricalSurface3D(volmdlr.OXYZ, 0.15)
         cylindricalface = faces.CylindricalFace3D.from_surface_rectangular_cut(
@@ -201,11 +209,22 @@ class TestCylindricalFace3D(unittest.TestCase):
 
         normal = cylindricalface.normal_at_point(point)
         self.assertTrue(normal.is_close(volmdlr.Vector3D(-1, 0, 0)))
-      
+
     def test_face_inside(self):
         face1, face2 = DessiaObject.from_json(
             os.path.join(folder, "test_cylindricalface_face_inside.json")).primitives
         self.assertTrue(face1.face_inside(face2))
+
+    def test_set_operations_new_faces(self):
+        face, intersections = DessiaObject.from_json(
+            os.path.join(folder, 'test_set_operations_newfaces_290224_3.json')).primitives
+        new_faces = face.set_operations_new_faces({face: intersections})
+        self.assertEqual(len(new_faces), 5)
+        expected_areas = [0.005812103536328831, 0.005812206548041761, 0.009068627125512702,
+                          0.00906862712551361, 0.03348981924655232]
+        for i, area in enumerate(sorted([face.area() for face in new_faces])):
+            self.assertAlmostEqual(area, expected_areas[i])
+
 
 
 if __name__ == '__main__':
