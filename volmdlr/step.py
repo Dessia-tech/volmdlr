@@ -27,6 +27,7 @@ import volmdlr.wires
 from volmdlr.utils import step_reader
 from volmdlr.utils.step_reader import (STEP_TO_VOLMDLR, STEP_REPRESENTATION_ENTITIES,
                                        WIREFRAME_STEP_REPRESENTATION_ENTITIES)
+from volmdlr import composite_shapes
 
 
 class StepFunction:
@@ -731,7 +732,7 @@ class Step(dc.DessiaObject):
                     if not list_primitives:
                         none_primitives.add(instantiate_id)
 
-                    volmdlr_object = volmdlr.core.Assembly(list_primitives, assembly_positions, assembly_frame,
+                    volmdlr_object = composite_shapes.Assembly(list_primitives, assembly_positions, assembly_frame,
                                                            name=name)
                     object_dict[instantiate_id] = volmdlr_object
                     last_error = None

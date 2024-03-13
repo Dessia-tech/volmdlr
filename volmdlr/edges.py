@@ -39,6 +39,7 @@ from volmdlr import get_minimum_distance_points_lines, PATH_ROOT
 import volmdlr.utils.common_operations as vm_common_operations
 import volmdlr.utils.intersections as vm_utils_intersections
 from volmdlr.core import EdgeStyle
+from volmdlr.utils import step_writer
 # pylint: disable=arguments-differ
 
 
@@ -2266,7 +2267,7 @@ class BSplineCurve2D(BSplineCurve):
             point_id += 1
 
         content += f"#{point_id} = B_SPLINE_CURVE_WITH_KNOTS('{self.name}',{self.degree}," \
-                   f"({volmdlr.core.step_ids_to_str(points_ids)})," \
+                   f"({step_writer.step_ids_to_str(points_ids)})," \
                    f".UNSPECIFIED.,.F.,.F.,{tuple(self.knot_multiplicities)},{tuple(self.knots)},.UNSPECIFIED.);\n"
         return content, point_id + 1
 
@@ -5307,7 +5308,7 @@ class BSplineCurve3D(BSplineCurve):
 
         curve_id = point_id
         content += f"#{curve_id} = B_SPLINE_CURVE_WITH_KNOTS('{self.name}',{self.degree}," \
-                   f"({volmdlr.core.step_ids_to_str(points_ids)})," \
+                   f"({step_writer.step_ids_to_str(points_ids)})," \
                    f".UNSPECIFIED.,.F.,.F.,{tuple(self.knot_multiplicities)},{tuple(self.knots)}," \
                    f".UNSPECIFIED.);\n"
 
