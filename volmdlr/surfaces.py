@@ -2768,7 +2768,7 @@ class CylindricalSurface3D(UPeriodicalSurface):
         :return: list of intersecting curves
         """
         distance_plane_cylinder_axis = plane3d.point_distance(self.frame.origin)
-        if distance_plane_cylinder_axis == self.radius:
+        if abs(distance_plane_cylinder_axis - self.radius) < 1e-8:
             point = plane3d.point_projection(self.frame.origin)
             return [curves.Line3D.from_point_and_vector(point, self.frame.w)]
         if distance_plane_cylinder_axis > self.radius:
