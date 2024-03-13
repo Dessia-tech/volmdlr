@@ -4413,7 +4413,8 @@ class Contour3D(ContourMixin, Wire3D):
         :param offset: translation vector.
         :return: A new translated Contour3D.
         """
-        new_edges = [edge.translation(offset) for edge in
+        memo = {}
+        new_edges = [edge.translation(offset, memo=memo) for edge in
                      self.primitives]
         return Contour3D(new_edges, self.name)
 

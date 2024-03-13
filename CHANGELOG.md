@@ -16,7 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### edges.py
 - 
 #### wires.py
-- 
+- translation: Add memo dictionary to keep data sctructure when perfoming translations.
+
 #### surfaces.py
 - SphericalSurface3D: is_coincident
 - BSplineSurface3D: is_coincident

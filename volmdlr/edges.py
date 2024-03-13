@@ -1582,21 +1582,31 @@ class BSplineCurve(Edge):
             u = b
         return u
 
-    def translation(self, offset: Union[volmdlr.Vector2D, volmdlr.Vector3D]):
+    def translation(self, offset: Union[volmdlr.Vector2D, volmdlr.Vector3D], memo=None):
         """
         Translates the B-spline curve.
 
         :param offset: The translation vector
         :type offset: Union[:class:`volmdlr.Vector2D`,
             :class:`volmdlr.Vector3D`]
+        :param memo: (Optional) A dictionary that keeps track of elements that have already been transformed
+            and also save the current transformation. This is useful when transforming data structures where data
+            is intended to be shared between primitives.
         :return: A new translated BSplineCurve
         :rtype: :class:`volmdlr.edges.BSplineCurve`
         """
-        control_points = [point.translation(offset)
-                          for point in self.control_points]
-        return self.__class__(self.degree, control_points,
-                              self.knot_multiplicities, self.knots,
-                              self.weights)
+        control_points = [point.translation(offset) for point in self.control_points]
+        if memo is None:
+            return self.__class__(self.degree, control_points,
+                                  self.knot_multiplicities, self.knots,
+                                  self.weights)
+        if id(self) not in memo:
+            control_points[0] = self.start.translation(offset, memo=memo)
+            control_points[-1] = self.end.translation(offset, memo=memo)
+            memo[id(self)] = self.__class__(self.degree, control_points,
+                                            self.knot_multiplicities, self.knots,
+                                            self.weights)
+        return memo[id(self)]
 
     def point_belongs(self, point: Union[volmdlr.Point2D, volmdlr.Point3D], abs_tol: float = 1e-6):
         """
@@ -2643,15 +2653,25 @@ class LineSegment2D(LineSegment):
         return LineSegment2D(start=self.start.rotation(center, angle), end=self.end.rotation(center, angle),
                              reference_path=self.reference_path, name=self.name)
 
-    def translation(self, offset: volmdlr.Vector2D):
+    def translation(self, offset: volmdlr.Vector2D, memo=None):
         """
         LineSegment2D translation.
 
         :param offset: translation vector.
+        :param memo: (Optional) A dictionary that keeps track of elements that have already been transformed
+            and also save the current transformation. This is useful when transforming data structures where data
+            is intended to be shared between primitives.
         :return: A new translated LineSegment2D.
         """
-        return LineSegment2D(start=self.start.translation(offset), end=self.end.translation(offset),
-                             reference_path=self.reference_path, name=self.name)
+        if memo is None:
+            return LineSegment2D(start=self.start.translation(offset),
+                                 end=self.end.translation(offset),
+                                 reference_path=self.reference_path, name=self.name)
+        if id(self) not in memo:
+            memo[id(self)] = LineSegment2D(start=self.start.translation(offset, memo=memo),
+                                           end=self.end.translation(offset, memo=memo),
+                                           reference_path=self.reference_path, name=self.name)
+        return memo[id(self)]
 
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
         """
@@ -3537,19 +3557,24 @@ class Arc2D(ArcMixin, Edge):
             name=self.name,
         )
 
-    def translation(self, offset: volmdlr.Vector2D):
+    def translation(self, offset: volmdlr.Vector2D, memo=None):
         """
         Arc2D translation.
 
         :param offset: translation vector.
+        :param memo: (Optional) A dictionary that keeps track of elements that have already been transformed
+            and also save the current transformation. This is useful when transforming data structures where data
+            is intended to be shared between primitives.
         :return: A new translated Arc2D.
         """
-        return Arc2D(
-            circle=self.circle.translation(offset),
-            start=self.start.translation(offset),
-            end=self.end.translation(offset),
-            name=self.name,
-        )
+        if memo is None:
+            return Arc2D(circle=self.circle.translation(offset),
+                         start=self.start.translation(offset), end=self.end.translation(offset), name=self.name)
+        if id(self) not in memo:
+            memo[id(self)] = Arc2D(circle=self.circle.translation(offset, memo=memo),
+                                   start=self.start.translation(offset, memo=memo),
+                                   end=self.end.translation(offset, memo=memo), name=self.name)
+        return memo[id(self)]
 
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
         """
@@ -3764,11 +3789,23 @@ class FullArc2D(FullArcMixin, Arc2D):
         new_start_end = self.start.rotation(center, angle)
         return FullArc2D(circle=new_circle, start_end=new_start_end, reference_path=self.reference_path, name=self.name)
 
-    def translation(self, offset: volmdlr.Vector2D):
-        """Translation of a full arc 2D."""
-        new_circle = self.circle.translation(offset)
-        new_start_end = self.start.translation(offset)
-        return FullArc2D(circle=new_circle, start_end=new_start_end, reference_path=self.reference_path, name=self.name)
+    def translation(self, offset: volmdlr.Vector2D, memo=None):
+        """
+        Translation of a full arc 2D.
+
+        :param offset: translation vector.
+        :param memo: (Optional) A dictionary that keeps track of elements that have already been transformed
+            and also save the current transformation. This is useful when transforming data structures where data
+            is intended to be shared between primitives.
+        """
+        if memo is None:
+            return FullArc2D(circle=self.circle.translation(offset), start_end=self.start.translation(offset),
+                             reference_path=self.reference_path, name=self.name)
+        if id(self) not in memo:
+            memo[id(self)] = FullArc2D(circle=self.circle.translation(offset, memo=memo),
+                                       start_end=self.start.translation(offset, memo=memo),
+                                       reference_path=self.reference_path, name=self.name)
+        return memo[id(self)]
 
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
         """
@@ -4302,16 +4339,25 @@ class ArcEllipse2D(ArcEllipseMixin, Edge):
                             self.start.frame_mapping(frame, side),
                             self.end.frame_mapping(frame, side))
 
-    def translation(self, offset: volmdlr.Vector2D):
+    def translation(self, offset: volmdlr.Vector2D, memo=None):
         """
         Translates the Arc ellipse given an offset vector.
 
         :param offset: offset vector
+        :param memo: (Optional) A dictionary that keeps track of elements that have already been transformed
+            and also save the current transformation. This is useful when transforming data structures where data
+            is intended to be shared between primitives.
         :return: new translated arc ellipse 2d.
         """
-        return ArcEllipse2D(self.ellipse.translation(offset),
-                            self.start.translation(offset),
-                            self.end.translation(offset))
+        if memo is None:
+            return ArcEllipse2D(self.ellipse.translation(offset),
+                                self.start.translation(offset),
+                                self.end.translation(offset))
+        if id(self) not in memo:
+            memo[id(self)] = ArcEllipse2D(self.ellipse.translation(offset, memo=memo),
+                                          self.start.translation(offset, memo=memo),
+                                          self.end.translation(offset, memo=memo))
+        return memo[id(self)]
 
     def straight_line_point_belongs(self, point):
         """
@@ -4518,16 +4564,24 @@ class FullArcEllipse2D(FullArcEllipse, ArcEllipse2D):
         return FullArcEllipse2D(self.ellipse.frame_mapping(frame, side),
                                 self.start_end.frame_mapping(frame, side))
 
-    def translation(self, offset: volmdlr.Vector2D):
+    def translation(self, offset: volmdlr.Vector2D, memo=None):
         """
         Full ArcEllipse 2D translation.
 
         :param offset: translation vector.
         :type offset: volmdlr.Vector2D
+        :param memo: (Optional) A dictionary that keeps track of elements that have already been transformed
+            and also save the current transformation. This is useful when transforming data structures where data
+            is intended to be shared between primitives.
         :return: A new translated FullArcEllipse2D.
         :rtype: FullArcEllipse2D
         """
-        return FullArcEllipse2D(self.ellipse.translation(offset), self.start_end.translation(offset), self.name)
+        if memo is None:
+            return FullArcEllipse2D(self.ellipse.translation(offset), self.start_end.translation(offset), self.name)
+        if id(self) not in memo:
+            memo[id(self)] = FullArcEllipse2D(self.ellipse.translation(offset, memo=memo),
+                                              self.start_end.translation(offset, memo=memo), self.name)
+        return memo[id(self)]
 
     def abscissa(self, point: Union[volmdlr.Point2D, volmdlr.Point3D], tol: float = 1e-6):
         """
@@ -4697,15 +4751,24 @@ class LineSegment3D(LineSegment):
 
         return False
 
-    def translation(self, offset: volmdlr.Vector3D):
+    def translation(self, offset: volmdlr.Vector3D, memo=None):
         """
         LineSegment3D translation.
 
         :param offset: translation vector
+        :param memo: (Optional) A dictionary that keeps track of elements that have already been transformed
+            and also save the current transformation. This is useful when transforming data structures where data
+            is intended to be shared between primitives.
         :return: A new translated LineSegment3D
         """
-        return LineSegment3D(start=self.start.translation(offset), end=self.end.translation(offset),
-                             reference_path=self.reference_path, name=self.name)
+        if memo is None:
+            return LineSegment3D(start=self.start.translation(offset), end=self.end.translation(offset),
+                                 reference_path=self.reference_path, name=self.name)
+        if id(self) not in memo:
+            memo[id(self)] = LineSegment3D(start=self.start.translation(offset, memo=memo),
+                                           end=self.end.translation(offset, memo=memo),
+                                           reference_path=self.reference_path, name=self.name)
+        return memo[id(self)]
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
@@ -5827,17 +5890,24 @@ class Arc3D(ArcMixin, Edge):
         new_end = self.end.rotation(center, axis, angle)
         return Arc3D(circle, new_start, new_end, name=self.name)
 
-    def translation(self, offset: volmdlr.Vector3D):
+    def translation(self, offset: volmdlr.Vector3D, memo=None):
         """
         Arc3D translation.
 
         :param offset: translation vector.
+        :param memo: (Optional) A dictionary that keeps track of elements that have already been transformed
+            and also save the current transformation. This is useful when transforming data structures where data
+            is intended to be shared between primitives.
         :return: A new translated Arc3D.
         """
-        new_circle = self.circle.translation(offset)
-        new_start = self.start.translation(offset)
-        new_end = self.end.translation(offset)
-        return Arc3D(new_circle, new_start, new_end, name=self.name)
+        if memo is None:
+            return Arc3D(self.circle.translation(offset), self.start.translation(offset),
+                         self.end.translation(offset), name=self.name)
+        if id(self) not in memo:
+            memo[id(self)] = Arc3D(self.circle.translation(offset, memo=memo),
+                                   self.start.translation(offset, memo=memo),
+                                   self.end.translation(offset, memo=memo), name=self.name)
+        return memo[id(self)]
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
@@ -6268,18 +6338,25 @@ class FullArc3D(FullArcMixin, Arc3D):
         new_circle = self.circle.rotation(center, axis, angle)
         return FullArc3D(new_circle, new_start_end, name=self.name)
 
-    def translation(self, offset: volmdlr.Vector3D):
+    def translation(self, offset: volmdlr.Vector3D, memo=None):
         """
         Translates the FullArc3D object by a specified offset.
 
         :param offset: The translation offset vector.
         :type offset: (volmdlr.Vector3D).
+        :param memo: (Optional) A dictionary that keeps track of elements that have already been transformed
+            and also save the current transformation. This is useful when transforming data structures where data
+            is intended to be shared between primitives.
         :return: A new FullArc3D object that is the result of the translation.
         :rtype: FullArc3D.
         """
-        new_start_end = self.start.translation(offset)
-        new_circle = self.circle.translation(offset)
-        return FullArc3D(new_circle, new_start_end, name=self.name)
+        if memo is None:
+            return FullArc3D(circle=self.circle.translation(offset), start_end=self.start.translation(offset),
+                             name=self.name)
+        if id(self) not in memo:
+            memo[id(self)] = FullArc3D(circle=self.circle.translation(offset, memo=memo),
+                                       start_end=self.start.translation(offset, memo=memo), name=self.name)
+        return memo[id(self)]
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
@@ -6639,17 +6716,24 @@ class ArcEllipse3D(ArcEllipseMixin, Edge):
         new_ellipse3d = self.ellipse.rotation(center, axis, angle)
         return ArcEllipse3D(new_ellipse3d, new_start, new_end)
 
-    def translation(self, offset: volmdlr.Vector3D):
+    def translation(self, offset: volmdlr.Vector3D, memo=None):
         """
         ArcEllipse3D translation.
 
         :param offset: translation vector.
+        :param memo: (Optional) A dictionary that keeps track of elements that have already been transformed
+            and also save the current transformation. This is useful when transforming data structures where data
+            is intended to be shared between primitives.
         :return: A new translated ArcEllipse3D.
         """
-        new_start = self.start.translation(offset)
-        new_end = self.end.translation(offset)
-        new_ellipse3d = self.ellipse.translation(offset)
-        return ArcEllipse3D(new_ellipse3d, new_start, new_end)
+        if memo is None:
+            return ArcEllipse3D(self.ellipse.translation(offset), self.start.translation(offset),
+                                self.end.translation(offset))
+        if id(self) not in memo:
+            memo[id(self)] = ArcEllipse3D(self.ellipse.translation(offset, memo=memo),
+                                          self.start.translation(offset, memo=memo),
+                                          self.end.translation(offset, memo=memo))
+        return memo[id(self)]
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
@@ -6836,16 +6920,24 @@ class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
         return FullArcEllipse3D(self.ellipse.frame_mapping(frame, side),
                                 self.start_end.frame_mapping(frame, side), name=self.name)
 
-    def translation(self, offset: volmdlr.Vector3D):
+    def translation(self, offset: volmdlr.Vector3D, memo=None):
         """
         Ellipse3D translation.
 
         :param offset: translation vector.
         :type offset: volmdlr.Vector3D
+        :param memo: (Optional) A dictionary that keeps track of elements that have already been transformed
+            and also save the current transformation. This is useful when transforming data structures where data
+            is intended to be shared between primitives.
         :return: A new translated FullArcEllipse3D.
         :rtype: FullArcEllipse3D
         """
-        return FullArcEllipse3D(self.ellipse.translation(offset), self.start_end.translation(offset), self.name)
+        if memo is None:
+            return FullArcEllipse3D(self.ellipse.translation(offset), self.start_end.translation(offset))
+        if id(self) not in memo:
+            memo[id(self)] = FullArcEllipse3D(self.ellipse.translation(offset, memo=memo),
+                                              self.start_end.translation(offset, memo=memo))
+        return memo[id(self)]
 
     def abscissa(self, point: volmdlr.Point3D, tol: float = 1e-6):
         """
