@@ -111,7 +111,7 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def __hash__(self):
         """Computes the hash."""
-        return hash(self.surface3d) + hash(self.surface2d)
+        return hash((self.surface3d, self.surface2d))
 
     def __eq__(self, other_):
         """Computes the equality to another face."""
@@ -264,7 +264,8 @@ class Face3D(volmdlr.core.Primitive3D):
 
         :param surface: Surface3D where the face is defined.
         :param contours3d: List of 3D contours representing the face's BREP.
-        :param name: the name to inject in the new face
+        :param name: the name to inject in the new face.
+        :param tol: tolerance.
         """
         outer_contour3d, inner_contours3d = None, []
         if len(contours3d) == 1:
@@ -275,7 +276,8 @@ class Face3D(volmdlr.core.Primitive3D):
 
         elif len(contours3d) > 1:
             outer_contour2d, inner_contours2d, outer_contour3d, \
-                inner_contours3d, primitives_mapping = cls.from_contours3d_with_inner_contours(surface, contours3d)
+                inner_contours3d, primitives_mapping = cls.from_contours3d_with_inner_contours(surface, contours3d,
+                                                                                               tol)
         else:
             raise ValueError('Must have at least one contour')
         if ((not outer_contour2d) or (not all(outer_contour2d.primitives)) or
@@ -295,7 +297,7 @@ class Face3D(volmdlr.core.Primitive3D):
         return face
 
     @staticmethod
-    def from_contours3d_with_inner_contours(surface, contours3d):
+    def from_contours3d_with_inner_contours(surface, contours3d, abs_tol: float = 1e-6):
         """Helper function to class."""
         outer_contour2d = None
         outer_contour3d = None
@@ -310,7 +312,7 @@ class Face3D(volmdlr.core.Primitive3D):
 
         check_contours = [not contour2d.is_ordered(tol=1e-2) for contour2d in contours2d]
         if (surface.x_periodicity or surface.y_periodicity) and sum(1 for value in check_contours if value) >= 2:
-            outer_contour2d, inner_contours2d = surface.connect_contours(contours2d[0], contours2d[1:])
+            outer_contour2d, inner_contours2d = surface.connect_contours(contours2d[0], contours2d[1:], abs_tol)
             outer_contour3d, primitives_mapping = surface.contour2d_to_3d(outer_contour2d,
                                                                           return_primitives_mapping=True)
             inner_contours3d = []

@@ -50,6 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 
 
 ### Changed
+- Force wires to share same points between two edges.
 
 #### curves.py
 - Ellipse2D: point_distance optimization

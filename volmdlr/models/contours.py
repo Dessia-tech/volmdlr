@@ -208,3 +208,15 @@ knots = [0., 0.5, 1.]
 bspline = edges.BSplineCurve3D(3, control_points, knot_multiplicities, knots)
 
 contour3d_all_edges = wires.Contour3D([arc, linesegment, arc_ellipse, bspline])
+
+point1 = volmdlr.Point3D(1.0, 0.0, 0.0)
+point2 = volmdlr.Point3D(-1.0, 0.0, 0.0)
+circle = curves.Circle3D(volmdlr.OXYZ, 1)
+arc1 = edges.Arc3D(circle, point1, point2)
+arc2 = edges.Arc3D(circle, point2, point1)
+contour3d_two_arcs = wires.Contour3D([arc1, arc2])
+
+ellipse = curves.Ellipse3D(frame=volmdlr.OXYZ, major_axis=1.0, minor_axis=0.5)
+arc1 = edges.ArcEllipse3D(ellipse, point1, point2)
+arc2 = edges.ArcEllipse3D(ellipse, point2, point1)
+contour3d_two_arcs_of_ellipse = wires.Contour3D([arc1, arc2])

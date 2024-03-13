@@ -2440,7 +2440,7 @@ class LineSegment2D(LineSegment):
         LineSegment.__init__(self, start, end, reference_path=reference_path, name=name)
 
     def __hash__(self):
-        return hash(('linesegment2d', self.start, self.end, self.line))
+        return hash(('linesegment2d', self.start, self.end))
 
     def _data_hash(self):
         return self.start._data_hash() + self.end._data_hash()
