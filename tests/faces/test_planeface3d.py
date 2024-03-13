@@ -206,6 +206,11 @@ class TestPlaneFace3D(unittest.TestCase):
         self.assertEqual(len(intersections), 1)
         self.assertAlmostEqual(intersections[0].length(), 0.0014548006826744287)
 
+        planeface, cylface = dessia_common.core.DessiaObject.from_json(
+            os.path.join(folder, 'test_planeface_cylface_intersections_280224_2.json')).primitives
+        intersections = planeface.face_intersections(cylface)
+        self.assertEqual(len(intersections), 1)
+        self.assertAlmostEqual(intersections[0].length(), 0.008184355121239877)
 
 
     def test_conical_face_intersections(self):
