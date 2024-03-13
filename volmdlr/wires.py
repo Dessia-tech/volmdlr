@@ -2356,10 +2356,13 @@ class Contour2D(ContourMixin, Wire2D):
 
         for point1, point2 in zip(sorted_points[:-1], sorted_points[1:]):
             closing_line = volmdlr.edges.LineSegment2D(point1, point2)
+
             if not contour_to_cut.point_inside(closing_line.middle_point()):
                 continue
+
             closing_contour = Contour2D([closing_line])
             contour1, contour2 = contour_to_cut.get_divided_contours(point1, point2, closing_contour)
+
             if sorted_points.index(point1) + 2 <= len(sorted_points) - 1:
                 if contour1.point_belongs(sorted_points[sorted_points.index(point1) + 2]):
                     contour_to_cut = contour1
