@@ -2041,7 +2041,7 @@ class ContourMixin(WireMixin):
         """
         Returns True if all connected edges share the same vertex and False otherwise.
 
-        This a special case for degenerated for contours found in parametric space or in boolean operations.
+        This a special case for degenerated contours found in parametric space or in boolean operations.
         """
         if len(self.primitives) > 1:
             return all(prim2.start is prim1.end for prim1, prim2 in zip(self.primitives[:-1], self.primitives[1:]))
