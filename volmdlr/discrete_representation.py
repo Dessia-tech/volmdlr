@@ -4060,45 +4060,43 @@ class EncodedOctreeBasedVoxelization(Voxelization):
         :return: A dictionary where the keys are voxel sizes and the values are sets of voxel centers.
         :rtype: dict[float, set[tuple[float, float, float]]]
         """
-        return self._get_non_homogeneous_leaf_centers(0, self._root_voxel_size, self._root_center, self._octree)
+        return self._get_non_homogeneous_leaf_centers(0, self._root_voxel_size, self._root_center, 0)[0]
 
     def _get_non_homogeneous_leaf_centers(
-        self, current_depth: int, current_size: float, current_center: _Point3D, current_octree
-    ) -> Dict[float, Set[_Point3D]]:
+        self, current_depth: int, current_size: float, current_center: _Point3D, current_index: int
+    ) -> Tuple[Dict[float, Set[_Point3D]], int]:
         """
         Recursive method to extract all the non-homogeneous voxel centers.
 
         This method maximize the voxel size without any less of information.
 
         :return: A dictionary where the keys are voxel sizes and the values are sets of voxel centers.
-        :rtype: dict[float, set[tuple[float, float, float]]]
         """
         centers_by_voxel_size = {}
+        next_idx = current_index + 2
 
-        if current_depth == self._octree_depth:
-            # Return leaf nodes
-            centers_by_voxel_size[current_size] = {current_center}
+        half_size = round_to_digits(current_size / 2, DECIMALS)
 
-        else:
-            half_size = round_to_digits(current_size / 2, DECIMALS)
+        for i in range(2):
+            for j in range(2):
+                for k in range(2):
+                    # if the child is in the octree
+                    if self._octree[current_index] & (1 << i * 4 + j * 2 + k):
+                        # calculate the center of the sub-voxel
+                        sub_voxel_center = round_point_3d_to_digits(
+                            (
+                                current_center[0] + (i - 0.5) * half_size,
+                                current_center[1] + (j - 0.5) * half_size,
+                                current_center[2] + (k - 0.5) * half_size,
+                            ),
+                            DECIMALS,
+                        )
 
-            for i in range(2):
-                for j in range(2):
-                    for k in range(2):
-                        # if it is the octree
-                        if current_octree[i * 4 + j * 2 + k]:
-                            # calculate the center of the sub-voxel
-                            sub_voxel_center = round_point_3d_to_digits(
-                                (
-                                    current_center[0] + (i - 0.5) * half_size,
-                                    current_center[1] + (j - 0.5) * half_size,
-                                    current_center[2] + (k - 0.5) * half_size,
-                                ),
-                                DECIMALS,
-                            )
+                        # if the child is not a leaf
+                        if self._octree[current_index + 1] & (1 << i * 4 + j * 2 + k):
                             # Recursive process
-                            sub_centers = self._get_non_homogeneous_leaf_centers(
-                                current_depth + 1, half_size, sub_voxel_center, current_octree[i * 4 + j * 2 + k]
+                            sub_centers, next_idx = self._get_non_homogeneous_leaf_centers(
+                                current_depth + 1, half_size, sub_voxel_center, next_idx
                             )
 
                             # Merge sub-centers into the result dictionary, keeping track of voxel sizes
@@ -4107,12 +4105,13 @@ class EncodedOctreeBasedVoxelization(Voxelization):
                                     centers_by_voxel_size[size] = set()
                                 centers_by_voxel_size[size].update(sub_voxel_centers)
 
-            if len(centers_by_voxel_size.get(half_size, [])) == 8:
-                # Merge voxels if possible
-                del centers_by_voxel_size[half_size]
-                centers_by_voxel_size[current_size] = {current_center}
+                        # if the child
+                        else:
+                            if half_size not in centers_by_voxel_size:
+                                centers_by_voxel_size[half_size] = set()
+                            centers_by_voxel_size[half_size].add(sub_voxel_center)
 
-        return centers_by_voxel_size
+        return centers_by_voxel_size, next_idx
 
     def get_inner_growing_voxel_centers(
         self, layers_minimal_thickness: float, layer_dict: Dict[_Point3D, float] = None
