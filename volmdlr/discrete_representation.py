@@ -4077,6 +4077,9 @@ class EncodedOctreeBasedVoxelization(Voxelization):
 
         half_size = round_to_digits(current_size / 2, DECIMALS)
 
+        if self._octree[current_index] == 255 and self._octree[current_index + 1] == 0:
+            print("should not happen")
+
         for i in range(2):
             for j in range(2):
                 for k in range(2):

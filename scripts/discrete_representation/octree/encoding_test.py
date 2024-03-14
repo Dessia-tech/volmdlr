@@ -2,6 +2,7 @@ import time
 
 from volmdlr.primitives3d import Block
 from volmdlr.discrete_representation import MatrixBasedVoxelization, EncodedOctreeBasedVoxelization
+from volmdlr.core import VolumeModel
 import volmdlr
 
 block = Block(volmdlr.OXYZ)
@@ -18,3 +19,11 @@ t2 = time.perf_counter()
 
 print(f"Octree: {t1 - t0:.3f} s ; {octree._octree.nbytes / 1000} kB")
 print(f"Matrix: {t2 - t1:.3f} s ; {matrix.matrix.nbytes / 1000} kB")
+
+a = octree.to_non_homogeneous_point_based_voxelizations()
+
+octree_old = matrix.to_octree_based_voxelization()
+b = octree_old.to_non_homogeneous_point_based_voxelizations()
+
+volume_model = VolumeModel([_.to_mesh() for _ in a])
+volume_model.babylonjs()

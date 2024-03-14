@@ -136,7 +136,7 @@ def _encode_from_mesh_data(
                                 depth=depth + 1,
                                 max_depth=max_depth,
                             )
-                            if sub_voxel_array.size() > 2 or sub_voxel_array[0] != 15:
+                            if sub_voxel_array.size() > 2 or sub_voxel_array[0] != 255:
                                 octree_array[1] |= 1 << i * 4 + j * 2 + k
                                 octree_array.insert(octree_array.end(), sub_voxel_array.begin(), sub_voxel_array.end())
 
