@@ -26,7 +26,7 @@ _Segment2D = Tuple[_Point2D, _Point2D]
 _Triangle2D = Tuple[_Point2D, _Point2D, _Point2D]
 
 
-def encode(vertices: NDArray[float], faces: NDArray[int], voxel_size: float) -> NDArray[np.uint8]:
+def encode(vertices: NDArray[float], faces: NDArray[int], voxel_size: float) -> Tuple[NDArray[np.uint8], _Point3D, int]:
     """
     Encode an octree from mesh data.
 
@@ -59,10 +59,10 @@ def encode(vertices: NDArray[float], faces: NDArray[int], voxel_size: float) -> 
     sizes = [_round_to_digits(voxel_size * 2**i, 9) for i in range(max_depth, -1, -1)]
     sizes.append(round_to_digits(voxel_size * 1 / 2, 9))
 
-    return np.asarray(
+    return (np.asarray(
         _encode_from_mesh_data(vertices, faces, list(range(len(faces))), center, sizes, 0, max_depth),
         np.uint8,
-    )
+    ), center, max_depth)
 
 
 @cython.cfunc
