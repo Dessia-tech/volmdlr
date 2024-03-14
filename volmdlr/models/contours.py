@@ -9,7 +9,7 @@ Created on Thu Oct 20 2022.
 # %% Libraries
 import volmdlr
 from volmdlr import curves, edges, wires
-
+import volmdlr.models.edges
 # %% Contour2d_1
 
 primitives = [
@@ -156,7 +156,7 @@ points2d = [volmdlr.Point2D(-1, 1), volmdlr.Point2D(2, 2), volmdlr.Point2D(-2, -
 bspline = edges.BSplineCurve2D(3, points2d, knot_multiplicities=[4, 4], knots=[0.0, 1.0])
 contour2_unittest = wires.Contour2D([bspline, line_segment1, arc, line_segment2, line_segment3, line_segment4])
 unordered_contour2_unittest = wires.Contour2D([line_segment2, bspline.reverse(), arc.reverse(),
-                                                          line_segment1, line_segment3, line_segment4])
+                                              line_segment1, line_segment3, line_segment4])
 
 invalid_unordered_contour2_unittest = wires.Contour2D([line_segment2, bspline.reverse(), arc.reverse(),
                                                        line_segment1, line_segment3, line_segment4,
@@ -167,19 +167,7 @@ unordered_wire_unittest = wires.Wire2D([line_segment2, bspline.reverse(), arc.re
                                         line_segment1, line_segment3])
 
 # Contour3D with all edges.
-control_points = [volmdlr.Point3D(0, 3, 0),
-                  volmdlr.Point3D(3, 2, 1),
-                  volmdlr.Point3D(5, -1, 4),
-                  volmdlr.Point3D(5, -4, 0),
-                  volmdlr.Point3D(-1, -2, -3),
-                  volmdlr.Point3D(-3, 4, 1)]
-knots = [0.0, 1.0]
-knot_multiplicities = [6, 6]
-bspline_curve3d = edges.BSplineCurve3D(degree=5, control_points=control_points,
-                                       knot_multiplicities=knot_multiplicities,
-                                       knots=knots,
-                                       weights=None,
-                                       name='B Spline Curve 3D 1')
+bspline_curve3d = volmdlr.models.edges.bspline_curve3d()
 lineseg1 = edges.LineSegment3D(volmdlr.Point3D(3, 3, 2), bspline_curve3d.start)
 lineseg2 = edges.LineSegment3D(bspline_curve3d.end, volmdlr.Point3D(-3, -3, 0))
 arc = edges.Arc3D.from_3_points(volmdlr.Point3D(-3, -3, 0),
@@ -220,3 +208,15 @@ knots = [0., 0.5, 1.]
 bspline = edges.BSplineCurve3D(3, control_points, knot_multiplicities, knots)
 
 contour3d_all_edges = wires.Contour3D([arc, linesegment, arc_ellipse, bspline])
+
+point1 = volmdlr.Point3D(1.0, 0.0, 0.0)
+point2 = volmdlr.Point3D(-1.0, 0.0, 0.0)
+circle = curves.Circle3D(volmdlr.OXYZ, 1)
+arc1 = edges.Arc3D(circle, point1, point2)
+arc2 = edges.Arc3D(circle, point2, point1)
+contour3d_two_arcs = wires.Contour3D([arc1, arc2])
+
+ellipse = curves.Ellipse3D(frame=volmdlr.OXYZ, major_axis=1.0, minor_axis=0.5)
+arc1 = edges.ArcEllipse3D(ellipse, point1, point2)
+arc2 = edges.ArcEllipse3D(ellipse, point2, point1)
+contour3d_two_arcs_of_ellipse = wires.Contour3D([arc1, arc2])
