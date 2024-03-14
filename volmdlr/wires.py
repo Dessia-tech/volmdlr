@@ -1892,14 +1892,10 @@ class ContourMixin(WireMixin):
         Return extremities points of a list of points on a contour.
 
         """
-        # TODO: rewrite this awful code!
         points = []
         primitives = self.primitives
         for prim in primitives:
-            pts = []
-            for point in list_p:  # due to errors
-                if prim.point_belongs(point):
-                    pts.append(point)
+            pts = [point for point in list_p if prim.point_belongs(point)]
             if len(pts) == 1:
                 points.append(pts[0])
                 break
@@ -1907,17 +1903,13 @@ class ContourMixin(WireMixin):
                 points.append(prim.start.nearest_point(pts))
                 break
 
-        for i in range(len(primitives) - 1, -1, -1):
-            pts = []
-            for point in list_p:  # due to errors
-                if primitives[i].point_belongs(point):
-                    pts.append(point)
-            if len(pts) == 1:
-                if not pts[0].in_list(points):
-                    points.append(pts[0])
-                    break
-            elif len(pts) > 1:
-                point = primitives[i].end.nearest_point(pts)
+        for prim in reversed(primitives):
+            pts = [point for point in list_p if prim.point_belongs(point)]
+            if len(pts) == 1 and not pts[0].in_list(points):
+                points.append(pts[0])
+                break
+            if len(pts) > 1:
+                point = prim.end.nearest_point(pts)
                 if not point.in_list(points):
                     points.append(point)
                     break
@@ -1935,8 +1927,7 @@ class ContourMixin(WireMixin):
 
         """
         for prim in self.primitives:
-            shared_section = prim.get_shared_section(primitive, abs_tol)
-            if shared_section:
+            if prim.get_shared_section(primitive, abs_tol):
                 return True
         return False
 
@@ -2117,21 +2108,6 @@ class Contour2D(ContourMixin, Wire2D):
             return False
         if len(self.primitives) != len(other_.primitives) or abs(self.length() - other_.length()) > 1e-6:
             return False
-        # equal = 0
-        # for prim1 in self.primitives:
-        #     reverse1 = prim1.reverse()
-        #     found = False
-        #     for prim2 in other_.primitives:
-        #         reverse2 = prim2.reverse()
-        #         if (prim1 == prim2 or reverse1 == prim2
-        #                 or reverse2 == prim1 or reverse1 == reverse2):
-        #             equal += 1
-        #             found = True
-        #     if not found:
-        #         return False
-        # if equal == len(self.primitives):
-        #     return True
-        # return False
         for i, edge1 in enumerate(self.primitives):
             if not edge1 == other_.primitives[i]:
                 return False
@@ -2169,12 +2145,8 @@ class Contour2D(ContourMixin, Wire2D):
         :param y: plane v vector.
         :return: Contour3D.
         """
-        primitives3d = []
-        for edge in self.primitives:
-            primitives3d.append(edge.to_3d(plane_origin, x, y))
-        for prim1, prim2 in zip(primitives3d, primitives3d[1:] + [primitives3d[0]]):
-            prim2.start = prim1.end
-        return Contour3D(primitives3d)
+        primitives3d = [edge.to_3d(plane_origin, x, y) for edge in self.primitives]
+        return Contour3D(merge_primitives_points(primitives3d))
 
     def point_inside(self, point, include_edge_points: bool = False, tol: float = 1e-6):
         """
@@ -2260,8 +2232,7 @@ class Contour2D(ContourMixin, Wire2D):
         else:
             trigo = -1
         for edge in self.primitives:
-            center += trigo * edge.straight_line_area() \
-                      * edge.straight_line_center_of_mass()
+            center += trigo * edge.straight_line_area() * edge.straight_line_center_of_mass()
 
         return center / self.area()
 
@@ -2476,8 +2447,7 @@ class Contour2D(ContourMixin, Wire2D):
         iteration_contours = [self]
         for i in range(n - 1):
             xi = x_min + (i + 1) * (x_max - x_min) / n
-            cut_line = curves.Line2D(volmdlr.Point2D(xi, 0),
-                                     volmdlr.Point2D(xi, 1))
+            cut_line = curves.Line2D(volmdlr.Point2D(xi, 0), volmdlr.Point2D(xi, 1))
 
             iteration_contours2 = []
             for contour in iteration_contours:
@@ -2493,8 +2463,7 @@ class Contour2D(ContourMixin, Wire2D):
 
     def triangulation(self):
         """Returns the triangulation of the contour 2d."""
-        return self.grid_triangulation(number_points_x=20,
-                                       number_points_y=20)
+        return self.grid_triangulation(number_points_x=20, number_points_y=20)
 
     def grid_triangulation(self, x_density: float = None,
                            y_density: float = None,
@@ -2680,11 +2649,7 @@ class Contour2D(ContourMixin, Wire2D):
         Delete primitives with start=end, and return a new contour.
         """
 
-        new_primitives = []
-        for prim in self.primitives:
-            if prim.start != prim.end:
-                new_primitives.append(prim)
-
+        new_primitives = [prim for prim in self.primitives if prim.start != prim.end]
         return Contour2D(merge_primitives_points(new_primitives))
 
     def merge_with(self, contour2d, abs_tol: float = 1e-6):
@@ -2707,8 +2672,7 @@ class Contour2D(ContourMixin, Wire2D):
         if not merged_primitives:
             return [self]
         contours = Contour2D.contours_from_edges(merged_primitives, abs_tol)
-        contours = sorted(contours, key=lambda contour: contour.area(),
-                          reverse=True)
+        contours = sorted(contours, key=lambda contour: contour.area(), reverse=True)
         return contours
 
     def union(self, contour2: 'Contour2D'):
@@ -2739,8 +2703,7 @@ class Contour2D(ContourMixin, Wire2D):
                 resulting_primitives.extend(primitives2_inside)
             return [Contour2D(merge_primitives_points(WireMixin.order_primitives(resulting_primitives)))]
         merged_contours = self.merge_with(contour2)[::-1]
-        merged_contours = sorted(merged_contours, key=lambda contour: contour.area(),
-                                 reverse=True)
+        merged_contours = sorted(merged_contours, key=lambda contour: contour.area(), reverse=True)
         return merged_contours
 
     def cut_by_wire(self, wire: Wire2D):
@@ -2751,7 +2714,7 @@ class Contour2D(ContourMixin, Wire2D):
         :rtype: list[volmdlr.wires.Contour2D]
 
         :param wire: volmdlr.wires.Wire2D.
-        :return: contours2d : list[volmdlr.wires.Contour2D].
+        :return: list[volmdlr.wires.Contour2D].
         """
 
         points_intersections = self.wire_intersections(wire)
@@ -4284,21 +4247,10 @@ class Contour3D(ContourMixin, Wire3D):
             return False
         if len(self.primitives) != len(other_.primitives):
             return False
-        equal = 0
-        for prim1 in self.primitives:
-            reverse1 = prim1.reverse()
-            found = False
-            for prim2 in other_.primitives:
-                reverse2 = prim2.reverse()
-                if (prim1 == prim2 or reverse1 == prim2
-                        or reverse2 == prim1 or reverse1 == reverse2):
-                    equal += 1
-                    found = True
-            if not found:
+        for i, edge1 in enumerate(self.primitives):
+            if edge1 != other_.primitives[i]:
                 return False
-        if equal == len(self.primitives):
-            return True
-        return False
+        return True
 
     @property
     def edge_polygon(self):
@@ -4420,8 +4372,7 @@ class Contour3D(ContourMixin, Wire3D):
         primitives2d = self.get_primitives_2d(plane_origin, x, y)
         return Contour2D(primitives=primitives2d)
 
-    def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
-                 angle: float):
+    def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
         Contour3D rotation.
 
@@ -4430,8 +4381,7 @@ class Contour3D(ContourMixin, Wire3D):
         :param angle: angle rotation.
         :return: a new rotated Contour3D.
         """
-        new_edges = [edge.rotation(center, axis, angle) for edge
-                     in self.primitives]
+        new_edges = [edge.rotation(center, axis, angle) for edge in self.primitives]
         return Contour3D(new_edges, self.name)
 
     def translation(self, offset: volmdlr.Vector3D):
@@ -4441,8 +4391,7 @@ class Contour3D(ContourMixin, Wire3D):
         :param offset: translation vector.
         :return: A new translated Contour3D.
         """
-        new_edges = [edge.translation(offset) for edge in
-                     self.primitives]
+        new_edges = [edge.translation(offset) for edge in self.primitives]
         return Contour3D(new_edges, self.name)
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
@@ -4451,8 +4400,7 @@ class Contour3D(ContourMixin, Wire3D):
 
         side = 'old' or 'new'.
         """
-        new_edges = [edge.frame_mapping(frame, side) for edge in
-                     self.primitives]
+        new_edges = [edge.frame_mapping(frame, side) for edge in self.primitives]
         return Contour3D(new_edges, self.name)
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
@@ -4528,8 +4476,7 @@ class Contour3D(ContourMixin, Wire3D):
         dict_intersecting_points = {}
         for primitive in self.primitives:
             for primitive2 in contour3d.primitives:
-                intersecting_point = primitive.linesegment_intersections(
-                    primitive2)
+                intersecting_point = primitive.linesegment_intersections(primitive2)
                 if intersecting_point is not None:
                     dict_intersecting_points[primitive2] = intersecting_point
         if dict_intersecting_points:
@@ -4541,12 +4488,7 @@ class Contour3D(ContourMixin, Wire3D):
         Delete primitives with start=end, and return a new contour.
 
         """
-
-        new_primitives = []
-        for primitive in self.primitives:
-            if not primitive.start.is_close(primitive.end):
-                new_primitives.append(primitive)
-
+        new_primitives = [primitive for primitive in self.primitives if not primitive.start.is_close(primitive.end)]
         return Contour3D(new_primitives)
 
     def merge_with(self, contour3d, abs_tol: float = 1e-6):
@@ -4628,8 +4570,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         :param offset: translation vector.
         :return: A new translated ClosedPolygon3D.
         """
-        new_points = [point.translation(offset) for point in
-                      self.points]
+        new_points = [point.translation(offset) for point in self.points]
         return ClosedPolygon3D(new_points, self.name)
 
     def to_2d(self, plane_origin, x, y):
