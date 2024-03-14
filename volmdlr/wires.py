@@ -212,8 +212,7 @@ class WireMixin:
         elif angle_resolution:
             n = int(length / angle_resolution) + 1
 
-        return [self.point_at_abscissa(i / n * length) for i in
-                range(n + 1)]
+        return [self.point_at_abscissa(i / n * length) for i in range(n + 1)]
 
     def point_at_abscissa(self, curvilinear_abscissa: float):
         """Gets the point corresponding to given abscissa. """
@@ -368,14 +367,11 @@ class WireMixin:
 
     def inverted_primitives(self):
         """
-        Invert wire's primitives.
+        Inverts each primitive of the wire.
 
+        :return: list of inverted primitives
         """
-
-        new_primitives = []
-        for prim in self.primitives[::-1]:
-            new_primitives.append(prim.reverse())
-        return new_primitives
+        return [prim.reverse() for prim in self.primitives[::-1]]
 
     def invert(self):
         """Gets the wire in the inverted direction."""
@@ -425,8 +421,7 @@ class WireMixin:
         :return: True or False
         """
         for edge in self.primitives:
-            shared_section = edge.get_shared_section(primitive, tol)
-            if shared_section:
+            if edge.get_shared_section(primitive, tol):
                 return True
         return False
 
@@ -680,6 +675,7 @@ class WireMixin:
         Compute intersections between a wire (2D or 3D) and an edge (2D or 3D).
 
         :param edge: edge to compute intersections.
+        :param abs_tol: tolerance.
         """
         edge_intersections = []
         for primitive in self.primitives:
@@ -694,6 +690,7 @@ class WireMixin:
         Compute intersections between two wire 2d.
 
         :param wire: volmdlr.wires.Wire2D
+        :param abs_tol: tolerance.
         """
         intersections_points = []
         for primitive in wire.primitives:
@@ -863,8 +860,7 @@ class Wire2D(WireMixin, PhysicalObject):
                     offset_intersections.append(intersections[0])
                 else:
                     end = self.primitives[i].end
-                    if intersections[0].point_distance(end) > intersections[
-                        1].point_distance(end):
+                    if intersections[0].point_distance(end) > intersections[1].point_distance(end):
                         intersections.reverse()
                     offset_intersections.append(intersections[0])
 
@@ -3069,8 +3065,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         :param angle: angle rotation
         :return: a new rotated ClosedPolygon2D
         """
-        return ClosedPolygon2D(
-            [point.rotation(center, angle) for point in self.points])
+        return ClosedPolygon2D([point.rotation(center, angle) for point in self.points])
 
     def translation(self, offset: volmdlr.Vector2D):
         """
@@ -3079,8 +3074,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         :param offset: translation vector
         :return: A new translated ClosedPolygon2D
         """
-        return ClosedPolygon2D(
-            [point.translation(offset) for point in self.points])
+        return ClosedPolygon2D([point.translation(offset) for point in self.points])
 
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
         """Apply transformation to the object."""
@@ -3183,8 +3177,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
             normal_vector2 = vectors[2 * i].unit_normal_vector()
             alpha = math.acos(normal_vector1.dot(normal_vector2))
 
-            offset_point = self.points[i] + offset / math.cos(alpha / 2) * \
-                           (-offset_vectors[i])
+            offset_point = self.points[i] + offset / math.cos(alpha / 2) * (-offset_vectors[i])
 
             offset_points.append(offset_point)
 
@@ -3419,7 +3412,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
                     new_line_b = volmdlr.edges.LineSegment2D(start=middle_point, end=line.end)
                     if not (line_colides_with_hull(line=new_line_a,
                                                    concave_hull=hull_concave_edges) and line_colides_with_hull(
-                        line=new_line_b, concave_hull=hull_concave_edges)):
+                            line=new_line_b, concave_hull=hull_concave_edges)):
                         ok_middle_points.append(middle_point)
                         list_cossines.append(cos)
             if len(ok_middle_points) > 0:
@@ -3740,8 +3733,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         # point_intersection.plot(ax=ax2d)
 
         if point_intersection.point_distance(
-                line_segment.start) < point_intersection.point_distance(
-            line_segment.end):
+                line_segment.start) < point_intersection.point_distance(line_segment.end):
             closing_point = line_segment.start
         else:
             closing_point = line_segment.end
@@ -3977,8 +3969,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
                                 possible_sewing_closing_points_in_linesegment[
                                     line_segment1])
 
-                elif possible_sewing_closing_points_in_linesegment[
-                    line_segment2]:
+                elif possible_sewing_closing_points_in_linesegment[line_segment2]:
                     closing_point = self.select_closest_sewing_closing_point(
                         line_segment2, primitive,
                         possible_sewing_closing_points_in_linesegment[
@@ -4647,8 +4638,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
                 new_polygon1.points + [new_polygon1.points[0]]):
             if i != 0:
                 mean_point2d = 0.5 * (
-                        new_polygon1_2d_points[i] + new_polygon1_2d_points[
-                    i - 1])
+                        new_polygon1_2d_points[i] + new_polygon1_2d_points[i - 1])
                 closing_point = new_polygon2_2d.line_intersecting_closing_point(
                     mean_point2d)
                 closing_point_index = new_polygon2_2d.points.index(
@@ -5015,8 +5005,8 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
             else:
                 closing_point_index, list_remove_closing_points, \
                     passed_by_zero_index = self.validate_concave_closing_point(
-                    closing_point_index, list_closing_point_indexes,
-                    passed_by_zero_index, ratio_denom, polygons_points_ratio)
+                        closing_point_index, list_closing_point_indexes,
+                        passed_by_zero_index, ratio_denom, polygons_points_ratio)
 
             if list_remove_closing_points:
                 new_list_closing_point_indexes = list(
