@@ -4060,10 +4060,10 @@ class EncodedOctreeBasedVoxelization(Voxelization):
         :return: A dictionary where the keys are voxel sizes and the values are sets of voxel centers.
         :rtype: dict[float, set[tuple[float, float, float]]]
         """
-        return self._get_non_homogeneous_leaf_centers(0, self._root_voxel_size, self._root_center, 0)[0]
+        return self._get_non_homogeneous_leaf_centers(0, self._root_voxel_size, self._root_center)[0]
 
     def _get_non_homogeneous_leaf_centers(
-        self, current_depth: int, current_size: float, current_center: _Point3D, current_index: int
+        self, current_index: int, current_size: float, current_center: _Point3D
     ) -> Tuple[Dict[float, Set[_Point3D]], int]:
         """
         Recursive method to extract all the non-homogeneous voxel centers.
@@ -4074,11 +4074,7 @@ class EncodedOctreeBasedVoxelization(Voxelization):
         """
         centers_by_voxel_size = {}
         next_idx = current_index + 2
-
         half_size = round_to_digits(current_size / 2, DECIMALS)
-
-        if self._octree[current_index] == 255 and self._octree[current_index + 1] == 0:
-            print("should not happen")
 
         for i in range(2):
             for j in range(2):
@@ -4099,7 +4095,7 @@ class EncodedOctreeBasedVoxelization(Voxelization):
                         if self._octree[current_index + 1] & (1 << i * 4 + j * 2 + k):
                             # Recursive process
                             sub_centers, next_idx = self._get_non_homogeneous_leaf_centers(
-                                current_depth + 1, half_size, sub_voxel_center, next_idx
+                                next_idx, half_size, sub_voxel_center
                             )
 
                             # Merge sub-centers into the result dictionary, keeping track of voxel sizes
