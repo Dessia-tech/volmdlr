@@ -207,7 +207,6 @@ def get_non_homogeneous_voxel_centers(
 
 
 @cython.cfunc
-@cython.exceptval(check=False)
 def _get_non_homogeneous_leaf_centers(
     octree: vector[cython.uchar],
     current_index: cython.int,
