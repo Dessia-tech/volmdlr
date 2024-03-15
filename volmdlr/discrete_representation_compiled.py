@@ -13,6 +13,7 @@ import cython
 import cython.cimports.libc.math as math_c
 import numpy as np
 from cython.cimports.libcpp import bool as bool_C
+from cython.cimports.libcpp.map import map as map_C
 from cython.cimports.libcpp.stack import stack
 from cython.cimports.libcpp.vector import vector
 from numpy.typing import NDArray
@@ -59,10 +60,14 @@ def encode(vertices: NDArray[float], faces: NDArray[int], voxel_size: float) -> 
     sizes = [_round_to_digits(voxel_size * 2**i, 9) for i in range(max_depth, -1, -1)]
     sizes.append(round_to_digits(voxel_size * 1 / 2, 9))
 
-    return (np.asarray(
-        _encode_from_mesh_data(vertices, faces, list(range(len(faces))), center, sizes, 0, max_depth),
-        np.uint8,
-    ), center, max_depth)
+    return (
+        np.asarray(
+            _encode_from_mesh_data(vertices, faces, list(range(len(faces))), center, sizes, 0, max_depth),
+            np.uint8,
+        ),
+        center,
+        max_depth,
+    )
 
 
 @cython.cfunc
@@ -184,6 +189,66 @@ def _triangle_bbox_intersects_voxel(
         and tri_min_z <= max_z
         and tri_max_z >= min_z
     )
+
+
+@cython.cfunc
+def _get_non_homogeneous_leaf_centers(
+    octree: vector[cython.uchar], current_index: cython.int, current_size: cython.double, current_center: _Point3D
+) -> Tuple[map_C[cython.double, vector[Tuple[cython.double, cython.double, cython.double]]], cython.int]:
+    """
+    Recursive method to extract all the non-homogeneous voxel centers.
+
+    This method maximize the voxel size without any less of information.
+
+    :return: A dictionary where the keys are voxel sizes and the values are sets of voxel centers.
+    """
+    centers_by_voxel_size: map_C[cython.double, vector[Tuple[cython.double, cython.double, cython.double]]]
+    next_idx: cython.int = current_index + 2
+    half_size: cython.double = _round_to_digits(current_size / 2, 9)
+
+    i: cython.uchar
+    j: cython.uchar
+    k: cython.uchar
+
+    for i in range(2):
+        for j in range(2):
+            for k in range(2):
+                # if the child is in the octree
+                if octree[current_index] & (1 << i * 4 + j * 2 + k):
+                    # calculate the center of the sub-voxel
+                    sub_voxel_center: Tuple[cython.double, cython.double, cython.double]
+                    sub_voxel_center = _round_point_3d_to_digits(
+                        (
+                            current_center[0] + (i - 0.5) * half_size,
+                            current_center[1] + (j - 0.5) * half_size,
+                            current_center[2] + (k - 0.5) * half_size,
+                        ),
+                        9,
+                    )
+
+                    # if the child is not a leaf
+                    if octree[current_index + 1] & (1 << i * 4 + j * 2 + k):
+                        # Recursive process
+                        sub_centers, next_idx = _get_non_homogeneous_leaf_centers(
+                            octree, next_idx, half_size, sub_voxel_center
+                        )
+
+                        # Merge sub-centers into the result dictionary, keeping track of voxel sizes
+                        size: cython.double
+                        sub_voxel_centers: vector[Tuple[cython.double, cython.double, cython.double]]
+                        for size, sub_voxel_centers in sub_centers:
+                            # if size not in centers_by_voxel_size:
+                            #     centers_by_voxel_size[size] = set()
+                            centers_by_voxel_size[size].insert(centers_by_voxel_size.end(), sub_voxel_centers.begin(), sub_voxel_centers.end())
+                            # centers_by_voxel_size[size].update(sub_voxel_centers)
+
+                    # if the child is a leaf
+                    else:
+                        # if half_size not in centers_by_voxel_size:
+                            # centers_by_voxel_size[half_size] = set()
+                        centers_by_voxel_size[half_size].push_back(sub_voxel_center)
+
+    return centers_by_voxel_size, next_idx
 
 
 # PYTHON FUNCTIONS

@@ -4038,7 +4038,7 @@ class EncodedOctreeBasedVoxelization(Voxelization):
                                     centers_by_voxel_size[size] = set()
                                 centers_by_voxel_size[size].update(sub_voxel_centers)
 
-                        # if the child
+                        # if the child is a leaf
                         else:
                             if half_size not in centers_by_voxel_size:
                                 centers_by_voxel_size[half_size] = set()
