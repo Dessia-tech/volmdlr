@@ -1972,9 +1972,9 @@ class ContourMixin(WireMixin):
                 else:
                     is_horizontal = math.isclose(primitive.start.y, primitive.end.y, abs_tol=1e-6)
                     is_vertical = math.isclose(primitive.start.x, primitive.end.x, abs_tol=1e-6)
-                    should_discretize = discretize_line_direction == "xy" or \
-                                        (discretize_line_direction == "x" and is_horizontal) or \
-                                        (discretize_line_direction == "y" and is_vertical)
+                    should_discretize = (discretize_line_direction == "xy" or
+                                         (discretize_line_direction == "x" and is_horizontal) or
+                                         (discretize_line_direction == "y" and is_vertical))
                     if should_discretize:
                         polygon_points.extend(primitive.discretization_points(angle_resolution=angle_resolution)[:-1])
                     else:
@@ -2235,7 +2235,7 @@ class Contour2D(ContourMixin, Wire2D):
     def second_moment_area(self, point):
         """Returns the second moment of are of the contour."""
         second_moment_area_x, second_moment_area_y, second_moment_area_xy = self.edge_polygon.second_moment_area(
-            point==point)
+            point=point)
         for edge in self.primitives:
             second_moment_area_x_e, second_moment_area_y_e, second_moment_area_xy_e = \
                 edge.straight_line_second_moment_area(point=point)
@@ -4630,7 +4630,8 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         new_center1, new_center2 = new_polygon1.average_center_point(), new_polygon2.average_center_point()
 
         new_polygon1_2d, new_polygon2_2d = \
-            new_polygon1.to_2d(plane_origin=new_center1, x=x, y=y), new_polygon2.to_2d(plane_origin=new_center2, x=x, y=y)
+            (new_polygon1.to_2d(plane_origin=new_center1, x=x, y=y),
+             new_polygon2.to_2d(plane_origin=new_center2, x=x, y=y))
 
         dict_closing_pairs = {}
         triangles = []
@@ -4948,8 +4949,9 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
             closing_point_index = last_index
         elif math.isclose(ratio, -1, abs_tol=0.3):
             closing_point_index = last_index
-        elif closing_point_index - last_index > 5 and list_closing_point_indexes[
-            -1] + 4 <= ratio_denominator - 1 and polygons_points_ratio > 0.95:
+        elif (closing_point_index - last_index > 5 and
+              list_closing_point_indexes[-1] + 4 <= ratio_denominator - 1 and
+              polygons_points_ratio > 0.95):
             closing_point_index = last_index + 4
 
         return closing_point_index, list_remove_closing_points, passed_by_zero_index
