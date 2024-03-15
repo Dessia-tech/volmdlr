@@ -16,6 +16,7 @@ from cython.cimports.libcpp import bool as bool_C
 from cython.cimports.libcpp.map import map as map_C
 from cython.cimports.libcpp.stack import stack
 from cython.cimports.libcpp.vector import vector
+from cython.operator import dereference, postincrement
 from numpy.typing import NDArray
 
 # CUSTOM TYPES
@@ -191,6 +192,20 @@ def _triangle_bbox_intersects_voxel(
     )
 
 
+def get_non_homogeneous_voxel_centers(
+    octree: NDArray[np.uint8], root_voxel_size: float, root_center: _Point3D
+) -> Dict[float, Set[_Point3D]]:
+    """
+    Get the center points of non-homogeneous voxels and organize them by voxel size.
+
+    This method maximize the voxel size without any less of information.
+
+    :return: A dictionary where the keys are voxel sizes and the values are sets of voxel centers.
+    :rtype: dict[float, set[tuple[float, float, float]]]
+    """
+    return _get_non_homogeneous_leaf_centers(octree, 0, root_voxel_size, root_center)[0]
+
+
 @cython.cfunc
 def _get_non_homogeneous_leaf_centers(
     octree: vector[cython.uchar], current_index: cython.int, current_size: cython.double, current_center: _Point3D
@@ -234,18 +249,23 @@ def _get_non_homogeneous_leaf_centers(
                         )
 
                         # Merge sub-centers into the result dictionary, keeping track of voxel sizes
-                        size: cython.double
-                        sub_voxel_centers: vector[Tuple[cython.double, cython.double, cython.double]]
-                        for size, sub_voxel_centers in sub_centers:
-                            # if size not in centers_by_voxel_size:
-                            #     centers_by_voxel_size[size] = set()
-                            centers_by_voxel_size[size].insert(centers_by_voxel_size.end(), sub_voxel_centers.begin(), sub_voxel_centers.end())
-                            # centers_by_voxel_size[size].update(sub_voxel_centers)
+                        it: map_C[cython.double, vector[Tuple[cython.double, cython.double, cython.double]]].it = (
+                            sub_centers.begin()
+                        )
+                        while it != sub_centers.end():
+                            size: cython.double = dereference(it).first
+                            sub_voxel_centers: vector[Tuple[cython.double, cython.double, cython.double]] = dereference(
+                                it
+                            ).second
+                            centers_by_voxel_size[size].insert(
+                                centers_by_voxel_size[size].end(), sub_voxel_centers.begin(), sub_voxel_centers.end()
+                            )
+                            postincrement(it)
 
                     # if the child is a leaf
                     else:
                         # if half_size not in centers_by_voxel_size:
-                            # centers_by_voxel_size[half_size] = set()
+                        # centers_by_voxel_size[half_size] = set()
                         centers_by_voxel_size[half_size].push_back(sub_voxel_center)
 
     return centers_by_voxel_size, next_idx

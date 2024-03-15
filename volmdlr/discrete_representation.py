@@ -17,15 +17,16 @@ from dessia_common.serialization import JsonSerializable
 from volmdlr import Point2D, Point3D, Vector3D
 from volmdlr.core import BoundingBox, BoundingRectangle, VolumeModel
 from volmdlr.discrete_representation_compiled import (
+    encode,
     flood_fill_matrix_2d,
     flood_fill_matrix_3d,
+    get_non_homogeneous_voxel_centers,
     line_segments_to_pixels,
     mesh_data_to_voxel_matrix,
     round_point_3d_to_digits,
     round_to_digits,
     triangle_intersects_voxel,
     voxel_triangular_faces,
-    encode,
 )
 from volmdlr.display import Mesh3D
 from volmdlr.edges import LineSegment2D
@@ -3139,7 +3140,6 @@ class EncodedOctreeBasedVoxelization(Voxelization):
 
         return cls(octree=octree, root_center=root_center, octree_depth=octree_depth, voxel_size=voxel_size, name=name)
 
-
     @classmethod
     def from_point_based_voxelization(
         cls, point_based_voxelization: "PointBasedVoxelization"
@@ -3994,7 +3994,8 @@ class EncodedOctreeBasedVoxelization(Voxelization):
         :return: A dictionary where the keys are voxel sizes and the values are sets of voxel centers.
         :rtype: dict[float, set[tuple[float, float, float]]]
         """
-        return self._get_non_homogeneous_leaf_centers(0, self._root_voxel_size, self._root_center)[0]
+        # return self._get_non_homogeneous_leaf_centers(0, self._root_voxel_size, self._root_center)[0]
+        return get_non_homogeneous_voxel_centers(self._octree, self._root_voxel_size, self._root_center)[0]
 
     def _get_non_homogeneous_leaf_centers(
         self, current_index: int, current_size: float, current_center: _Point3D
