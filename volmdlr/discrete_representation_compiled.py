@@ -207,8 +207,12 @@ def get_non_homogeneous_voxel_centers(
 
 
 @cython.cfunc
+@cython.exceptval(check=False)
 def _get_non_homogeneous_leaf_centers(
-    octree: vector[cython.uchar], current_index: cython.int, current_size: cython.double, current_center: _Point3D
+    octree: vector[cython.uchar],
+    current_index: cython.int,
+    current_size: cython.double,
+    current_center: Tuple[cython.double, cython.double, cython.double],
 ) -> Tuple[map_C[cython.double, vector[Tuple[cython.double, cython.double, cython.double]]], cython.int]:
     """
     Recursive method to extract all the non-homogeneous voxel centers.
@@ -244,6 +248,7 @@ def _get_non_homogeneous_leaf_centers(
                     # if the child is not a leaf
                     if octree[current_index + 1] & (1 << i * 4 + j * 2 + k):
                         # Recursive process
+                        sub_centers: map_C[cython.double, vector[Tuple[cython.double, cython.double, cython.double]]]
                         sub_centers, next_idx = _get_non_homogeneous_leaf_centers(
                             octree, next_idx, half_size, sub_voxel_center
                         )
