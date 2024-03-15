@@ -268,8 +268,6 @@ def _get_non_homogeneous_leaf_centers(
 
                     # if the child is a leaf
                     else:
-                        # if half_size not in centers_by_voxel_size:
-                        # centers_by_voxel_size[half_size] = set()
                         centers_by_voxel_size[half_size].push_back(sub_voxel_center)
 
     return centers_by_voxel_size, next_idx
