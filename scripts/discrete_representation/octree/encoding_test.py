@@ -9,7 +9,7 @@ block = Block(volmdlr.OXYZ)
 mesh = block.triangulation()
 # block.babylonjs()
 
-VOXEL_SIZE = 0.005
+VOXEL_SIZE = 0.01
 
 t0 = time.perf_counter()
 octree = EncodedOctreeBasedVoxelization.from_mesh_data(mesh.vertices, mesh.triangles, VOXEL_SIZE)

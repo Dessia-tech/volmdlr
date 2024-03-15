@@ -13,7 +13,7 @@ import cython
 import cython.cimports.libc.math as math_c
 import numpy as np
 from cython.cimports.libcpp import bool as bool_C
-from cython.cimports.libcpp.map import map as map_C
+from cython.cimports.libcpp.unordered_map import unordered_map
 from cython.cimports.libcpp.stack import stack
 from cython.cimports.libcpp.vector import vector
 from cython.operator import dereference, postincrement
@@ -212,7 +212,7 @@ def _get_non_homogeneous_leaf_centers(
     current_index: cython.int,
     current_size: cython.double,
     current_center: Tuple[cython.double, cython.double, cython.double],
-) -> Tuple[map_C[cython.double, vector[Tuple[cython.double, cython.double, cython.double]]], cython.int]:
+) -> Tuple[unordered_map[cython.double, vector[Tuple[cython.double, cython.double, cython.double]]], cython.int]:
     """
     Recursive method to extract all the non-homogeneous voxel centers.
 
@@ -220,7 +220,7 @@ def _get_non_homogeneous_leaf_centers(
 
     :return: A dictionary where the keys are voxel sizes and the values are sets of voxel centers.
     """
-    centers_by_voxel_size: map_C[cython.double, vector[Tuple[cython.double, cython.double, cython.double]]]
+    centers_by_voxel_size: unordered_map[cython.double, vector[Tuple[cython.double, cython.double, cython.double]]]
     next_idx: cython.int = current_index + 2
     half_size: cython.double = _round_to_digits(current_size / 2, 9)
 
@@ -247,15 +247,15 @@ def _get_non_homogeneous_leaf_centers(
                     # if the child is not a leaf
                     if octree[current_index + 1] & (1 << i * 4 + j * 2 + k):
                         # Recursive process
-                        sub_centers: map_C[cython.double, vector[Tuple[cython.double, cython.double, cython.double]]]
+                        sub_centers: unordered_map[cython.double, vector[Tuple[cython.double, cython.double, cython.double]]]
                         sub_centers, next_idx = _get_non_homogeneous_leaf_centers(
                             octree, next_idx, half_size, sub_voxel_center
                         )
 
-                        # Merge sub-centers into the result dictionary, keeping track of voxel sizes
-                        it: map_C[cython.double, vector[Tuple[cython.double, cython.double, cython.double]]].it = (
-                            sub_centers.begin()
-                        )
+                        # Merge sub-centers into the result map, keeping track of voxel sizes
+                        it: unordered_map[
+                            cython.double, vector[Tuple[cython.double, cython.double, cython.double]]
+                        ].it = sub_centers.begin()
                         while it != sub_centers.end():
                             size: cython.double = dereference(it).first
                             sub_voxel_centers: vector[Tuple[cython.double, cython.double, cython.double]] = dereference(
