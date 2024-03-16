@@ -7,14 +7,15 @@ Helper Cython functions for discrete representation defined using the pure Pytho
 This module needs to be compiled!
 """
 import math
+import time
 from typing import Dict, Iterable, List, Set, Tuple
 
 import cython
 import cython.cimports.libc.math as math_c
 import numpy as np
 from cython.cimports.libcpp import bool as bool_C
-from cython.cimports.libcpp.unordered_map import unordered_map
 from cython.cimports.libcpp.stack import stack
+from cython.cimports.libcpp.unordered_map import unordered_map
 from cython.cimports.libcpp.vector import vector
 from cython.operator import dereference, postincrement
 from numpy.typing import NDArray
@@ -203,7 +204,11 @@ def get_non_homogeneous_voxel_centers(
     :return: A dictionary where the keys are voxel sizes and the values are sets of voxel centers.
     :rtype: dict[float, set[tuple[float, float, float]]]
     """
-    return _get_non_homogeneous_leaf_centers(octree, 0, root_voxel_size, root_center)[0]
+    t0 = time.perf_counter()
+    result = _get_non_homogeneous_leaf_centers(octree, 0, root_voxel_size, root_center)[0]
+    t1 = time.perf_counter()
+    print(f"Pure op: {t1 - t0:.3f} s")
+    return result
 
 
 @cython.cfunc
@@ -247,7 +252,9 @@ def _get_non_homogeneous_leaf_centers(
                     # if the child is not a leaf
                     if octree[current_index + 1] & (1 << i * 4 + j * 2 + k):
                         # Recursive process
-                        sub_centers: unordered_map[cython.double, vector[Tuple[cython.double, cython.double, cython.double]]]
+                        sub_centers: unordered_map[
+                            cython.double, vector[Tuple[cython.double, cython.double, cython.double]]
+                        ]
                         sub_centers, next_idx = _get_non_homogeneous_leaf_centers(
                             octree, next_idx, half_size, sub_voxel_center
                         )
