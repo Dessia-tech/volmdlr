@@ -89,22 +89,21 @@ def _encode_from_mesh_data(
         octree_array.push_back(0)
         octree_array.push_back(0)
 
-        half_size = sizes[depth + 1]
         quarter_size = sizes[depth + 2]
 
         i: cython.uchar
         j: cython.uchar
         k: cython.uchar
 
-        x: Tuple[cython.double, cython.double] = (
+        x: cython.double[2] = (
             _round_to_digits(center[0] - quarter_size, 9),
             _round_to_digits(center[0] + quarter_size, 9),
         )
-        y: Tuple[cython.double, cython.double] = (
+        y: cython.double[2] = (
             _round_to_digits(center[1] - quarter_size, 9),
             _round_to_digits(center[1] + quarter_size, 9),
         )
-        z: Tuple[cython.double, cython.double] = (
+        z: cython.double[2] = (
             _round_to_digits(center[2] - quarter_size, 9),
             _round_to_digits(center[2] + quarter_size, 9),
         )
@@ -116,7 +115,7 @@ def _encode_from_mesh_data(
                     #     print(i * 4 + j * 2 + k)
 
                     # calculate the center of the sub-voxel
-                    sub_voxel_center: Tuple[cython.double, cython.double, cython.double] = (x[i], y[j], z[k])
+                    sub_voxel_center: Tuple[cython.double, cython.double, cython.double] = x[i], y[j], z[k]
 
                     # check for intersecting triangle with the sub-voxel
                     sub_voxel_intersecting_indices: vector[cython.int]
@@ -258,15 +257,15 @@ def _get_non_homogeneous_leaf_centers(
     j: cython.uchar
     k: cython.uchar
 
-    x: Tuple[cython.double, cython.double] = (
+    x: cython.double[2] = (
         _round_to_digits(current_center[0] - quarter_size, 9),
         _round_to_digits(current_center[0] + quarter_size, 9),
     )
-    y: Tuple[cython.double, cython.double] = (
+    y: cython.double[2] = (
         _round_to_digits(current_center[1] - quarter_size, 9),
         _round_to_digits(current_center[1] + quarter_size, 9),
     )
-    z: Tuple[cython.double, cython.double] = (
+    z: cython.double[2] = (
         _round_to_digits(current_center[2] - quarter_size, 9),
         _round_to_digits(current_center[2] + quarter_size, 9),
     )
@@ -277,7 +276,7 @@ def _get_non_homogeneous_leaf_centers(
                 # if the child is in the octree
                 if octree[current_index] & (1 << i * 4 + j * 2 + k):
                     # calculate the center of the sub-voxel
-                    sub_voxel_center: Tuple[cython.double, cython.double, cython.double] = (x[i], y[j], z[k])
+                    sub_voxel_center: Tuple[cython.double, cython.double, cython.double] = x[i], y[j], z[k]
 
                     # if the child is not a leaf
                     if octree[current_index + 1] & (1 << i * 4 + j * 2 + k):
