@@ -3995,7 +3995,7 @@ class EncodedOctreeBasedVoxelization(Voxelization):
         :rtype: dict[float, set[tuple[float, float, float]]]
         """
         # return self._get_non_homogeneous_leaf_centers(0, self._root_voxel_size, self._root_center)[0]
-        return get_non_homogeneous_voxel_centers(self._octree, self._root_voxel_size, self._root_center)
+        return get_non_homogeneous_voxel_centers(self._octree, self.voxel_size, self._root_center, self._octree_depth)
 
     def _get_non_homogeneous_leaf_centers(
         self, current_index: int, current_size: float, current_center: _Point3D

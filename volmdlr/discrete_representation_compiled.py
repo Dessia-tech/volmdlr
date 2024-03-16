@@ -210,7 +210,10 @@ def _triangle_bbox_intersects_voxel(
 
 
 def get_non_homogeneous_voxel_centers(
-    octree: NDArray[np.uint8], root_voxel_size: float, root_center: _Point3D
+    octree: NDArray[np.uint8],
+    voxel_size: float,
+    root_center: _Point3D,
+    max_depth: int,
 ) -> Dict[float, Set[_Point3D]]:
     """
     Get the center points of non-homogeneous voxels and organize them by voxel size.
@@ -221,7 +224,10 @@ def get_non_homogeneous_voxel_centers(
     :rtype: dict[float, set[tuple[float, float, float]]]
     """
     t0 = time.perf_counter()
-    result = _get_non_homogeneous_leaf_centers(octree, 0, root_voxel_size, root_center)[0]
+    sizes = [_round_to_digits(voxel_size * 2**i, 9) for i in range(max_depth, -1, -1)]
+    sizes.append(round_to_digits(voxel_size * 1 / 2, 9))
+
+    result = _get_non_homogeneous_leaf_centers(octree, 0, 0, root_center, np.array(sizes))[0]
     t1 = time.perf_counter()
     print(f"Pure op: {t1 - t0:.3f} s")
     return result
@@ -231,8 +237,9 @@ def get_non_homogeneous_voxel_centers(
 def _get_non_homogeneous_leaf_centers(
     octree: cython.uchar[:],
     current_index: cython.int,
-    current_size: cython.double,
+    current_depth: cython.int,
     current_center: Tuple[cython.double, cython.double, cython.double],
+    sizes: cython.double[:],
 ) -> Tuple[unordered_map[cython.double, vector[Tuple[cython.double, cython.double, cython.double]]], cython.int]:
     """
     Recursive method to extract all the non-homogeneous voxel centers.
@@ -243,7 +250,7 @@ def _get_non_homogeneous_leaf_centers(
     """
     centers_by_voxel_size: unordered_map[cython.double, vector[Tuple[cython.double, cython.double, cython.double]]]
     next_idx: cython.int = current_index + 2
-    half_size: cython.double = _round_to_digits(current_size / 2, 9)
+    half_size: cython.double = sizes[current_depth + 1]
 
     i: cython.uchar
     j: cython.uchar
@@ -272,7 +279,7 @@ def _get_non_homogeneous_leaf_centers(
                             cython.double, vector[Tuple[cython.double, cython.double, cython.double]]
                         ]
                         sub_centers, next_idx = _get_non_homogeneous_leaf_centers(
-                            octree, next_idx, half_size, sub_voxel_center
+                            octree, next_idx, current_depth + 1, sub_voxel_center, sizes
                         )
 
                         # Merge sub-centers into the result map, keeping track of voxel sizes
