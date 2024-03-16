@@ -3708,7 +3708,7 @@ class EncodedOctreeBasedVoxelization(Voxelization):
         point_based_voxelizations = []
 
         for voxel_size, voxel_centers in self._get_non_homogeneous_voxel_centers().items():
-            point_based_voxelizations.append(PointBasedVoxelization(voxel_centers, voxel_size))
+            point_based_voxelizations.append(PointBasedVoxelization(set(voxel_centers), voxel_size))
 
         return point_based_voxelizations
 

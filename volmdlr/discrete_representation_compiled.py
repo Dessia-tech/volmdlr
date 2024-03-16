@@ -95,6 +95,20 @@ def _encode_from_mesh_data(
         i: cython.uchar
         j: cython.uchar
         k: cython.uchar
+
+        x: Tuple[cython.double, cython.double] = (
+            _round_to_digits(center[0] - quarter_size, 9),
+            _round_to_digits(center[0] + quarter_size, 9),
+        )
+        y: Tuple[cython.double, cython.double] = (
+            _round_to_digits(center[1] - quarter_size, 9),
+            _round_to_digits(center[1] + quarter_size, 9),
+        )
+        z: Tuple[cython.double, cython.double] = (
+            _round_to_digits(center[2] - quarter_size, 9),
+            _round_to_digits(center[2] + quarter_size, 9),
+        )
+
         for i in range(2):
             for j in range(2):
                 for k in range(2):
@@ -102,15 +116,7 @@ def _encode_from_mesh_data(
                     #     print(i * 4 + j * 2 + k)
 
                     # calculate the center of the sub-voxel
-                    sub_voxel_center: Tuple[cython.double, cython.double, cython.double]
-                    sub_voxel_center = _round_point_3d_to_digits(
-                        (
-                            center[0] + (i - 0.5) * half_size,
-                            center[1] + (j - 0.5) * half_size,
-                            center[2] + (k - 0.5) * half_size,
-                        ),
-                        9,
-                    )
+                    sub_voxel_center: Tuple[cython.double, cython.double, cython.double] = (x[i], y[j], z[k])
 
                     # check for intersecting triangle with the sub-voxel
                     sub_voxel_intersecting_indices: vector[cython.int]
@@ -119,11 +125,6 @@ def _encode_from_mesh_data(
                     for u in range(intersecting_indices.size()):
                         v = intersecting_indices[u]
 
-                        # if _triangle_bbox_intersects_voxel(
-                        #     (vertices[faces[v][0]], vertices[faces[v][1]], vertices[faces[v][2]]),
-                        #     sub_voxel_center,
-                        #     (quarter_size, quarter_size, quarter_size),
-                        # ):
                         p0: Tuple[cython.double, cython.double, cython.double] = (
                             vertices[faces[v][0]][0],
                             vertices[faces[v][0]][1],
@@ -251,10 +252,24 @@ def _get_non_homogeneous_leaf_centers(
     centers_by_voxel_size: unordered_map[cython.double, vector[Tuple[cython.double, cython.double, cython.double]]]
     next_idx: cython.int = current_index + 2
     half_size: cython.double = sizes[current_depth + 1]
+    quarter_size: cython.double = sizes[current_depth + 2]
 
     i: cython.uchar
     j: cython.uchar
     k: cython.uchar
+
+    x: Tuple[cython.double, cython.double] = (
+        _round_to_digits(current_center[0] - quarter_size, 9),
+        _round_to_digits(current_center[0] + quarter_size, 9),
+    )
+    y: Tuple[cython.double, cython.double] = (
+        _round_to_digits(current_center[1] - quarter_size, 9),
+        _round_to_digits(current_center[1] + quarter_size, 9),
+    )
+    z: Tuple[cython.double, cython.double] = (
+        _round_to_digits(current_center[2] - quarter_size, 9),
+        _round_to_digits(current_center[2] + quarter_size, 9),
+    )
 
     for i in range(2):
         for j in range(2):
@@ -262,15 +277,7 @@ def _get_non_homogeneous_leaf_centers(
                 # if the child is in the octree
                 if octree[current_index] & (1 << i * 4 + j * 2 + k):
                     # calculate the center of the sub-voxel
-                    sub_voxel_center: Tuple[cython.double, cython.double, cython.double]
-                    sub_voxel_center = _round_point_3d_to_digits(
-                        (
-                            current_center[0] + (i - 0.5) * half_size,
-                            current_center[1] + (j - 0.5) * half_size,
-                            current_center[2] + (k - 0.5) * half_size,
-                        ),
-                        9,
-                    )
+                    sub_voxel_center: Tuple[cython.double, cython.double, cython.double] = (x[i], y[j], z[k])
 
                     # if the child is not a leaf
                     if octree[current_index + 1] & (1 << i * 4 + j * 2 + k):
