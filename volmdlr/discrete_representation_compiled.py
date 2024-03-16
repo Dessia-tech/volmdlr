@@ -64,7 +64,7 @@ def encode(vertices: NDArray[float], faces: NDArray[int], voxel_size: float) -> 
 
     return (
         np.asarray(
-            _encode_from_mesh_data(vertices, faces, list(range(len(faces))), center, sizes, 0, max_depth),
+            _encode_from_mesh_data(vertices, faces, list(range(len(faces))), center, np.array(sizes), 0, max_depth),
             np.uint8,
         ),
         center,
@@ -74,11 +74,11 @@ def encode(vertices: NDArray[float], faces: NDArray[int], voxel_size: float) -> 
 
 @cython.cfunc
 def _encode_from_mesh_data(
-    vertices: vector[Tuple[cython.double, cython.double, cython.double]],
-    faces: vector[Tuple[cython.int, cython.int, cython.int]],
+    vertices: cython.double[:, :],
+    faces: cython.int[:, :],
     intersecting_indices: vector[cython.int],
     center: Tuple[cython.double, cython.double, cython.double],
-    sizes: vector[cython.double],
+    sizes: cython.double[:],
     depth: cython.int,
     max_depth: cython.int,
 ) -> vector[cython.uchar]:
@@ -124,12 +124,28 @@ def _encode_from_mesh_data(
                         #     sub_voxel_center,
                         #     (quarter_size, quarter_size, quarter_size),
                         # ):
+                        p0: Tuple[cython.double, cython.double, cython.double] = (
+                            vertices[faces[v][0]][0],
+                            vertices[faces[v][0]][1],
+                            vertices[faces[v][0]][2],
+                        )
+                        p1: Tuple[cython.double, cython.double, cython.double] = (
+                            vertices[faces[v][1]][0],
+                            vertices[faces[v][1]][1],
+                            vertices[faces[v][1]][2],
+                        )
+                        p2: Tuple[cython.double, cython.double, cython.double] = (
+                            vertices[faces[v][2]][0],
+                            vertices[faces[v][2]][1],
+                            vertices[faces[v][2]][2],
+                        )
+
                         if _triangle_intersects_voxel(
-                            (vertices[faces[v][0]], vertices[faces[v][1]], vertices[faces[v][2]]),
+                            (p0, p1, p2),
                             sub_voxel_center,
                             (quarter_size, quarter_size, quarter_size),
                         ) or _triangle_interfaces_voxel(
-                            (vertices[faces[v][0]], vertices[faces[v][1]], vertices[faces[v][2]]),
+                            (p0, p1, p2),
                             sub_voxel_center,
                             (quarter_size, quarter_size, quarter_size),
                         ):
@@ -213,7 +229,7 @@ def get_non_homogeneous_voxel_centers(
 
 @cython.cfunc
 def _get_non_homogeneous_leaf_centers(
-    octree: vector[cython.uchar],
+    octree: cython.uchar[:],
     current_index: cython.int,
     current_size: cython.double,
     current_center: Tuple[cython.double, cython.double, cython.double],
