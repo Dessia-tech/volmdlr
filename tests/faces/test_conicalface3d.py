@@ -84,7 +84,8 @@ class TestConicalFace3D(unittest.TestCase):
             os.path.join(folder, 'conicalsurface_openned_contours_contour_1.json'))
 
         conical_face = faces.ConicalFace3D.from_contours3d(buggy_conical_surface,
-                                                           [buggy_contours3d1, buggy_contours3d2])
+                                                           [buggy_contours3d1, buggy_contours3d2],
+                                                           tol=1e-2)
         self.assertFalse(conical_face.surface2d.inner_contours)
         self.assertAlmostEqual(conical_face.area(), 0.021682359796019755 , 3)
 

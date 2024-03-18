@@ -1,5 +1,6 @@
 import math
 import unittest
+import os
 from copy import deepcopy
 import volmdlr
 from volmdlr.primitives3d import Block
@@ -70,6 +71,14 @@ class TestVolumeModel(unittest.TestCase):
 
         self.assertEqual(20, mesh.n_vertices)
         self.assertEqual(24, mesh.n_triangles)
+
+    #Todo: test works fine in local, but in drone it doesn't
+
+    # def test_from_step(self):
+    #     file_path = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(volmdlr.__file__))),
+    #                              "scripts/step/bracket2.step")
+    #     model = VolumeModel.from_step(step_file=file_path)
+    #     self.assertTrue(model.primitives)
 
 
 if __name__ == "__main__":

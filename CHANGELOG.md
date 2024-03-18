@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v0.18.0 [Future]
 ### New Features
+
+#### core.py
+- VolumeModel: from_step using OCP step reader
+
 #### display.py
 - Mesh3D: rotation / translation / frame_mapping
 
@@ -37,15 +41,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### wires.py
 - 
 #### surfaces.py
-- 
+- cylindricalSurface3D: fix tangent plane intersections.
+
 #### faces.py
 - SphericalFace3D: get_bounding_box
-- planeface:Sphericalface intersections
+- planeface: Sphericalface intersections
 
 #### shells.py
 - 
 
 ### Changed
+- Force wires to share same points between two edges.
 
 #### curves.py
 - Ellipse2D: point_distance optimization
