@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### faces.py
 - Face3D: from_contours3d (add abs_tol as parameter)
+- Face3D: to_ocp.
 #### shells.py
 - 
 ### Fixed

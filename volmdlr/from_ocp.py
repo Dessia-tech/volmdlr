@@ -143,7 +143,7 @@ def ellipse2d_from_ocp(cls, curve):
     :return: volmdlr Ellipse2D.
     """
     frame = frame2d_from_ocp_ax22d(curve.Position())
-    return cls(frame, curve.MajorRadius(), curve.MinorRadius())
+    return cls(curve.MajorRadius(), curve.MinorRadius(), frame)
 
 
 def ellipse3d_from_ocp(cls, curve):
@@ -497,7 +497,7 @@ def get_wires_from_face(face):
     face_wires = get_wires(face)
     if len(face_wires) > 1:
         outer_wire = BRepTools.OuterWire_s(face)
-        inner_wires = [wire for wire in face_wires if not outer_wire.IsSame(wire)]
+        inner_wires = [wire for wire in face_wires if not outer_wire.IsPartner(wire)]
     else:
         outer_wire = face_wires[0]
         inner_wires = []
@@ -516,7 +516,8 @@ def get_contour2d_from_face_wire(contour2d_class, wire, face, occt_to_volmdlr):
         orientation = exp.Current().Orientation()
         if orientation == 1:
             u_start, u_end = u_end, u_start
-
+        if crv.IsInstance("Geom2d_TrimmedCurve"):
+            crv = crv.BasisCurve()
         list_edges.append(volmdlr_edge2d_from_ocp_curve(occt_to_volmdlr[crv.get_type_name_s()], crv,
                                                          u_start, u_end, orientation))
         exp.Next()

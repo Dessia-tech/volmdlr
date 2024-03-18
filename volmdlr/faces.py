@@ -10,6 +10,9 @@ from typing import List
 import matplotlib.pyplot as plt
 import numpy as np
 import triangle as triangle_lib
+from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeFace
+from OCP.BRepLib import BRepLib
+
 
 from dessia_common.core import DessiaObject
 
@@ -28,8 +31,10 @@ from volmdlr import surfaces
 from volmdlr.utils.parametric import update_face_grid_points_with_inner_polygons
 import volmdlr.wires
 from volmdlr import from_ocp
-from volmdlr.utils.occt_helpers import OCCT_TO_VOLMDLR
+from volmdlr import to_ocp
+from volmdlr.utils.ocp_helpers import OCCT_TO_VOLMDLR
 from volmdlr.utils import step_writer
+
 
 warnings.simplefilter("once")
 
@@ -1706,6 +1711,26 @@ class Face3D(volmdlr.core.Primitive3D):
         if not self.point_belongs(point):
             raise ValueError(f'Point {point} not in this face.')
         return self.surface3d.normal_at_point(point)
+
+    def to_ocp(self):
+        """
+        Returns a OCP shape equivalent to the volmdlr object.
+        """
+        occt_surface = getattr(to_ocp, self.surface3d.__class__.__name__.lower()[:-2] + '_to_ocp')(self.surface3d)
+        contour_type_name = self.surface2d.outer_contour.__class__.__name__.lower()
+        wire_traduction_fuction = getattr(to_ocp, contour_type_name + '_to_ocp')
+        outer_wire = wire_traduction_fuction(self.surface2d.outer_contour, ocp_surface=occt_surface)
+        inner_wires = [wire_traduction_fuction(contour, ocp_surface=occt_surface)
+                       for contour in self.surface2d.inner_contours]
+        # Compute the 3D representations of the edges/wires
+        BRepLib.BuildCurves3d_s(outer_wire)
+        for inner_wire in inner_wires:
+            BRepLib.BuildCurves3d_s(inner_wire)
+
+        builder = BRepBuilderAPI_MakeFace(occt_surface, outer_wire)
+        for wire in inner_wires:
+            builder.Add(wire)
+        return builder.Face()
 
 
 class PlaneFace3D(Face3D):
