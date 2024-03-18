@@ -179,6 +179,7 @@ class TestBSplineFace3D(unittest.TestCase):
 
     def test_to_ocp(self):
         ocp_face = self.bspline_face.to_ocp()
+        proof = faces.BSplineFace3D.from_ocp(occt_face=ocp_face)
         self.assertFalse(ocp_face.IsNull())
 
 

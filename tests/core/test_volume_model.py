@@ -74,11 +74,11 @@ class TestVolumeModel(unittest.TestCase):
 
     #Todo: test works fine in local, but in drone it doesn't
 
-    # def test_from_step(self):
-    #     file_path = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(volmdlr.__file__))),
-    #                              "scripts/step/bracket2.step")
-    #     model = VolumeModel.from_step(step_file=file_path)
-    #     self.assertTrue(model.primitives)
+    def test_from_step(self):
+        file_path = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(volmdlr.__file__))),
+                                 "scripts/step/bracket2.step")
+        model = VolumeModel.from_step(step_file=file_path)
+        self.assertTrue(model.primitives)
 
 
 if __name__ == "__main__":

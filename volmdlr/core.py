@@ -21,9 +21,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 from numpy.typing import NDArray
 
-from OCP.Interface import Interface_Static
-import OCP.IFSelect
-from OCP.STEPControl import STEPControl_Reader
 from OCP.TopoDS import TopoDS_Shape
 
 import dessia_common.core as dc
@@ -1349,39 +1346,32 @@ class VolumeModel(dc.PhysicalObject):
 
         Note: This method is experimental and may contain bugs.
         """
-        # Set the unit to meter
-        reader = STEPControl_Reader()
-        Interface_Static.SetCVal_s("xstep.cascade.unit", "M")
-        read_status = reader.ReadFile(step_file)
-        if read_status != OCP.IFSelect.IFSelect_RetDone:
-            raise ValueError("STEP File could not be loaded")
-        for i in range(reader.NbRootsForTransfer()):
-            reader.TransferRoot(i + 1)
 
-        occ_shapes = []
-        for i in range(reader.NbShapes()):
-            occ_shapes.append(reader.Shape(i + 1))
-        return cls.from_ocp(occ_shapes, name=name)
-
+        # pylint: disable=cyclic-import, import-outside-toplevel
+        from volmdlr.utils.ocp_helpers import OCAFReader
+        shapes = OCAFReader().load_step(path=step_file)
+        return cls(shapes, name=name)
 
     @classmethod
-    def from_ocp(cls, ocp_shapes:List[TopoDS_Shape], name: str = ""):
+    def from_ocp(cls, ocp_shapes: List[TopoDS_Shape], name: str = ""):
         """
         Instanciate a volume model from a list of OCCT shapes.
         """
         # pylint: disable=cyclic-import, import-outside-toplevel
         from volmdlr.shells import Shell3D
+        from volmdlr.composite_shapes import Compound
         # Make sure that we extract all the solids
         solids = []
         for shape in ocp_shapes:
             shape_type = from_ocp.shapetype(shape)
-            # TODO: we get only the shells inside the Compound because circular imports
-            if shape_type in (0, 1, 2):
+            if shape_type == 0:
+                solids.append(Compound.from_ocp(shape))
+            if shape_type in (1, 2):
                 list_of_shells = from_ocp.get_shells(shape)
                 for shell in list_of_shells:
                     solids.append(Shell3D.from_ocp(shell))
             elif from_ocp.shapetype(shape) == 3:
-                Shell3D.from_ocp(shape)
+                solids.append(Shell3D.from_ocp(shape))
 
         return cls(primitives=solids, name=name)
 

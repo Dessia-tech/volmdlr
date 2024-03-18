@@ -14,7 +14,10 @@ from dessia_common.typings import JsonSerializable
 from numpy.typing import NDArray
 from trimesh import Trimesh
 
+from OCP.BRepMesh import BRepMesh_IncrementalMesh
+from OCP.TopLoc import TopLoc_Location
 from OCP.BRep import BRep_Tool
+from OCP.TopoDS import TopoDS_Iterator, TopoDS
 
 import volmdlr.core
 import volmdlr.core_compiled
@@ -112,7 +115,8 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         self._bbox = None
         if bounding_box:
             self._bbox = bounding_box
-
+        self._wrapped = None
+        self._map_of_colors = None
         self._faces_graph = None
         self._vertices_graph = None
         self._vertices_points = None
@@ -837,7 +841,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
 
         return OpenTriangleShell3D(faces=triangles, color=self.color, alpha=self.alpha, name=self.name)
 
-    def babylon_meshes(self, merge_meshes=True):
+    def babylon_meshes(self, merge_meshes=False):
         """
         Returns the babylonjs mesh.
         """
@@ -1056,7 +1060,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         return shells_list
 
     @classmethod
-    def from_ocp(cls, occt_shell) -> "Shell3D":
+    def from_ocp(cls, occt_shell, color_tool=None, default_color: tuple = (0.8, 0.8, 0.8), name: str ="") -> "Shell3D":
         """
         Builds a shell from an OCP shell.
         """
@@ -1069,17 +1073,26 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
             "Geom_BSplineSurface": volmdlr.faces.BSplineFace3D,
             "Geom_SurfaceOfLinearExtrusion": volmdlr.faces.ExtrusionFace3D,
             "Geom_SurfaceOfRevolution": volmdlr.faces.RevolutionFace3D}
-        occt_faces = from_ocp.get_faces(occt_shell)
+        shell_color = from_ocp.get_color(occt_shell, color_tool) or default_color
+        it = TopoDS_Iterator()
+        it.Initialize(occt_shell, False, False)
         faces = []
-        for occt_face in occt_faces:
+        while it.More():
+            occt_face = TopoDS.Face_s(it.Value())
             surface = BRep_Tool().Surface_s(occt_face)
             if surface.get_type_name_s() == 'Geom_RectangularTrimmedSurface':
                 surface = surface.BasisSurface()
             face_cls = occt_surface_to_volmdlr_face_map[surface.get_type_name_s()]
-            faces.append(face_cls.from_ocp(occt_face))
+            volmdlr_face = face_cls.from_ocp(occt_face)
+            if color_tool:
+                face_color = from_ocp.get_color(occt_face, color_tool) or shell_color
+                volmdlr_face.color = face_color
+            faces.append(volmdlr_face)
+            it.Next()
+
         if occt_shell.Closed():
-            return ClosedShell3D(faces)
-        return OpenShell3D(faces)
+            return ClosedShell3D(faces, name=name)
+        return OpenShell3D(faces, name=name)
 
     def is_disjoint_from(self, shell2, tol=1e-8):
         """

@@ -3,6 +3,12 @@ Define some composite shapes.
 """
 from typing import List
 import matplotlib.pyplot as plt
+from OCP.TopoDS import TopoDS_Iterator
+from OCP.TopAbs import (
+    TopAbs_COMPSOLID, TopAbs_SOLID, TopAbs_SHELL,
+)
+from OCP.TDF import TDF_LabelSequence, TDF_Label
+from OCP.TDataStd import TDataStd_Name
 
 import dessia_common.core as dc
 import volmdlr
@@ -12,6 +18,7 @@ from volmdlr.utils.step_writer import (product_writer, geometric_context_writer,
 from volmdlr.core import (Primitive3D, BoundingBox, map_primitive_with_initial_and_final_frames, get_babylon_data)
 from volmdlr import from_ocp
 from volmdlr.shells import Shell3D
+from volmdlr.faces import Face3D
 
 
 class Assembly(dc.PhysicalObject):
@@ -285,10 +292,43 @@ class Compound(dc.PhysicalObject):
         return step_content, current_id, [brep_id, product_definition_id]
 
     @classmethod
-    def from_ocp(cls, occt_compound):
+    def from_ocp(cls, occt_compound, color_tool=None, default_color: tuple = (0.8, 0.8, 0.8),
+                 shape_tool=None, name: str =""):
         """
         Creates a volmdlr Compound from an OCCT compound.
         """
-        # TODO: Today only shells are read. Needs to implement Solid or wireframe models if needed
-        shell_list = [Shell3D.from_ocp(occt_shell) for occt_shell in from_ocp.get_shells(occt_compound)]
-        return cls(shell_list)
+        it = TopoDS_Iterator()
+        it.Initialize(occt_compound, False, False)
+        shapes = []
+        while it.More():
+            shape = it.Value()
+            shape_type = shape.ShapeType()
+            entity_name = ""
+            if shape_tool:
+                label = TDF_Label()
+                shape_tool.Search(shape, label)
+                entity_name = cls.get_shape_name_from_label(label)
+            # TODO: Today only shells are read. Needs to implement Solid or wireframe models if needed
+            if shape_type in (TopAbs_COMPSOLID, TopAbs_SOLID):
+                list_of_shells = from_ocp.get_shells(shape)
+                for shell in list_of_shells:
+                    shapes.append(Shell3D.from_ocp(shell, color_tool=color_tool, name=entity_name))
+            elif shape_type == TopAbs_SHELL:
+                shapes.append(Shell3D.from_ocp(shape, color_tool=color_tool, name=entity_name))
+            it.Next()
+        if shapes:
+            return cls(shapes, name=name)
+        faces_list = [Face3D.from_ocp(ocp_face) for ocp_face in from_ocp.get_faces(occt_compound)]
+        if faces_list:
+            return cls(faces_list, name=name)
+        raise NotImplemented
+
+    @staticmethod
+    def get_shape_name_from_label(label):
+        # Get the entity name
+        name_attr = TDataStd_Name()
+        if label.FindAttribute(TDataStd_Name.GetID_s(), name_attr):
+            entity_name = name_attr.Get().ToExtString()
+            print(f"Entity name: {entity_name}")
+            return entity_name
+        return ""
