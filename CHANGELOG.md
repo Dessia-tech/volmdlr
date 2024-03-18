@@ -84,8 +84,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - u_iso/v_iso: Returns the u-iso/v-iso curve of the surface.
 - Plane3D/CylindricalSurface/ConicalSurface/SphericalSurface3D : normal_at_point
 
+#### core_compiled
+- Add custom Schemas for Vectors & Points
+
 #### shells.py
 - first version boolean operations with any faces.
+
 
 #### global
 - Add reference_path to a handful of classes

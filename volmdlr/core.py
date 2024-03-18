@@ -29,6 +29,7 @@ from OCP.TopoDS import TopoDS_Shape
 import dessia_common.core as dc
 from dessia_common.errors import ConsistencyError
 import dessia_common.files as dcf
+from dessia_common.schemas.core import BuiltinProperty, SchemaAttribute, ClassSchema, Schema
 import volmdlr
 import volmdlr.templates
 from volmdlr.core_compiled import bbox_is_intersecting
@@ -2031,3 +2032,62 @@ class MovingVolumeModel(VolumeModel):
                         'center': center,
                         'steps': steps}
         return babylon_data
+
+
+class VectorSchema(Schema):
+    def __init__(self, class_, annotations, attributes):
+        self.classname = f"{class_.__module__}.{class_.__name__}"
+
+        super().__init__(annotations=annotations, attributes=attributes)
+
+    def to_dict(self, **kwargs):
+        dict_ = super().to_dict()
+        dict_.update({"standalone_in_db": False, "classes": [self.classname]})
+        return dict_
+
+class Vector2Schema(VectorSchema):
+    def __init__(self, class_):
+        annotations = {"x": float, "y": float, "name": str}
+        attributes = [SchemaAttribute("x"), SchemaAttribute("y"), SchemaAttribute("name", default_value="")]
+        super().__init__(class_=class_, annotations=annotations, attributes=attributes)
+
+class Vector3Schema(Schema):
+    def __init__(self, class_):
+        annotations = {"x": float, "y": float, "z": float, "name": str}
+        attributes = [SchemaAttribute("x"), SchemaAttribute("y"),
+                      SchemaAttribute("z"), SchemaAttribute("name", default_value="")]
+        super().__init__(class_=class_, annotations=annotations, attributes=attributes)
+
+
+class VectorBlueprint(volmdlr.Vector):
+    @classmethod
+    def raw_schema(cls):
+        raise NotImplementedError("Cannot compute schema for base class 'Vector'. Should be one of its children class")
+
+    @classmethod
+    def schema(cls):
+        """ Write raw schema as a dict in order to make it jsonable. """
+        return cls.raw_schema().to_dict()
+
+
+class Vector2DBlueprint(volmdlr.Vector2D):
+    @classmethod
+    def raw_schema(cls):
+        """ Custom Schema implementation in order to allow vectors and points to be used in forms. """
+        return Vector2Schema(cls)
+
+class Vector3DBlueprint(volmdlr.Vector3D):
+    @classmethod
+    def raw_schema(cls):
+        """ Custom Schema implementation in order to allow vectors and points to be used in forms. """
+        return Vector3Schema(cls)
+
+class Point2DBlueprint(volmdlr.Point2D):
+    pass
+
+
+class TestSchema(dc.PhysicalObject):
+    def __init__(self, point: Point2DBlueprint, name: str = ""):
+        self.point = point
+
+        super().__init__(name)
