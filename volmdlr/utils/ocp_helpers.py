@@ -114,59 +114,6 @@ def plot_face(face, ax=None, color="k", alpha=1, edge_details=False):
     return ax
 
 
-def discretize_edge2d(edge, number_points: int = 16):
-    """Discretizes a 2D edge with specified deflection."""
-    curve = BRepAdaptor_Curve2d(edge)
-    try:
-        gcpnts = GCPnts_QuasiUniformAbscissa(curve, number_points)
-    except:
-        return []
-    curve_props = BRepLProp_CLProps(curve, 1, 1e-6)
-    pts = []
-    for i in range(number_points):
-        point = gcpnts.Parameter(i + 1)
-        curve_props.SetParameter(point)
-        vpt = curve_props.Value()
-        pts.append(volmdlr.Point2D(vpt.X(), vpt.Y(), vpt.Z()))
-    return pts
-
-
-def plot_edge2d(edge, ax=None, edge_style=volmdlr.core.EdgeStyle()):
-    """
-    Matplotlib plot method for a 2D edge.
-
-    """
-    if ax is None:
-        fig, ax = plt.subplots()
-
-    # curve = BRepAdaptor_Curve2d(edge)
-    # if curve.GetType() == GeomAbs_CurveType.GeomAbs_Line:
-    #     number_points = 2
-    # elif curve.GetType() in (GeomAbs_CurveType.GeomAbs_BezierCurve, GeomAbs_CurveType.GeomAbs_BSplineCurve):
-    #     number_points = max(100, curve.NbPoles())
-    # else:
-    #     number_points = int(72 * abs(curve.LastParameter() - curve.FirstParameter()) / volmdlr.TWO_PI)
-    points = discretize_edge2d(edge)
-    x = [point.x for point in points]
-    y = [point.y for point in points]
-    ax.plot(x, y, color=edge_style.color, alpha=edge_style.alpha)
-    if edge_style.edge_ends:
-        ax.plot(x, y, color=edge_style.color, alpha=edge_style.alpha)
-    return ax
-
-
-def plot_wire2d(wire, ax=None, edge_style=volmdlr.core.EdgeStyle()):
-    """OCP wire 2D plot using Matplotlib."""
-    if ax is None:
-        fig, ax = plt.subplots()
-    exp = BRepTools_WireExplorer(wire)
-    while exp.More():
-        edge = exp.Current()
-        plot_edge2d(edge, ax=ax, edge_style=edge_style)
-        exp.Next()
-    return ax
-
-
 downcast_LUT = {
     TopAbs_VERTEX: TopoDS.Vertex_s,
     TopAbs_EDGE: TopoDS.Edge_s,
