@@ -15,6 +15,11 @@ from numpy.typing import NDArray
 from trimesh import Trimesh
 
 from OCP.BRep import BRep_Tool
+from OCP.TopoDS import TopoDS_Shell, TopoDS_Face
+from OCP.BRepBuilderAPI import BRepBuilderAPI_Sewing
+from OCP.Bnd import Bnd_Box
+from OCP.BRepBndLib import BRepBndLib
+from OCP.BRepMesh import BRepMesh_IncrementalMesh
 
 import volmdlr.core
 import volmdlr.core_compiled
@@ -2236,3 +2241,66 @@ class DisplayTriangleShell3D(Shell3D):
         if other_object.__class__.__name__ != self.__class__.__name__:
             return False
         return self._data_hash() == other_object._data_hash()
+
+
+class Shell(object):
+    """
+    the outer boundary of a surface
+    """
+
+    wrapped: TopoDS_Shell
+
+    def __init__(self, obj: TopoDS_Shell, name: str = ''):
+        self.wrapped = obj
+
+        self.name = name
+        self._faces = None
+        self._bbox = None
+
+    @property
+    def faces(self):
+        if not self._faces:
+            pass
+            # self._faces = [face.from_ocp() for face in self.wrapped.]
+        return self._faces
+
+    @faces.setter
+    def faces(self, faces):
+        self._faces = faces
+
+    @classmethod
+    def from_faces(cls, faces: List[volmdlr.faces.Face3D]):
+        list_of_faces = [face.to_ocp() for face in faces]
+
+        shell_builder = BRepBuilderAPI_Sewing()
+
+        for face in list_of_faces:
+            shell_builder.Add(face)
+
+        shell_builder.Perform()
+        s = shell_builder.SewedShape()
+        shell = cls(s)
+        shell.faces = faces
+        return shell
+
+    def bounding_box(self):
+        if not self._bbox:
+            tol = 1e-2
+            bbox = Bnd_Box()
+
+            mesh = BRepMesh_IncrementalMesh(self.wrapped, tol, True)
+            mesh.Perform()
+
+            BRepBndLib.Add_s(self.wrapped, bbox, True)
+
+            xmin, ymin, zmin, xmax, ymax, zmax = bbox.Get()
+
+            self._bbox = volmdlr.core.BoundingBox(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax, zmin=zmin, zmax=zmax)
+        return self._bbox
+
+    def point_distance(self, point):
+        pass
+
+
+
+
