@@ -2,12 +2,10 @@
 Module to translate objects in OCP to Volmdlr.
 """
 # pylint: disable=no-name-in-module
-from typing import Any
 from OCP.TColStd import TColStd_Array2OfReal, TColStd_Array1OfReal
 from OCP.BRep import BRep_Tool
 from OCP.BRepTools import BRepTools, BRepTools_WireExplorer
-from OCP.TopAbs import (TopAbs_EDGE, TopAbs_FACE, TopAbs_VERTEX, TopAbs_WIRE, TopAbs_SHELL, TopAbs_ShapeEnum,
-                        TopAbs_SOLID, TopAbs_COMPSOLID, TopAbs_COMPOUND)
+from OCP.TopAbs import (TopAbs_FACE, TopAbs_WIRE, TopAbs_SHELL)
 from OCP.TopoDS import (TopoDS_Face, TopoDS_Shell, TopoDS_Wire, TopoDS, TopoDS_Shape)
 
 from OCP.TopExp import TopExp_Explorer
@@ -535,44 +533,3 @@ def surface2d_from_ocp_face(cls, contour2d_class, face, occt_to_volmdlr):
     inner_contours2d = [get_contour2d_from_face_wire(contour2d_class, inner_wire, face, occt_to_volmdlr)
                         for inner_wire in inner_wires]
     return cls(outer_contour2d, inner_contours2d)
-
-
-downcast_LUT = {
-    TopAbs_VERTEX: TopoDS.Vertex_s,
-    TopAbs_EDGE: TopoDS.Edge_s,
-    TopAbs_WIRE: TopoDS.Wire_s,
-    TopAbs_FACE: TopoDS.Face_s,
-    TopAbs_SHELL: TopoDS.Shell_s,
-    TopAbs_SOLID: TopoDS.Solid_s,
-    TopAbs_COMPSOLID: TopoDS.CompSolid_s,
-    TopAbs_COMPOUND: TopoDS.Compound_s,
-}
-
-
-def shapetype(obj: TopoDS_Shape) -> TopAbs_ShapeEnum:
-    """
-    Returns a number from 0 to 7, representing the type of the shape.
-
-    COMPOUND = 0
-    COMPSOLID = 1
-    SHELL = 2
-    FACE = 3
-    WIRE = 4
-    EDGE = 5
-    VERTEX = 6
-    SHAPE = 7
-    """
-    if obj.IsNull():
-        raise ValueError("Null TopoDS_Shape object")
-
-    return obj.ShapeType()
-
-
-def downcast(obj: TopoDS_Shape) -> TopoDS_Shape:
-    """
-    Downcasts a TopoDS object to suitable specialized type.
-    """
-
-    f_downcast: Any = downcast_LUT[shapetype(obj)]
-
-    return f_downcast(obj)

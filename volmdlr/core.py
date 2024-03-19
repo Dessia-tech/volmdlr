@@ -1374,13 +1374,13 @@ class VolumeModel(dc.PhysicalObject):
         # Make sure that we extract all the solids
         solids = []
         for shape in ocp_shapes:
-            shape_type = from_ocp.shapetype(shape)
+            shape_type = ocp_helpers_shapetype(shape)
             # TODO: we get only the shells inside the Compound because circular imports
             if shape_type in (0, 1, 2):
                 list_of_shells = from_ocp.get_shells(shape)
                 for shell in list_of_shells:
                     solids.append(Shell3D.from_ocp(shell))
-            elif from_ocp.shapetype(shape) == 3:
+            elif ocp_helpers_shapetype(shape) == 3:
                 Shell3D.from_ocp(shape)
 
         return cls(primitives=solids, name=name)
