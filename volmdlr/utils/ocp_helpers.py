@@ -10,7 +10,7 @@ from OCP.GCPnts import GCPnts_QuasiUniformAbscissa
 from OCP.GeomAbs import GeomAbs_CurveType
 from OCP.BRepTools import BRepTools_WireExplorer
 from OCP import TopAbs
-from OCP.TopoDS import TopoDS, TopoDS_Shape
+from OCP.TopoDS import TopoDS
 from OCP.TopExp import TopExp_Explorer
 
 import volmdlr

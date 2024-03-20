@@ -8,7 +8,7 @@ from OCP.BRep import BRep_Tool
 from OCP.BRepTools import BRepTools, BRepTools_WireExplorer
 from OCP.TopAbs import (TopAbs_EDGE, TopAbs_FACE, TopAbs_VERTEX, TopAbs_WIRE, TopAbs_SHELL, TopAbs_ShapeEnum,
                         TopAbs_SOLID, TopAbs_COMPSOLID, TopAbs_COMPOUND)
-from OCP.ShapeFix import ShapeFix_Shape, ShapeFix_Solid, ShapeFix_Face
+from OCP.ShapeFix import ShapeFix_Shape
 from OCP.TopoDS import (TopoDS_Face, TopoDS_Shell, TopoDS_Wire, TopoDS, TopoDS_Shape)
 
 from OCP.TopExp import TopExp_Explorer

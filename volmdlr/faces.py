@@ -1768,7 +1768,7 @@ class Face3D(volmdlr.core.Primitive3D):
         inner_wires = [wire_traduction_fuction(contour)
                        for contour in self.inner_contours3d]
 
-        outer_wire = ocp_helpers.fix(outer_wire)
+        outer_wire = from_ocp.fix(outer_wire)
 
         face_builder = BRepBuilderAPI_MakeFace(occt_surface, outer_wire)
         exp = BRepTools_WireExplorer(outer_wire)
@@ -1796,7 +1796,7 @@ class Face3D(volmdlr.core.Primitive3D):
         fix_face = ShapeFix_Face(face)
         fix_face.FixOrientation()
         fix_face.Perform()
-        return fix_face.Result()
+        return from_ocp.downcast(fix_face.Result())
 
 
 class PlaneFace3D(Face3D):
