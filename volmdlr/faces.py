@@ -1778,7 +1778,7 @@ class Face3D(volmdlr.core.Primitive3D):
             exp.Next()
 
         for wire in inner_wires:
-            if not wire.IsClosed():
+            if not BRep_Tool.IsClosed_s(wire):
                 raise ValueError("Cannot build face(s): inner wire is not closed")
             face_builder.Add(wire)
             exp = BRepTools_WireExplorer(wire)
