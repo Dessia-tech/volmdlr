@@ -38,6 +38,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### edges.py
 - Edge: delete_shared_section (use abs_tol)
 - Bspline: get_shared_section (update abs_tol for is_shared_section_possible)
+- Arc2D: plot_data
+
 #### wires.py
 - 
 #### surfaces.py

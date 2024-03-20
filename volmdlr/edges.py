@@ -3597,9 +3597,6 @@ class Arc2D(ArcMixin, Edge):
         """
         start_angle = self.angle_start
         end_angle = self.angle_end
-        if not self.is_trigo:
-            start_angle = 2 * math.pi - start_angle
-            end_angle = 2 * math.pi - end_angle
         return plot_data.Arc2D(cx=self.circle.center.x,
                                cy=self.circle.center.y,
                                r=self.circle.radius,
