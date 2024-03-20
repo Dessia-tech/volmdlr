@@ -4,7 +4,7 @@ import math
 import random
 import warnings
 from itertools import chain, product
-from typing import Iterable, List, Tuple, Union
+from typing import Iterable, List, Tuple, Union, Optional
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -20,6 +20,12 @@ from OCP.BRepBuilderAPI import BRepBuilderAPI_Sewing
 from OCP.Bnd import Bnd_Box
 from OCP.BRepBndLib import BRepBndLib
 from OCP.BRepMesh import BRepMesh_IncrementalMesh
+from OCP.GProp import GProp_PGProps
+from OCP.BRepGProp import BRepGProp
+from OCP.BRepExtrema import BRepExtrema_DistShapeShape
+from OCP.BRepAlgoAPI import BRepAlgoAPI_Fuse, BRepAlgoAPI_BooleanOperation, BRepAlgoAPI_Splitter
+from OCP.BOPAlgo import BOPAlgo_GlueEnum
+from OCP.TopTools import TopTools_ListOfShape
 
 import volmdlr.core
 import volmdlr.core_compiled
@@ -28,7 +34,7 @@ import volmdlr.geometry
 from volmdlr import curves, display, edges, surfaces, wires
 from volmdlr.core import edge_in_list, get_edge_index_in_list, get_point_index_in_list, point_in_list
 from volmdlr.utils.step_writer import geometric_context_writer, product_writer, step_ids_to_str
-from volmdlr import from_ocp
+from volmdlr import from_ocp, to_ocp
 from volmdlr.utils.mesh_helpers import perform_decimation
 # pylint: disable=unused-argument
 
@@ -2245,7 +2251,7 @@ class DisplayTriangleShell3D(Shell3D):
 
 class Shell(object):
     """
-    the outer boundary of a surface
+    OCP shell wrapped.
     """
 
     wrapped: TopoDS_Shell
@@ -2269,17 +2275,18 @@ class Shell(object):
         self._faces = faces
 
     @classmethod
-    def from_faces(cls, faces: List[volmdlr.faces.Face3D]):
-        list_of_faces = [face.to_ocp() for face in faces]
+    def from_faces(cls, faces: Union[volmdlr.faces.Face3D, TopoDS_Face]):
+        if isinstance(faces[0], volmdlr.faces.Face3D):
+            faces = [face.to_ocp() for face in faces]
 
         shell_builder = BRepBuilderAPI_Sewing()
 
-        for face in list_of_faces:
+        for face in faces:
             shell_builder.Add(face)
 
         shell_builder.Perform()
-        s = shell_builder.SewedShape()
-        shell = cls(s)
+        shape = shell_builder.SewedShape()
+        shell = cls(shape)
         shell.faces = faces
         return shell
 
@@ -2299,8 +2306,68 @@ class Shell(object):
         return self._bbox
 
     def point_distance(self, point):
+        point = to_ocp.point3d_to_ocp(point)
+        return BRepExtrema_DistShapeShape(self.wrapped, point).Value()
+
+    def volume(self):
+        tol = 1e-6
+        prop = GProp_PGProps()
+        BRepGProp.VolumeProperties_s(self.wrapped, prop, tol)
+        return abs(prop.Mass())
+
+    def _bool_op(
+            self,
+            args: Iterable["Shell"],
+            tools: Iterable["Shell"],
+            op: Union[BRepAlgoAPI_BooleanOperation, BRepAlgoAPI_Splitter],
+            parallel: bool = True,
+    ) -> "TopoDS_Shell":
+        """
+        Generic boolean operation
+
+        :param parallel: Sets the SetRunParallel flag, which enables parallel execution of boolean operations in OCC kernel
+        """
+
+        arg = TopTools_ListOfShape()
+        for obj in args:
+            arg.Append(obj.wrapped)
+
+        tool = TopTools_ListOfShape()
+        for obj in tools:
+            tool.Append(obj.wrapped)
+
+        op.SetArguments(arg)
+        op.SetTools(tool)
+
+        op.SetRunParallel(parallel)
+        op.Build()
+
+        return op.Shape()
+
+    def union(self, *to_union: "Shell", glue: bool = False, tol: Optional[float] = None):
+        """
+        Fuse the positional arguments with this Shape.
+
+        :param glue: Sets the glue option for the algorithm, which allows
+            increasing performance of the intersection of the input shapes
+        :param tol: Fuzzy mode tolerance
+        """
+
+        fuse_op = BRepAlgoAPI_Fuse()
+        if glue:
+            fuse_op.SetGlue(BOPAlgo_GlueEnum.BOPAlgo_GlueShift)
+        if tol:
+            fuse_op.SetFuzzyValue(tol)
+
+        union = self._bool_op((self,), to_union, fuse_op)
+
+        return self.__class__(union)
+
+    def to_dict(self):
         pass
 
+    def to_step(self):
+        pass
 
 
 
