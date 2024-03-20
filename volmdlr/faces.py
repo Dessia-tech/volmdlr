@@ -10,18 +10,17 @@ from typing import List
 import matplotlib.pyplot as plt
 import numpy as np
 import triangle as triangle_lib
-from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeFace, BRepBuilderAPI_MakeWire
+
+from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeFace
 from OCP.BRepLib import BRepLib
-# from OCP.BRepBuilder import BRep_Builder
-from OCP.TopoDS import TopoDS_Face
 from OCP.BOPTools import BOPTools_AlgoTools2D
 from OCP.BRepTools import BRepTools_WireExplorer
 from OCP.ShapeFix import ShapeFix_Face
-
-from dessia_common.core import DessiaObject
-
 from OCP.BRep import BRep_Tool
 from OCP.TopoDS import TopoDS_Shape
+
+
+from dessia_common.core import DessiaObject
 
 import volmdlr.core
 from volmdlr.core import EdgeStyle
@@ -1736,7 +1735,7 @@ class Face3D(volmdlr.core.Primitive3D):
         outer_wire = wire_traduction_fuction(self.surface2d.outer_contour, ocp_surface=occt_surface)
         inner_wires = [wire_traduction_fuction(contour, ocp_surface=occt_surface)
                        for contour in self.surface2d.inner_contours]
-        outer_wire = ocp_helpers.fix(outer_wire)
+        outer_wire = from_ocp.fix(outer_wire)
         # Compute the 3D representations of the edges/wires
         BRepLib.BuildCurves3d_s(outer_wire)
         for inner_wire in inner_wires:
@@ -1744,7 +1743,7 @@ class Face3D(volmdlr.core.Primitive3D):
 
         face_builder = BRepBuilderAPI_MakeFace(occt_surface, outer_wire)
         for wire in inner_wires:
-            if not wire.IsClosed():
+            if not BRep_Tool.IsClosed_s(wire):
                 raise ValueError("Cannot build face(s): inner wire is not closed")
             face_builder.Add(wire)
         face_builder.Build()
@@ -1756,7 +1755,7 @@ class Face3D(volmdlr.core.Primitive3D):
         fix_face = ShapeFix_Face(face)
         fix_face.FixOrientation()
         fix_face.Perform()
-        return fix_face.Result()
+        return from_ocp.downcast(fix_face.Result())
 
     def to_ocp_from_3d(self):
         """

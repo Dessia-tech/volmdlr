@@ -1,6 +1,7 @@
 """
 Module to translate objects in Volmdlr to OCP.
 """
+# pylint: disable=no-name-in-module
 from OCP.Geom import (Geom_BSplineSurface, Geom_CylindricalSurface, Geom_ConicalSurface, Geom_ToroidalSurface,
                       Geom_SphericalSurface, Geom_SurfaceOfLinearExtrusion, Geom_Plane, Geom_BSplineCurve, Geom_Line,
                       Geom_Circle, Geom_Ellipse)
@@ -101,7 +102,7 @@ def frame3d_to_ocp(frame, right_handed: bool = False):
     Create an OCP Frame3D from a voldmlr Frame3D.
 
     :param frame: volmdlr Frame3D.
-    :param right_handed: (Optional) If set to True returns a gp_Ax2, that is right-handed coordinate system in 3D space. If
+    :param right_handed: (Optional) If set to True returns a gp_Ax2, that is right-handed coordinate system. If
     set to False (default) returns a gp_Ax3 can be right-handed ("direct sense") or left-handed ("indirect sense").
     :return: OCP Frame3D.
     """
@@ -170,12 +171,12 @@ def bsplinecurve3d_to_ocp(bsplinecurve):
         return Geom_BSplineCurve(list_to_tcolgp_array10fpnt(bsplinecurve.control_points),
                                  list_to_tcolstd_array1ofreal(bsplinecurve.knots),
                                  list_to_tcolstd_array1ofinteger(bsplinecurve.knot_multiplicities),
-                                 bsplinecurve.degree, bsplinecurve.periodic)
+                                 bsplinecurve.degree)
     return Geom_BSplineCurve(list_to_tcolgp_array10fpnt(bsplinecurve.control_points),
                              list_to_tcolstd_array1ofreal(bsplinecurve.weights),
                              list_to_tcolstd_array1ofreal(bsplinecurve.knots),
                              list_to_tcolstd_array1ofinteger(bsplinecurve.knot_multiplicities),
-                             bsplinecurve.degree, bsplinecurve.periodic)
+                             bsplinecurve.degree)
 
 
 def line2d_to_ocp(line):
@@ -223,12 +224,12 @@ def bsplinecurve2d_to_ocp(bsplinecurve):
         return Geom2d_BSplineCurve(list_to_tcolgp_array10fpnt2d(bsplinecurve.control_points),
                                    list_to_tcolstd_array1ofreal(bsplinecurve.knots),
                                    list_to_tcolstd_array1ofinteger(bsplinecurve.knot_multiplicities),
-                                   bsplinecurve.degree, bsplinecurve.periodic)
+                                   bsplinecurve.degree)
     return Geom2d_BSplineCurve(list_to_tcolgp_array10fpnt2d(bsplinecurve.control_points),
                                list_to_tcolstd_array1ofreal(bsplinecurve.weights),
                                list_to_tcolstd_array1ofreal(bsplinecurve.knots),
                                list_to_tcolstd_array1ofinteger(bsplinecurve.knot_multiplicities),
-                               bsplinecurve.degree, bsplinecurve.periodic)
+                               bsplinecurve.degree)
 
 
 def edge2d_to_ocp(edge2d, ocp_surface=None):
