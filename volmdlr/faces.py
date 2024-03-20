@@ -15,6 +15,8 @@ from dessia_common.core import DessiaObject
 
 from OCP.BRep import BRep_Tool
 from OCP.TopoDS import TopoDS_Shape
+from OCP.BOPTools import BOPTools_AlgoTools2D
+from OCP.BRepTools import BRepTools_WireExplorer
 
 import volmdlr.core
 from volmdlr.core import EdgeStyle
@@ -4110,3 +4112,42 @@ class BSplineFace3D(Face3D):
         :param abs_tol: tolerance.
         """
         return super().divide_face(list_cutting_contours, abs_tol)
+
+    @classmethod
+    def from_ocp(cls, ocp_face: TopoDS_Shape):
+        """
+        Translate an OCCT face retrieving its 2D wires into a volmdlr face.
+        """
+        occt_surface = BRep_Tool().Surface_s(ocp_face)
+        if occt_surface.get_type_name_s() == 'Geom_RectangularTrimmedSurface':
+            occt_surface = occt_surface.BasisSurface()
+
+        surface_function = getattr(from_ocp, occt_surface.get_type_name_s().lower()[5:] + '_from_ocp')
+        surface_class = OCCT_TO_VOLMDLR[occt_surface.get_type_name_s()]
+        surface = surface_function(surface_class, occt_surface, occt_to_volmdlr=OCCT_TO_VOLMDLR)
+        outer_wire, inner_wires = from_ocp.get_wires_from_face(ocp_face)
+        primitives2d = []
+        exp = BRepTools_WireExplorer(outer_wire)
+        while exp.More():
+            edge = exp.Current()
+            BOPTools_AlgoTools2D.BuildPCurveForEdgeOnFace_s(edge, ocp_face)
+            primitives2d.append(from_ocp.get_edge2d_from_face_edge(edge, ocp_face, OCCT_TO_VOLMDLR))
+            exp.Next()
+        if surface.x_periodicity or surface.y_periodicity:
+            surface.repair_primitives_periodicity(primitives2d=primitives2d, primitives_mapping={})
+
+        outer_contour = volmdlr.wires.Contour2D(primitives2d)
+        inner_contours = []
+        for wire in inner_wires:
+            primitives2d = []
+            exp = BRepTools_WireExplorer(wire)
+            while exp.More():
+                edge = exp.Current()
+                BOPTools_AlgoTools2D.BuildPCurveForEdgeOnFace_s(edge, ocp_face)
+                primitives2d.append(from_ocp.get_edge2d_from_face_edge(edge, ocp_face, OCCT_TO_VOLMDLR))
+                exp.Next()
+            if surface.x_periodicity or surface.y_periodicity:
+                surface.repair_primitives_periodicity(primitives2d=primitives2d, primitives_mapping={})
+            inner_contours.append(volmdlr.wires.Contour2D(primitives2d))
+        surface2d = surfaces.Surface2D(outer_contour, inner_contours)
+        return cls(surface, surface2d)

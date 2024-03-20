@@ -504,21 +504,27 @@ def get_wires_from_face(face):
     return outer_wire, inner_wires
 
 
-def get_contour2d_from_face_wire(contour2d_class, wire, face, occt_to_volmdlr):
+def get_edge2d_from_face_edge(ocp_edge, ocp_face, ocp_to_volmdlr):
+    """
+    Get parametric representation of the face's wires.
+    """
+    u_start, u_end = BRep_Tool().Range_s(ocp_edge, ocp_face)
+    crv = BRep_Tool().CurveOnSurface_s(ocp_edge, ocp_face, u_start, u_end, False)
+    orientation = ocp_edge.Orientation()
+    if orientation == 1:
+        u_start, u_end = u_end, u_start
+
+    return volmdlr_edge2d_from_ocp_curve(ocp_to_volmdlr[crv.get_type_name_s()], crv, u_start, u_end, orientation)
+
+
+def get_contour2d_from_face_wire(contour2d_class, wire, face, ocp_to_volmdlr):
     """
     Get parametric representation of the face's wires.
     """
     exp = BRepTools_WireExplorer(wire, face)
     list_edges = []
     while exp.More():
-        u_start, u_end = BRep_Tool().Range_s(exp.Current(), face)
-        crv = BRep_Tool().CurveOnSurface_s(exp.Current(), face, u_start, u_end, False)
-        orientation = exp.Current().Orientation()
-        if orientation == 1:
-            u_start, u_end = u_end, u_start
-
-        list_edges.append(volmdlr_edge2d_from_ocp_curve(occt_to_volmdlr[crv.get_type_name_s()], crv,
-                                                         u_start, u_end, orientation))
+        list_edges.append(get_edge2d_from_face_edge(exp.Current(), face, ocp_to_volmdlr))
         exp.Next()
     if not contour2d_class(list_edges).is_ordered(1e-2):
         print("Contour not ordered")
