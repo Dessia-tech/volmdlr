@@ -708,7 +708,7 @@ class Surface2D(PhysicalObject):
                     factor=factor, curvature_mesh_size=kwargs['curvature_mesh_size'],
                     min_points=kwargs['min_points'], initial_mesh_size=kwargs['initial_mesh_size'])
 
-        volmdlr.core.VolumeModel.generate_msh_file(file_name, mesh_dimension, mesh_order)
+        volmdlr.model.VolumeModel.generate_msh_file(file_name, mesh_dimension, mesh_order)
 
         # gmsh.initialize()
         # gmsh.open(file_name + ".geo")

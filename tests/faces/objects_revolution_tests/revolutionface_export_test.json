@@ -1,6 +1,6 @@
 {
   "name": "",
-  "object_class": "volmdlr.core.VolumeModel",
+  "object_class": "volmdlr.model.VolumeModel",
   "package_version": "0.10.1.dev1106+gab56340c",
   "primitives": [
     {

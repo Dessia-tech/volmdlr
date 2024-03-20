@@ -8,8 +8,8 @@ Created on Wed Sep 29 14:35:47 2021
 
 import json
 
-MIN_FILE_COVERAGE = 58.4
-MIN_PROJECT_COVERAGE = 60
+MIN_FILE_COVERAGE = 60
+MIN_PROJECT_COVERAGE = 74
 
 untracked_modules = ['volmdlr/templates.py',
                      'volmdlr/code_aster.py',
