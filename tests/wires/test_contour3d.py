@@ -1,9 +1,10 @@
 import os
 import unittest
 import volmdlr
+import volmdlr.model
 from volmdlr.wires import Contour3D, Contour2D
 from volmdlr.step import Step
-from volmdlr import edges, core, curves
+from volmdlr import edges, curves
 from volmdlr.models.contours import contour3d, contour3d_all_edges
 
 
@@ -59,7 +60,7 @@ class TestContour3D(unittest.TestCase):
         self.assertTrue(face.outer_contour3d.is_ordered())
 
         arguments = ["", ["#2518728", "#2518729"]]
-        primitives = core.VolumeModel.from_json(
+        primitives = volmdlr.model.VolumeModel.from_json(
                 os.path.join(folder, "strange_contour_from_step_primitives.json")).primitives
         object_dict = {2518728: primitives[0], 2518729: primitives[1]}
 

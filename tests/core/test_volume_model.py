@@ -4,7 +4,7 @@ import os
 from copy import deepcopy
 import volmdlr
 from volmdlr.primitives3d import Block
-from volmdlr.core import VolumeModel, BoundingBox
+from volmdlr.model import VolumeModel, BoundingBox
 
 
 class TestVolumeModel(unittest.TestCase):

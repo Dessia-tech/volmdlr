@@ -23,7 +23,7 @@ shell1 = box_red.union(box_green)[0]
 shell1.merge_faces()
 shell1.color = (0.2, 0.7, 0.47)
 shell1.alpha = 0.6
-vm.core.VolumeModel([shell1]).babylonjs()
+vm.model.VolumeModel([shell1]).babylonjs()
 
 box_blue = primitives3D.Block(
     vm.Frame3D(vm.Point3D(0.1, 0, 0), vm.Vector3D(0.2, 0, 0),
@@ -40,7 +40,7 @@ shell2 = box_blue.union(box_blue2)[0]
 shell2.merge_faces()
 shell2.color = (0.5, 0.5, 0.5)
 shell2.alpha = 0.6
-vm.core.VolumeModel([shell2]).babylonjs()
+vm.model.VolumeModel([shell2]).babylonjs()
 union_box = shell1.union(shell2)
 union_box[0].merge_faces()
 subtraction_box = shell1.subtract(shell2)
@@ -53,7 +53,7 @@ for new_box in [union_box, subtraction_box, subtraction_closedbox, intersection_
     for shell in new_box:
         shell.color = (1, 0.1, 0.1)
         shell.alpha = 0.6
-    vm.core.VolumeModel(new_box + [shell1, shell2]).babylonjs()
+    vm.model.VolumeModel(new_box + [shell1, shell2]).babylonjs()
 
 block1 = primitives3D.Block(frame=vm.Frame3D(origin=vm.Point3D(0.2, 0.6, 0.2),
                                              u=vm.Point3D(0.4, 0, 0),

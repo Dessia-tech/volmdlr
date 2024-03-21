@@ -114,7 +114,7 @@ conical_rim = RevolvedProfile(frame2, rim_contour, 0.5*vm.X3D.to_point(), vm.X3D
                               angle=3.14, name='conical rim')
 
 
-model = vm.core.VolumeModel([profile1, profile5, conical_rim])
+model = vm.model.VolumeModel([profile1, profile5, conical_rim])
 model.check_platform()
 
 translated_model = model.translation(vm.Point3D.random(0, 1, 0, 1, 0, 1))
