@@ -4,12 +4,8 @@
 Base classes.
 """
 # pylint: disable=no-name-in-module
-import os
-import tempfile
 import warnings
-import webbrowser
 from dataclasses import dataclass
-from datetime import datetime
 from functools import lru_cache
 from typing import List, Tuple, Union
 
@@ -21,21 +17,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 from numpy.typing import NDArray
 
-from OCP.Interface import Interface_Static
-import OCP.IFSelect
-from OCP.STEPControl import STEPControl_Reader
-from OCP.TopoDS import TopoDS_Shape
-
 import dessia_common.core as dc
-from dessia_common.errors import ConsistencyError
-import dessia_common.files as dcf
+
 import volmdlr
 import volmdlr.templates
 from volmdlr.core_compiled import bbox_is_intersecting
 from volmdlr.discrete_representation_compiled import triangle_intersects_voxel
 from volmdlr.geometry import get_transfer_matrix_from_basis
-from volmdlr.utils.step_writer import STEP_HEADER, STEP_FOOTER
-from volmdlr import from_ocp
 
 np.seterr(divide='raise')
 

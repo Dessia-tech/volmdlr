@@ -17,7 +17,7 @@ import dessia_common.core as dc  # isort: skip
 from dessia_common.files import BinaryFile, StringFile  # isort: skip
 
 import volmdlr as vm
-import volmdlr.core as vmc
+import volmdlr.model
 import volmdlr.faces as vmf
 from volmdlr import shells
 
@@ -298,10 +298,10 @@ class Stl(dc.DessiaObject):
         Convert the STL object to a volume model.
 
         :return: A volume model representation of the STL object.
-        :rtype: vmc.VolumeModel
+        :rtype: volmdlr.model.VolumeModel
         """
         closed_shell = self.to_closed_shell()
-        return vmc.VolumeModel([closed_shell], name=self.name)
+        return volmdlr.model.VolumeModel([closed_shell], name=self.name)
 
     def extract_points(self):
         """
