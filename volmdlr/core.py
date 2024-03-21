@@ -1013,8 +1013,6 @@ class VolumeModel:
     """
     VolumeModel is deprecated, please, use volmdlr.model.VolumeModel instead.
     """
-    warnings.warn("volmdlr.core.VolumeModel is deprecated and will be removed in future releases, please "
-                  "use volmdlr.model.VolumeModel instead", UserWarning)
 
     def __init__(self, primitives: List[Primitive3D], name: str = ''):
         warnings.warn("volmdlr.core.VolumeModel is deprecated and will be removed in future releases, please "
