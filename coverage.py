@@ -29,7 +29,8 @@ untracked_modules = ['volmdlr/templates.py',
                      'models/contours.py',
                      'models/bspline_curves.py',
                      'volmdlr/from_ocp.py',
-                     'volmdlr/to_ocp.py'
+                     'volmdlr/to_ocp.py',
+                     'volmdlr/core.py'  # TODO: remove this line when deprecated VolumeModel is removed
                      ]
 
 print('untracked modules:', untracked_modules)
@@ -41,7 +42,8 @@ project_coverage = d['totals']['percent_covered']
 
 print(f'total covered: {project_coverage} %')
 assert project_coverage > MIN_PROJECT_COVERAGE
-print(f'[Coverage] You can increase MIN_PROJECT_COVERAGE to maximum {project_coverage}% (actual {MIN_PROJECT_COVERAGE}%)')
+print(
+    f'[Coverage] You can increase MIN_PROJECT_COVERAGE to maximum {project_coverage}% (actual {MIN_PROJECT_COVERAGE}%)')
 
 min_actual_coverage = 100
 for file_name, data in d['files'].items():
@@ -54,4 +56,5 @@ for file_name, data in d['files'].items():
             raise RuntimeError(f'File {file_name} is not covered enough: {file_coverage} % / {MIN_FILE_COVERAGE} %')
         min_actual_coverage = min(min_actual_coverage, data['summary']['percent_covered'])
 
-print('[Coverage] You can increase MIN_FILE_COVERAGE to maximum {}% (actual:{})%'.format(min_actual_coverage, MIN_FILE_COVERAGE))
+print('[Coverage] You can increase MIN_FILE_COVERAGE to maximum {}% (actual:{})%'.format(min_actual_coverage,
+                                                                                         MIN_FILE_COVERAGE))

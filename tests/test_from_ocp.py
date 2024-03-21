@@ -25,7 +25,6 @@ class TestOCPConversion(unittest.TestCase):
 
     ocp_parabola3d = Geom_Parabola(gp_Ax2(gp_Pnt(0, 0, 0), gp_Dir(1, 0, 0)), 1)
 
-
     def test_line2d_from_ocp(self):
         result = line2d_from_ocp(Line2D, self.ocp_line2d)
         self.assertIsInstance(result, Line2D)
@@ -54,46 +53,47 @@ class TestOCPConversion(unittest.TestCase):
     def test_ellipse2d_from_ocp(self):
         result = ellipse2d_from_ocp(Ellipse2D, self.ocp_ellipse2d)
         self.assertIsInstance(result, Ellipse2D)
-        self.assertEqual(tuple(result.center), (self.ocp_ellipse2d.Location().X(), self.ocp_ellipse2d.Location().Y()))
-        self.assertEqual(tuple(result.focus1), (self.ocp_ellipse2d.Focus1().X(), self.ocp_ellipse2d.Focus1().Y()))
-        self.assertEqual(tuple(result.focus2), (self.ocp_ellipse2d.Focus2().X(), self.ocp_ellipse2d.Focus2().Y()))
+        self.assertTupleEqual(tuple(result.center),
+                              (self.ocp_ellipse2d.Location().X(), self.ocp_ellipse2d.Location().Y()))
+        self.assertTupleEqual(tuple(result.focus1), (self.ocp_ellipse2d.Focus1().X(), self.ocp_ellipse2d.Focus1().Y()))
+        self.assertTupleEqual(tuple(result.focus2), (self.ocp_ellipse2d.Focus2().X(), self.ocp_ellipse2d.Focus2().Y()))
         self.assertEqual(result.major_axis, self.ocp_ellipse2d.MajorRadius())
         self.assertEqual(result.minor_axis, self.ocp_ellipse2d.MinorRadius())
 
     def test_ellipse3d_from_ocp(self):
         result = ellipse3d_from_ocp(Ellipse3D, self.ocp_ellipse3d)
         self.assertIsInstance(result, Ellipse3D)
-        self.assertEqual(tuple(result.center), (self.ocp_ellipse3d.Position().Location().X(),
-                                                self.ocp_ellipse3d.Position().Location().Y(),
-                                                self.ocp_ellipse3d.Position().Location().Z()))
-        self.assertEqual(tuple(result.normal),
-                         (self.ocp_ellipse3d.Position().Direction().X(),
-                          self.ocp_ellipse3d.Position().Direction().Y(),
-                          self.ocp_ellipse3d.Position().Direction().Z()))
-        self.assertEqual(tuple(result.focus1), (self.ocp_ellipse3d.Focus1().X(),
-                                                self.ocp_ellipse3d.Focus1().Y(),
-                                                self.ocp_ellipse3d.Focus1().Z()))
-        self.assertEqual(tuple(result.focus2), (self.ocp_ellipse3d.Focus2().X(),
-                                                self.ocp_ellipse3d.Focus2().Y(),
-                                                self.ocp_ellipse3d.Focus2().Z()))
+        self.assertTupleEqual(tuple(result.center), (self.ocp_ellipse3d.Position().Location().X(),
+                                                     self.ocp_ellipse3d.Position().Location().Y(),
+                                                     self.ocp_ellipse3d.Position().Location().Z()))
+        self.assertTupleEqual(tuple(result.normal),
+                              (self.ocp_ellipse3d.Position().Direction().X(),
+                               self.ocp_ellipse3d.Position().Direction().Y(),
+                               self.ocp_ellipse3d.Position().Direction().Z()))
+        self.assertTupleEqual(tuple(result.focus1), (self.ocp_ellipse3d.Focus1().X(),
+                                                     self.ocp_ellipse3d.Focus1().Y(),
+                                                     self.ocp_ellipse3d.Focus1().Z()))
+        self.assertTupleEqual(tuple(result.focus2), (self.ocp_ellipse3d.Focus2().X(),
+                                                     self.ocp_ellipse3d.Focus2().Y(),
+                                                     self.ocp_ellipse3d.Focus2().Z()))
         self.assertEqual(result.major_axis, self.ocp_ellipse3d.MajorRadius())
         self.assertEqual(result.minor_axis, self.ocp_ellipse3d.MinorRadius())
 
     def test_hyperbola3d_from_ocp(self):
         result = hyperbola3d_from_ocp(Hyperbola3D, self.ocp_hyperbola3d)
         self.assertIsInstance(result, Hyperbola3D)
-        self.assertEqual(tuple(result.focus), (self.ocp_hyperbola3d.Focus1().X(),
-                                               self.ocp_hyperbola3d.Focus1().Y(),
-                                               self.ocp_hyperbola3d.Focus1().Z()))
+        self.assertTupleEqual(tuple(result.focus), (self.ocp_hyperbola3d.Focus1().X(),
+                                                    self.ocp_hyperbola3d.Focus1().Y(),
+                                                    self.ocp_hyperbola3d.Focus1().Z()))
         self.assertEqual(result.semi_major_axis, self.ocp_hyperbola3d.MajorRadius())
         self.assertEqual(result.semi_minor_axis, self.ocp_hyperbola3d.MinorRadius())
 
     def test_parabola3d_from_ocp(self):
         result = parabola3d_from_ocp(Parabola3D, self.ocp_parabola3d)
         self.assertIsInstance(result, Parabola3D)
-        self.assertEqual(tuple(result.focus), (self.ocp_parabola3d.Focus().X(),
-                                               self.ocp_parabola3d.Focus().Y(),
-                                               self.ocp_parabola3d.Focus().Z()))
+        self.assertTupleEqual(tuple(result.focus), (self.ocp_parabola3d.Focus().X(),
+                                                    self.ocp_parabola3d.Focus().Y(),
+                                                    self.ocp_parabola3d.Focus().Z()))
 
 
 if __name__ == '__main__':

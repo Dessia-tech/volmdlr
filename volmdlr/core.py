@@ -40,21 +40,6 @@ def element_in_list(element, list_elements, tol: float = 1e-6):
     return False
 
 
-def point_in_list(point, list_points, tol: float = 1e-6):
-    """
-    Verifies if a point is inside a list  of points, considering a certain tolerance.
-
-    :param point: Point to be verified inside list.
-    :param list_points: List of points to be used.
-    :param tol: Tolerance to consider if two points are the same.
-    :return: True if there is a point inside the list close to the point to given tolerance.
-    """
-
-    if not list_points:
-        return False
-    return point.in_list(list_points, tol)
-
-
 def edge_in_list(edge, list_edges, tol: float = 1e-6):
     """
     Verifies if an edge is inside a list  of edges, considering a certain tolerance.
@@ -109,16 +94,6 @@ def get_edge_index_in_list(edge, list_edges, tol: float = 1e-6):
     return get_element_index_in_list(edge, list_edges, tol)
 
 
-def determinant(vec1, vec2, vec3):
-    """
-    Calculates the determinant for a three vector matrix.
-
-    """
-    # TODO: to be removed
-    a = np.array((vec1.vector, vec2.vector, vec3.vector))
-    return np.linalg.det(a)
-
-
 def delete_double_point(list_point):
     """
     Delete duplicate points from a list of points.
@@ -130,10 +105,11 @@ def delete_double_point(list_point):
     :rtype: Union[List[:class:`volmdlr.Point2D`],
         List[:class:`volmdlr.Point3D`]]
     """
-    # TODO : this method would be faster using sets
     points = []
+    points_set = set()
     for point in list_point:
-        if point not in points:
+        if point not in points_set:
+            points_set.add(point)
             points.append(point)
         else:
             continue

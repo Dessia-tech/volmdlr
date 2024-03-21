@@ -1,6 +1,5 @@
 import math
 import unittest
-import os
 from copy import deepcopy
 import volmdlr
 from volmdlr.primitives3d import Block
