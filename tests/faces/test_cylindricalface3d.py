@@ -227,7 +227,7 @@ class TestCylindricalFace3D(unittest.TestCase):
         for i, area in enumerate(sorted([face.area() for face in new_faces])):
             self.assertAlmostEqual(area, expected_areas[i])
 
-    def test_from_occt(self):
+    def test_from_ocp(self):
         frame = gp_Ax3()
         cylinder = gp_Cylinder(frame, 8)
         cylindrical_face = BRepBuilderAPI_MakeFace(cylinder, 0, math.pi, 0, 15).Face()

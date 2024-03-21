@@ -3,16 +3,11 @@
 """
 Base classes.
 """
-# pylint: disable=no-name-in-module
 import warnings
 from dataclasses import dataclass
 from functools import lru_cache
 from typing import List, Tuple, Union
 
-try:
-    import gmsh
-except (TypeError, OSError):
-    pass
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy.typing import NDArray
