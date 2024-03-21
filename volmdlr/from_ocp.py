@@ -143,7 +143,7 @@ def ellipse2d_from_ocp(cls, curve):
     :return: volmdlr Ellipse2D.
     """
     frame = frame2d_from_ocp_ax22d(curve.Position())
-    return cls(frame, curve.MajorRadius(), curve.MinorRadius())
+    return cls(curve.MajorRadius(), curve.MinorRadius(), frame)
 
 
 def ellipse3d_from_ocp(cls, curve):
