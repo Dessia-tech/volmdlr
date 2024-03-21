@@ -3044,7 +3044,7 @@ class CylindricalSurface3D(UPeriodicalSurface):
     #     for gene in cyl_generatrices:
     #         intersections = cylindricalsurface.edge_intersections(gene)
     #         for intersection in intersections:
-    #             if not volmdlr.core.point_in_list(intersection, intersection_points):
+    #             if not intersection.in_list(intersection_points):
     #                 intersection_points.append(intersection)
     #     return intersection_points
 
