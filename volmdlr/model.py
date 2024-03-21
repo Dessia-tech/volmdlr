@@ -16,7 +16,7 @@ except (TypeError, OSError):
     pass
 import matplotlib.pyplot as plt
 import numpy as np
-
+# pylint: disable=no-name-in-module
 from OCP.Interface import Interface_Static
 import OCP.IFSelect
 from OCP.STEPControl import STEPControl_Reader
@@ -30,6 +30,7 @@ import volmdlr.templates
 from volmdlr.utils.step_writer import STEP_HEADER, STEP_FOOTER
 from volmdlr import from_ocp
 from volmdlr.core import Primitive3D, BoundingBox, get_babylon_data
+from volmdlr.shells import Shell3D
 
 
 class VolumeModel(dc.PhysicalObject):
@@ -375,8 +376,6 @@ class VolumeModel(dc.PhysicalObject):
         """
         Instanciate a volume model from a list of OCCT shapes.
         """
-        # pylint: disable=cyclic-import, import-outside-toplevel
-        from volmdlr.shells import Shell3D
         # Make sure that we extract all the solids
         solids = []
         for shape in ocp_shapes:

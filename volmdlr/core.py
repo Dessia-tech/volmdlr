@@ -1007,3 +1007,21 @@ class BoundingBox(dc.DessiaObject):
                                               mins_maxs[4], mins_maxs[5]))
             self._octree = octants
         return self._octree
+
+
+class VolumeModel:
+    """
+    VolumeModel is deprecated, please, use volmdlr.model.VolumeModel instead.
+    """
+    warnings.warn("volmdlr.core.VolumeModel is deprecated and will be removed in future releases, please "
+                  "use volmdlr.model.VolumeModel instead", UserWarning)
+
+    def __init__(self, primitives: List[Primitive3D], name: str = ''):
+        warnings.warn("volmdlr.core.VolumeModel is deprecated and will be removed in future releases, please "
+                      "use volmdlr.model.VolumeModel instead", UserWarning)
+        # pylint: disable=cyclic-import, import-outside-toplevel
+        from volmdlr import model
+        self.instance = model.VolumeModel(primitives=primitives, name=name)
+
+    def __getattr__(self, name):
+        return getattr(self.instance, name)
