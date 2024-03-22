@@ -6,6 +6,8 @@ import volmdlr
 from volmdlr.faces import SphericalFace3D
 from volmdlr import surfaces, wires
 from dessia_common.core import DessiaObject
+from OCP.GProp import GProp_GProps
+from OCP.BRepGProp import BRepGProp_Face, BRepGProp  # used for mass calculation
 
 folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'objects_spherical_test')
 
@@ -96,6 +98,15 @@ class TestSphericalFace3D(unittest.TestCase):
         intersections = planeface.face_intersections(sphericalface)
         self.assertEqual(len(intersections), 1)
         self.assertAlmostEqual(intersections[0].length(), 2.8957237263187805)
+
+    def test_to_ocp(self):
+        sphere = surfaces.SphericalSurface3D(volmdlr.OXYZ, 1)
+        spherical_face = SphericalFace3D.from_surface_rectangular_cut(spherical_surface=sphere)
+        ocp_face = spherical_face.to_ocp()
+        properties = GProp_GProps()
+        BRepGProp.SurfaceProperties_s(ocp_face, properties)
+        face_area = properties.Mass()
+        self.assertAlmostEqual(face_area, 4 * math.pi) # SI
 
 
 if __name__ == '__main__':

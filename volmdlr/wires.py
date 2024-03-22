@@ -18,7 +18,7 @@ import numpy as np
 import plot_data.core as plot_data
 from scipy.spatial.qhull import ConvexHull, Delaunay
 from triangle import triangulate
-
+# pylint: disable=no-name-in-module
 from OCP.BRep import BRep_Tool
 from OCP.BRepTools import BRepTools_WireExplorer
 from OCP.TopoDS import TopoDS

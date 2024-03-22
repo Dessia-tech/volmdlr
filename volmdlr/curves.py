@@ -2134,6 +2134,26 @@ class EllipseMixin:
         return math.pi * (self.major_axis + self.minor_axis) * \
             (1 + (3 * perimeter_formular_h / (10 + math.sqrt(4 - 3 * perimeter_formular_h))))
 
+    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, same_sense: bool = True, abs_tol: float = 1e-6):
+        """
+        Trims an ellipse between two points.
+
+        :param point1: point1 used to trim ellipse.
+        :param point2: point2 used to trim ellipse.
+        :param same_sense: indicates whether the curve direction agrees with (True) or is in the opposite
+               direction (False) to the edge direction. By default, it's assumed True
+        :param abs_tol: tolerance between points to consider a full arc of ellipse.
+        :return: arc of ellipse between these two points.
+        """
+        fullar_arc_class_ = getattr(volmdlr.edges, 'FullArcEllipse' + self.__class__.__name__[-2:])
+        arc_class_ = getattr(volmdlr.edges, 'ArcEllipse' + self.__class__.__name__[-2:])
+        ellipse = self
+        if not same_sense:
+            ellipse = self.reverse()
+        if point1.is_close(point2, abs_tol):
+            return fullar_arc_class_(ellipse, point1, self.name)
+        return arc_class_(ellipse, point1, point2)
+
 
 class Ellipse2D(EllipseMixin, ClosedCurve):
     """
@@ -2850,24 +2870,6 @@ class Ellipse3D(ConicMixin, EllipseMixin, ClosedCurve):
         new_point = self.frame.global_to_local_coordinates(point)
         return math.isclose(new_point.x ** 2 / self.major_axis ** 2 +
                             new_point.y ** 2 / self.minor_axis ** 2, 1.0, abs_tol=tol)
-
-    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, same_sense: bool = True, abs_tol: float = 1e-6):
-        """
-        Trims an ellipse between two points.
-
-        :param point1: point1 used to trim ellipse.
-        :param point2: point2 used to trim ellipse.
-        :param same_sense: indicates whether the curve direction agrees with (True) or is in the opposite
-               direction (False) to the edge direction. By default, it's assumed True
-        :param abs_tol: tolerance between points to consider a full arc of ellipse.
-        :return: arc of ellipse between these two points.
-        """
-        ellipse = self
-        if not same_sense:
-            ellipse = self.reverse()
-        if point1.is_close(point2, abs_tol):
-            return volmdlr.edges.FullArcEllipse3D(ellipse, point1, self.name)
-        return volmdlr.edges.ArcEllipse3D(ellipse, point1, point2)
 
     def linesegment_intersections(self, linesegment, abs_tol: float = 1e-6):
         """
