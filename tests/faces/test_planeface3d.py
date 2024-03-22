@@ -4,6 +4,8 @@ Tests for places faces
 import math
 import os
 import unittest
+from OCP.GProp import GProp_GProps
+from OCP.BRepGProp import BRepGProp_Face, BRepGProp  # used for mass calculation
 
 import dessia_common.core
 import dessia_common.core as dc
@@ -318,6 +320,13 @@ class TestPlaneFace3D(unittest.TestCase):
         face = faces.PlaneFace3D(surface3d, surface2d)
         grid_points = face.grid_points([10, 10])
         self.assertEqual(len(grid_points), 56)
+
+    def test_to_ocp(self):
+        ocp_face = self.face_with_3holes.to_ocp()
+        properties = GProp_GProps()
+        BRepGProp.SurfaceProperties_s(ocp_face, properties)
+        face_area = properties.Mass()
+        self.assertAlmostEqual(face_area, 0.16 - 3 * 0.0128)  # SI
 
 
 if __name__ == '__main__':
