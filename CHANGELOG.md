@@ -55,6 +55,7 @@ New module model.py to hold VolumeModel object.
 
 ### Changed
 - Force wires to share same points between two edges.
+- increase code Quality
 
 #### curves.py
 - Ellipse2D: point_distance optimization

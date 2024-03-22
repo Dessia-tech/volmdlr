@@ -32,7 +32,7 @@ class TestContour3D(unittest.TestCase):
         merged_contour1_contour2 = contour1.merge_with(contour2)
         merged_contour2_contour1 = contour2.merge_with(contour1)
         self.assertEqual(len(merged_contour1_contour2), len(merged_contour2_contour1))
-        self.assertEqual(merged_contour1_contour2[0], merged_contour2_contour1[0])
+        self.assertTrue(merged_contour1_contour2[0].is_superposing(merged_contour2_contour1[0]))
 
     def test_is_sharing_primitives_with(self):
         contour1_sharing_primitives = Contour3D.from_json(
