@@ -914,7 +914,8 @@ class VolumeModel(dc.PhysicalObject):
             for dim, tag in entities:
                 elem_types, elem_tags, elem_node_tags = gmsh_model.model.mesh.getElements(dim, tag)
 
-                lines_elements.append(str(dim) + ' ' + str(tag) + ' ' + str(elem_types[0]) + ' ' + str(len(elem_tags[0])))
+                lines_elements.append(str(dim) + ' ' + str(tag) + ' ' + str(elem_types[0]) +
+                                      ' ' + str(len(elem_tags[0])))
                 range_list = int(len(elem_node_tags[0]) / len(elem_tags[0]))
                 for n in range(0, len(elem_node_tags[0]), range_list):
                     lines_elements.append(str(elem_tags[0][int(n / range_list)]) + ' ' +

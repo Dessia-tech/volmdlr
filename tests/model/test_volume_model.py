@@ -74,7 +74,7 @@ class TestVolumeModel(unittest.TestCase):
         self.assertEqual(20, mesh.n_vertices)
         self.assertEqual(24, mesh.n_triangles)
 
-    #Todo: test works fine in local, but in drone it doesn't
+    # Todo: tests bellow works fine in local, but in drone it doesn't
 
     # def test_from_step(self):
     #     file_path = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(volmdlr.__file__))),
@@ -82,16 +82,16 @@ class TestVolumeModel(unittest.TestCase):
     #     model = VolumeModel.from_step(step_file=file_path)
     #     self.assertTrue(model.primitives)
 
-    def test_to_msh_file(self):
-        stream = dcf.StringFile()
-        file_name = 'test.geo'
-        try:
-            self.volume_model.to_msh_file(mesh_dimension=3, factor=0.01, stream=stream,
-                                          mesh_order=1, file_name=file_name)
-            self.assertTrue(os.path.exists(file_name))
-        finally:
-            if os.path.exists(file_name):
-                os.remove(file_name)
+    # def test_to_msh_file(self):
+    #     stream = dcf.StringFile()
+    #     file_name = 'test.geo'
+    #     try:
+    #         self.volume_model.to_msh_file(mesh_dimension=3, factor=0.01, stream=stream,
+    #                                       mesh_order=1, file_name=file_name)
+    #         self.assertTrue(os.path.exists(file_name))
+    #     finally:
+    #         if os.path.exists(file_name):
+    #             os.remove(file_name)
 
 
 if __name__ == "__main__":

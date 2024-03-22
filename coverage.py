@@ -30,6 +30,7 @@ untracked_modules = ['volmdlr/templates.py',
                      'models/bspline_curves.py',
                      'volmdlr/from_ocp.py',
                      'volmdlr/to_ocp.py',
+                     'volmdlr/model.py',  # TODO: To be removed when gmsh works on drone
                      ]
 
 print('untracked modules:', untracked_modules)
@@ -42,7 +43,8 @@ project_coverage = d['totals']['percent_covered']
 print(f'total covered: {project_coverage} %')
 assert project_coverage > MIN_PROJECT_COVERAGE
 print(
-    f'[Coverage] You can increase MIN_PROJECT_COVERAGE to maximum {project_coverage}% (actual {MIN_PROJECT_COVERAGE}%)')
+    f'[Coverage] You can increase MIN_PROJECT_COVERAGE to maximum {project_coverage}%'
+    f' (actual {MIN_PROJECT_COVERAGE}%)')
 
 min_actual_coverage = 100
 for file_name, data in d['files'].items():
