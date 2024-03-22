@@ -30,6 +30,7 @@ New module model.py to hold VolumeModel object.
 
 #### faces.py
 - Face3D: from_contours3d (add abs_tol as parameter)
+- Face3D: to_ocp.
 #### shells.py
 - 
 ### Fixed
