@@ -708,10 +708,7 @@ class Face3D(volmdlr.core.Primitive3D):
         :param line: other line.
         :return: a list of intersections.
         """
-        intersections = []
-        for intersection in self.surface3d.line_intersections(line):
-            if self.point_belongs(intersection):
-                intersections.append(intersection)
+        intersections = [point for point in self.surface3d.line_intersections(line) if self.point_belongs(point)]
         if not intersections:
             for prim in self.outer_contour3d.primitives:
                 intersection = prim.line_intersections(line)
@@ -729,13 +726,10 @@ class Face3D(volmdlr.core.Primitive3D):
         :param abs_tol: tolerance used.
         :return: a list of intersections.
         """
-        linesegment_intersections = []
         if not self.bounding_box.is_intersecting(linesegment.bounding_box):
             return []
-        for intersection in self.surface3d.linesegment_intersections(linesegment):
-            if self.point_belongs(intersection, abs_tol):
-                linesegment_intersections.append(intersection)
-        return linesegment_intersections
+        return [point for point in self.surface3d.linesegment_intersections(linesegment)
+                if self.point_belongs(point, abs_tol)]
 
     def fullarc_intersections(self, fullarc: vme.FullArc3D) -> List[volmdlr.Point3D]:
         """
@@ -744,11 +738,7 @@ class Face3D(volmdlr.core.Primitive3D):
         :param fullarc: other fullarc.
         :return: a list of intersections.
         """
-        intersections = []
-        for intersection in self.surface3d.fullarc_intersections(fullarc):
-            if self.point_belongs(intersection):
-                intersections.append(intersection)
-        return intersections
+        return [point for point in self.surface3d.fullarc_intersections(fullarc) if self.point_belongs(point)]
 
     def plot(self, ax=None, color="k", alpha=1, edge_details=False):
         """Plots the face."""
@@ -931,10 +921,9 @@ class Face3D(volmdlr.core.Primitive3D):
         intersections_points = []
         for edge1 in self.outer_contour3d.primitives:
             intersection_points = face2.edge_intersections(edge1)
-            if intersection_points:
-                for point in intersection_points:
-                    if not point.in_list(intersections_points):
-                        intersections_points.append(point)
+            for point in intersection_points:
+                if not point.in_list(intersections_points):
+                    intersections_points.append(point)
 
         return intersections_points
 
@@ -1901,17 +1890,17 @@ class PlaneFace3D(Face3D):
                 return [contour3d]
         intersections_points = self.face_intersections_outer_contour(cylindricalface)
         for point in cylindricalface.face_intersections_outer_contour(self):
-            if point not in intersections_points:
+            if not point.in_list(intersections_points):
                 intersections_points.append(point)
         face_intersections = []
         for primitive in cylindricalsurfaceface_intersections:
-            points_on_primitive = []
-            for point in intersections_points:
-                if primitive.point_belongs(point):
-                    points_on_primitive.append(point)
+            points_on_primitive = [point for point in intersections_points if primitive.point_belongs(point)]
+
             if not points_on_primitive:
                 continue
+
             points_on_primitive = primitive.sort_points_along_curve(points_on_primitive)
+
             if not isinstance(primitive, volmdlr_curves.Line3D):
                 points_on_primitive = points_on_primitive + [points_on_primitive[0]]
             for point1, point2 in zip(points_on_primitive[:-1], points_on_primitive[1:]):
@@ -1932,18 +1921,18 @@ class PlaneFace3D(Face3D):
                 self.edge3d_inside(surface_intersections[0]) and conical_face.edge3d_inside(surface_intersections[0]):
             contour3d = volmdlr.wires.Contour3D(surface_intersections)
             return [contour3d]
+
         intersections_points = self.face_intersections_outer_contour(conical_face)
         for point in conical_face.face_intersections_outer_contour(self):
             if not point.in_list(intersections_points):
                 intersections_points.append(point)
+
         face_intersections = []
         for primitive in surface_intersections:
-            points_on_primitive = []
-            for point in intersections_points:
-                if primitive.point_belongs(point):
-                    points_on_primitive.append(point)
+            points_on_primitive = [point for point in intersections_points if primitive.point_belongs(point)]
             if not points_on_primitive:
                 continue
+
             points_on_primitive = primitive.sort_points_along_curve(points_on_primitive)
             if isinstance(primitive, (volmdlr_curves.Hyperbola3D, volmdlr_curves.Parabola3D, volmdlr_curves.Line3D)):
                 for point1, point2 in zip(points_on_primitive[:-1], points_on_primitive[1:]):
@@ -1973,12 +1962,11 @@ class PlaneFace3D(Face3D):
                 intersections_points.append(point)
         face_intersections = []
         for primitive in surface_intersections:
-            points_on_primitive = []
-            for point in intersections_points:
-                if primitive.point_belongs(point, 1e-5):
-                    points_on_primitive.append(point)
+
+            points_on_primitive = [point for point in intersections_points if primitive.point_belongs(point, 1e-5)]
             if not points_on_primitive:
                 continue
+
             points_on_primitive = primitive.sort_points_along_curve(points_on_primitive)
             split_edges = primitive.split_with_sorted_points(points_on_primitive)
             for edge in split_edges:
@@ -2109,10 +2097,7 @@ class PlaneFace3D(Face3D):
 
         list_surfaces = []
         for contour in contours:
-            inners = []
-            for inner_c in inner_contours:
-                if contour.is_inside(inner_c):
-                    inners.append(inner_c)
+            inners = [inner_c for inner_c in inner_contours if contour.is_inside(inner_c)]
             list_surfaces.append(surfaces.Surface2D(contour, inners))
 
         return [self.__class__(self.surface3d, surface2d) for surface2d in list_surfaces]
@@ -2619,9 +2604,7 @@ class Triangle3D(PlaneFace3D):
         normal to the face
 
         """
-        normal = self.surface3d.frame.w
-        normal = normal.unit_vector()
-        return normal
+        return self.surface3d.frame.w.unit_vector()
 
     def triangle_minimum_distance(self, triangle_face, return_points=False):
         """
@@ -3015,10 +2998,7 @@ class ConicalFace3D(PeriodicalFaceMixin, Face3D):
     :type surface3d: ConicalSurface3D.
     :param surface2d: a 2d surface to define the conical face.
     :type surface2d: Surface2D.
-
-
     """
-
     def __init__(self, surface3d: surfaces.ConicalSurface3D, surface2d: surfaces.Surface2D, name: str = ""):
         Face3D.__init__(self, surface3d=surface3d, surface2d=surface2d, name=name)
         self._bbox = None
@@ -3255,7 +3235,6 @@ class SphericalFace3D(PeriodicalFaceMixin, Face3D):
         :return: Spherical face.
         :rtype: SphericalFace3D
         """
-        inner_contours = []
         point1 = volmdlr.Point2D(-math.pi, -0.5 * math.pi)
         point2 = volmdlr.Point2D(math.pi, -0.5 * math.pi)
         point3 = volmdlr.Point2D(math.pi, 0.5 * math.pi)
@@ -3263,9 +3242,7 @@ class SphericalFace3D(PeriodicalFaceMixin, Face3D):
         surface_rectangular_cut = volmdlr.wires.Contour2D.from_points([point1, point2, point3, point4])
         contours2d = [surface3d.contour3d_to_2d(contour) for contour in contours]
         point2d = surface3d.point3d_to_2d(point)
-        for contour in contours2d:
-            if not contour.point_inside(point2d):
-                inner_contours.append(contour)
+        inner_contours = [contour for contour in contours2d if not contour.point_inside(point2d)]
         surface2d = surfaces.Surface2D(outer_contour=surface_rectangular_cut, inner_contours=inner_contours)
         return cls(surface3d, surface2d=surface2d, name=name)
 
