@@ -872,7 +872,7 @@ class VolumeModel(dc.PhysicalObject):
 
         with open(file_name, mode='w', encoding='utf-8') as file:
             self.to_msh_stream(mesh_dimension=mesh_dimension,
-                               factor=factor, file_name=file,
+                               factor=factor, file_name=file_name,
                                mesh_order=mesh_order,
                                stream=stream,
                                curvature_mesh_size=kwargs['curvature_mesh_size'],
@@ -910,17 +910,18 @@ class VolumeModel(dc.PhysicalObject):
         lines_elements.append('$Elements')
 
         entities = gmsh_model.model.getEntities()
-        for dim, tag in entities:
-            elem_types, elem_tags, elem_node_tags = gmsh_model.model.mesh.getElements(dim, tag)
+        if entities:
+            for dim, tag in entities:
+                elem_types, elem_tags, elem_node_tags = gmsh_model.model.mesh.getElements(dim, tag)
 
-            lines_elements.append(str(dim) + ' ' + str(tag) + ' ' + str(elem_types[0]) + ' ' + str(len(elem_tags[0])))
-            range_list = int(len(elem_node_tags[0]) / len(elem_tags[0]))
-            for n in range(0, len(elem_node_tags[0]), range_list):
-                lines_elements.append(str(elem_tags[0][int(n / range_list)]) + ' ' +
-                                      str(elem_node_tags[0][n:n + range_list])[1:-1])
+                lines_elements.append(str(dim) + ' ' + str(tag) + ' ' + str(elem_types[0]) + ' ' + str(len(elem_tags[0])))
+                range_list = int(len(elem_node_tags[0]) / len(elem_tags[0]))
+                for n in range(0, len(elem_node_tags[0]), range_list):
+                    lines_elements.append(str(elem_tags[0][int(n / range_list)]) + ' ' +
+                                          str(elem_node_tags[0][n:n + range_list])[1:-1])
 
-        tag = str(elem_tags[0][int(n / range_list)])
-        lines_elements.insert(1, str(len(entities)) + ' ' + tag + ' 1 ' + tag)
+            tag = str(elem_tags[0][int(n / range_list)])
+            lines_elements.insert(1, str(len(entities)) + ' ' + tag + ' 1 ' + tag)
         lines_elements.append('$EndElements')
 
         return lines_elements

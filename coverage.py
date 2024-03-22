@@ -30,7 +30,6 @@ untracked_modules = ['volmdlr/templates.py',
                      'models/bspline_curves.py',
                      'volmdlr/from_ocp.py',
                      'volmdlr/to_ocp.py',
-                     'volmdlr/core.py'  # TODO: remove this line when deprecated VolumeModel is removed
                      ]
 
 print('untracked modules:', untracked_modules)
