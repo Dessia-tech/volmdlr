@@ -132,22 +132,27 @@ class Shape(PhysicalObject):
 
     @staticmethod
     def _entities(obj, topo_type: Shapes) -> Iterable[TopoDS_Shape]:
+        """Gets shape's entities (vertices, edges, faces, shells...)."""
         shape_set = TopTools_IndexedMapOfShape()
         TopExp.MapShapes_s(obj, inverse_shape_LUT[topo_type], shape_set)
 
         return tcast(Iterable[TopoDS_Shape], shape_set)
 
     def _get_vertices(self):
+        """Gets shape's vertices, if there exists any."""
         return [downcast(i) for i in self._entities(obj=self.wrapped, topo_type="Vertex")]
 
     def _get_edges(self):
+        """Gets shape's edges, if there exists any."""
         return [downcast(i) for i in self._entities(obj=self.wrapped, topo_type="Edge") if
                 not BRep_Tool.Degenerated_s(TopoDS.Edge_s(i))]
 
     def _get_faces(self):
+        """Gets shape's faces, if there exists any."""
         return [downcast(i) for i in self._entities(obj=self.wrapped, topo_type="Face")]
 
     def bounding_box(self):
+        """Gets bounding box for this shape."""
         if not self._bbox:
             tol = 1e-2
             bbox = Bnd_Box()
@@ -223,6 +228,7 @@ class Shell(Shape):
 
     @property
     def faces(self):
+        """Get shell's volmdlr faces."""
         if not self._faces:
             pass
             # self._faces = [from_ocp. for face in self._get_faces(self.wrapped)]
