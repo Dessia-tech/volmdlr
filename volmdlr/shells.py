@@ -9,11 +9,11 @@ from typing import Iterable, List, Tuple, Union
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
-import volmdlr.core_compiled
 from OCP.BRep import BRep_Tool
 from numpy.typing import NDArray
 from trimesh import Trimesh
 
+import volmdlr.core_compiled
 import volmdlr.core
 import volmdlr.faces
 import volmdlr.geometry

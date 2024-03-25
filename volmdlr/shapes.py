@@ -27,7 +27,8 @@ from OCP.BRepMesh import BRepMesh_IncrementalMesh
 from OCP.GProp import GProp_PGProps
 from OCP.BRepGProp import BRepGProp
 from OCP.BRepExtrema import BRepExtrema_DistShapeShape
-from OCP.BRepAlgoAPI import BRepAlgoAPI_Fuse, BRepAlgoAPI_BooleanOperation, BRepAlgoAPI_Splitter
+from OCP.BRepAlgoAPI import (BRepAlgoAPI_Fuse, BRepAlgoAPI_BooleanOperation, BRepAlgoAPI_Splitter,
+                             BRepAlgoAPI_Cut, BRepAlgoAPI_Common)
 from OCP.BOPAlgo import BOPAlgo_GlueEnum, BOPAlgo_PaveFiller
 from OCP.TopTools import TopTools_ListOfShape
 from OCP.ShapeFix import ShapeFix_Solid
@@ -173,6 +174,81 @@ class Shape(PhysicalObject):
         BRepGProp.VolumeProperties_s(self.wrapped, prop, tol)
         return abs(prop.Mass())
 
+    @staticmethod
+    def _bool_op(
+            args: Iterable["Shape"],
+            tools: Iterable["Shape"],
+            operation: Union[BRepAlgoAPI_BooleanOperation, BRepAlgoAPI_Splitter],
+            parallel: bool = True,
+    ) -> "TopoDS_Shell":
+        """
+        Generic boolean operation
+        :param parallel: Sets the SetRunParallel flag, which enables parallel execution of boolean\
+        operations in OCC kernel.
+        """
+
+        arg = TopTools_ListOfShape()
+        for obj in args:
+            arg.Append(obj.wrapped)
+
+        tool = TopTools_ListOfShape()
+        for obj in tools:
+            tool.Append(obj.wrapped)
+
+        operation.SetArguments(arg)
+        operation.SetTools(tool)
+
+        operation.SetRunParallel(parallel)
+        operation.Build()
+
+        return operation.Shape()
+
+    def subtraction(self, *to_subtract: "Shape", tol: Optional[float] = None) -> "Shape":
+        """
+        Subtract the positional arguments from this Shape.
+
+        :param tol: Fuzzy mode tolerance
+        """
+
+        cut_op = BRepAlgoAPI_Cut()
+
+        if tol:
+            cut_op.SetFuzzyValue(tol)
+
+        return self.__class__(self._bool_op((self,), to_subtract, cut_op))
+
+    def union(self, *to_union: "Shape", glue: bool = False, tol: Optional[float] = None):
+        """
+        Fuse the positional arguments with this Shape.
+        :param glue: Sets the glue option for the algorithm, which allows
+            increasing performance of the intersection of the input shapes
+        :param tol: Fuzzy mode tolerance
+        """
+
+        fuse_op = BRepAlgoAPI_Fuse()
+        if glue:
+            fuse_op.SetGlue(BOPAlgo_GlueEnum.BOPAlgo_GlueShift)
+        if tol:
+            fuse_op.SetFuzzyValue(tol)
+
+        union = self._bool_op((self,), to_union, fuse_op)
+
+        return self.__class__(union)
+
+    def intersection(self, *to_intersect: "Shape", tol: Optional[float] = None) -> "Shape":
+        """
+        Intersection of the positional arguments and this Shape.
+
+        :param tol: Fuzzy mode tolerance
+        """
+
+        intersect_op = BRepAlgoAPI_Common()
+
+        if tol:
+            intersect_op.SetFuzzyValue(tol)
+
+        return self.__class__(self._bool_op((self,), to_intersect, intersect_op))
+
 
 class Shell(Shape):
     """
@@ -240,6 +316,14 @@ class Solid(Shape):
 
     wrapped: TopoDS_Solid
 
+    @classmethod
+    def make_solid(cls, shell: Shell) -> "Solid":
+        """
+        Makes a solid from a single shell.
+        """
+
+        return cls(ShapeFix_Solid().SolidFromShell(shell.wrapped))
+
 
 class CompSolid(Shape):
     """
@@ -255,3 +339,30 @@ class Compound(Shape):
     """
 
     wrapped: TopoDS_Compound
+
+    @staticmethod
+    def _make_compound(list_of_shapes: Iterable[TopoDS_Shape]) -> TopoDS_Compound:
+        comp = TopoDS_Compound()
+        comp_builder = TopoDS_Builder()
+        comp_builder.MakeCompound(comp)
+
+        for shape in list_of_shapes:
+            comp_builder.Add(comp, shape)
+
+        return comp
+
+    def remove(self, shape: Shape):
+        """
+        Remove the specified shape.
+        """
+
+        comp_builder = TopoDS_Builder()
+        comp_builder.Remove(self.wrapped, shape.wrapped)
+
+    @classmethod
+    def make_compound(cls, list_of_shapes: Iterable[Shape]) -> "Compound":
+        """
+        Create a compound out of a list of shapes.
+        """
+
+        return cls(cls._make_compound((s.wrapped for s in list_of_shapes)))

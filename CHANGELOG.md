@@ -11,7 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### shapes.py
 - Shape: volume, bounding_box
-- Shell: add 3 different instanciation methods, 
+- Shell: add 3 different instanciation methods
+- Shape: add boolean operations: subtraction, union, intersection
 
 #### core.py
 - VolumeModel: from_step using OCP step reader
