@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### New Features
 - new module: shapes.py
 
+#### shapes.py
+- Shape: volume, bounding_box
+- Shell: add 3 different instanciation methods, 
+
 #### core.py
 - VolumeModel: from_step using OCP step reader
 
