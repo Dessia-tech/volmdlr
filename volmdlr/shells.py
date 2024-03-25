@@ -13,12 +13,13 @@ from OCP.BRep import BRep_Tool
 from numpy.typing import NDArray
 from trimesh import Trimesh
 
+from dessia_common.core import DessiaObject
+from dessia_common.typings import JsonSerializable
+
 import volmdlr.core_compiled
 import volmdlr.core
 import volmdlr.faces
 import volmdlr.geometry
-from dessia_common.core import DessiaObject
-from dessia_common.typings import JsonSerializable
 from volmdlr import curves, display, edges, surfaces, wires
 from volmdlr import from_ocp
 from volmdlr.core import edge_in_list, get_edge_index_in_list, get_point_index_in_list, point_in_list
