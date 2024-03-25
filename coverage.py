@@ -29,7 +29,7 @@ untracked_modules = ['volmdlr/templates.py',
                      'models/contours.py',
                      'models/bspline_curves.py',
                      'volmdlr/from_ocp.py',
-                     'volmdlr/to_ocp.py'
+                     'volmdlr/to_ocp.py',
                      'volmdlr/shapes.py'
                      ]
 
