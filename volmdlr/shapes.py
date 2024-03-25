@@ -43,7 +43,7 @@ from volmdlr.utils.mesh_helpers import perform_decimation
 import OCP.TopAbs as topabs  # Topology type enum
 
 
-#pylint: disable=no-name-in-module, invalid-name, unused-import, wrong-import-order
+# pylint: disable=no-name-in-module, invalid-name, unused-import, wrong-import-order
 
 
 def shapetype(obj: TopoDS_Shape) -> topabs.TopAbs_ShapeEnum:
