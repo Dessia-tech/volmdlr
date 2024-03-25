@@ -1,4 +1,4 @@
-"""volmdlr shells module."""
+"""volmdlr shapes module."""
 import base64
 # pylint: disable=no-name-in-module
 import math
@@ -146,7 +146,7 @@ class Shell(Shape):
 
 class Solid(Shape):
     """
-    a single solid
+    A single solid.
     """
 
     wrapped: TopoDS_Solid
