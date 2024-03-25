@@ -182,10 +182,10 @@ class TestBSplineFace3D(unittest.TestCase):
         self.assertLessEqual(total_time, 2)
 
     def test_to_ocp(self):
-        Properties = GProp_GProps()
         ocp_face = self.spiral_face.to_ocp()
-        BRepGProp.SurfaceProperties_s(ocp_face, Properties)
-        face_area = Properties.Mass()
+        properties = GProp_GProps()
+        BRepGProp.SurfaceProperties_s(ocp_face, properties)
+        face_area = properties.Mass()
         proof = faces.BSplineFace3D.from_ocp(ocp_face=ocp_face)
         self.assertAlmostEqual(face_area, 0.03564655697170522) # SI
         self.assertAlmostEqual(proof.surface2d.area(), 1.0) # parametric domain

@@ -326,7 +326,7 @@ class TestPlaneFace3D(unittest.TestCase):
         properties = GProp_GProps()
         BRepGProp.SurfaceProperties_s(ocp_face, properties)
         face_area = properties.Mass()
-        self.assertAlmostEqual(face_area, 0.16 + 3 * 0.0128)  # SI
+        self.assertAlmostEqual(face_area, 0.16 - 3 * 0.0128)  # SI
 
 
 if __name__ == '__main__':

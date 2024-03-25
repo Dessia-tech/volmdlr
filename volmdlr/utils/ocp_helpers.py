@@ -1,22 +1,19 @@
 """
 Utils to help reading and writing OCP objects.
 """
+# pylint: disable=no-name-in-module
 import matplotlib.pyplot as plt
-from typing import Any
-import volmdlr
-from OCP.BRepAdaptor import BRepAdaptor_Curve, BRepAdaptor_Curve2d
+
+from OCP.BRepAdaptor import BRepAdaptor_Curve
 from OCP.BRepLProp import BRepLProp_CLProps
-from OCP.GCPnts import GCPnts_AbscissaPoint, GCPnts_QuasiUniformAbscissa
+from OCP.GCPnts import GCPnts_QuasiUniformAbscissa
 from OCP.GeomAbs import GeomAbs_CurveType
 from OCP.BRepTools import BRepTools_WireExplorer
 from OCP import TopAbs
-from OCP.TopoDS import TopoDS, TopoDS_Shape
-
+from OCP.TopoDS import TopoDS
 from OCP.TopExp import TopExp_Explorer
-from OCP.TopAbs import (TopAbs_EDGE, TopAbs_FACE, TopAbs_VERTEX, TopAbs_WIRE, TopAbs_SHELL, TopAbs_ShapeEnum,
-                        TopAbs_SOLID, TopAbs_COMPSOLID, TopAbs_COMPOUND)
-from OCP.ShapeFix import ShapeFix_Shape, ShapeFix_Solid, ShapeFix_Face
 
+import volmdlr
 from volmdlr import curves, edges, surfaces
 
 
@@ -41,13 +38,12 @@ OCCT_TO_VOLMDLR = {"Geom_SphericalSurface": surfaces.SphericalSurface3D,
                    }
 
 
-def discretize_edge(edge, number_points: int = 16, max_deflection: float = 0.01):
+def discretize_edge(edge, number_points: int = 16):
     """Uniformly samples an edge with specified number_points."""
     curve = BRepAdaptor_Curve(edge)
-    try:
-        gcpnts = GCPnts_QuasiUniformAbscissa(curve, number_points)
-    except:
-        return []
+
+    gcpnts = GCPnts_QuasiUniformAbscissa(curve, number_points)
+
     curve_props = BRepLProp_CLProps(curve, 1, 1e-6)
     pts = []
     for i in range(number_points):
@@ -112,55 +108,3 @@ def plot_face(face, ax=None, color="k", alpha=1, edge_details=False):
         )
         exp.Next()
     return ax
-
-
-downcast_LUT = {
-    TopAbs_VERTEX: TopoDS.Vertex_s,
-    TopAbs_EDGE: TopoDS.Edge_s,
-    TopAbs_WIRE: TopoDS.Wire_s,
-    TopAbs_FACE: TopoDS.Face_s,
-    TopAbs_SHELL: TopoDS.Shell_s,
-    TopAbs_SOLID: TopoDS.Solid_s,
-    TopAbs_COMPSOLID: TopoDS.CompSolid_s,
-    TopAbs_COMPOUND: TopoDS.Compound_s,
-}
-
-
-def shapetype(obj: TopoDS_Shape) -> TopAbs_ShapeEnum:
-    """
-    Returns a number from 0 to 7, representing the type of the shape.
-
-    COMPOUND = 0
-    COMPSOLID = 1
-    SHELL = 2
-    FACE = 3
-    WIRE = 4
-    EDGE = 5
-    VERTEX = 6
-    SHAPE = 7
-    """
-    if obj.IsNull():
-        raise ValueError("Null TopoDS_Shape object")
-
-    return obj.ShapeType()
-
-
-def downcast(obj: TopoDS_Shape) -> TopoDS_Shape:
-    """
-    Downcasts a TopoDS object to suitable specialized type.
-    """
-
-    f_downcast: Any = downcast_LUT[shapetype(obj)]
-
-    return f_downcast(obj)
-
-
-def fix(obj: TopoDS_Shape) -> TopoDS_Shape:
-    """
-    Fix a TopoDS object to suitable specialized type.
-    """
-
-    shape_fixer = ShapeFix_Shape(obj)
-    shape_fixer.Perform()
-
-    return downcast(shape_fixer.Shape())

@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v0.18.0 [Future]
 ### New Features
+- new module: shapes.py
 
 #### core.py
 - VolumeModel: from_step using OCP step reader
@@ -53,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Force wires to share same points between two edges.
+- increase code Quality
 
 #### curves.py
 - Ellipse2D: point_distance optimization
