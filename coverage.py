@@ -31,6 +31,7 @@ untracked_modules = ['volmdlr/templates.py',
                      'volmdlr/from_ocp.py',
                      'volmdlr/to_ocp.py',
                      'volmdlr/model.py',  # TODO: To be removed when gmsh works on drone
+                     'volmdlr/shapes.py'
                      ]
 
 print('untracked modules:', untracked_modules)
