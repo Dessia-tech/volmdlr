@@ -3,7 +3,7 @@ Example of voxelization from an STL file.
 """
 from volmdlr.discrete_representation import MatrixBasedVoxelization
 from volmdlr.display import Mesh3D
-from volmdlr.core import VolumeModel
+from volmdlr.model import VolumeModel
 
 VOXEL_SIZE = 0.0015
 STL_MODEL_FILE_PATH = "../../stl/simple.stl"

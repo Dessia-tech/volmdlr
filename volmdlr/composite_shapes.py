@@ -9,7 +9,8 @@ import volmdlr
 import volmdlr.templates
 from volmdlr.utils.step_writer import (product_writer, geometric_context_writer, assembly_definition_writer,
                                        step_ids_to_str)
-from volmdlr.core import (Primitive3D, BoundingBox, map_primitive_with_initial_and_final_frames, get_babylon_data)
+from volmdlr.core import Primitive3D, BoundingBox, map_primitive_with_initial_and_final_frames
+from volmdlr.model import get_babylon_data
 from volmdlr import from_ocp
 from volmdlr.shells import Shell3D
 
