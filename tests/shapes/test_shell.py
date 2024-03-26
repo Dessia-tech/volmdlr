@@ -38,6 +38,23 @@ class TestShell(unittest.TestCase):
         self.assertAlmostEqual(bbox.volume(), 8.0, 5)
         self.assertTrue(bbox.center, volmdlr.Point3D(1.0, 1.0, 1.0))
 
+    def test_make_wedge(self):
+        dx, dy, dz = 1, 2, 1
+        shell = shapes.Solid.make_wedge(dx=dx, dy=dy, dz=dz, xmin=dx / 2, xmax=dx / 2, zmin=dz / 2, zmax=dz / 2,
+                                        local_frame_origin=volmdlr.Point3D(-0.5, 0.5, 0.0),
+                                        local_frame_direction=-volmdlr.Y3D,
+                                        local_frame_x_direction=volmdlr.X3D)
+
+        self.assertAlmostEqual(shell.volume(), (1 / 3) * dy)
+
+        shell = shapes.Shell.make_wedge(dx=dx, dy=dy, dz=dz, xmin=dx / 4, xmax=3 * dx / 4,
+                                        zmin=dz / 4, zmax=3 * dz / 4,
+                                        local_frame_origin=volmdlr.Point3D(-0.5, 0.5, 0.0),
+                                        local_frame_direction=-volmdlr.Y3D,
+                                        local_frame_x_direction=volmdlr.X3D)
+
+        self.assertAlmostEqual(shell.volume(), (1 / 3) * dy * (1 + 0.5 ** 2 + 0.5))
+
     def test_make_extrusion(self):
         length, width, height = 0.4, 0.3, 0.08
         contour = wires.Contour2D.rectangle_from_center_and_sides(volmdlr.O2D, x_length=length, y_length=width,
