@@ -23,6 +23,9 @@ class TestSolid(unittest.TestCase):
     faces2 = [f.translation(volmdlr.Vector3D(1, 1, 1)) for f in faces_list]
     solid2 = shapes.Solid.make_solid(shapes.Shell(faces=faces2))
 
+    def test_check_platform(self):
+        self.assertIsNone(self.solid1._check_platform())
+
     def test_to_dict_dict_to_object(self):
         to_dict = self.solid1.to_dict()
         dict_to_obejct = DessiaObject.dict_to_object(to_dict)
