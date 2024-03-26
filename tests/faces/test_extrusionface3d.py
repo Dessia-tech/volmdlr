@@ -1,5 +1,5 @@
 import unittest
-from volmdlr.core import VolumeModel
+from volmdlr.model import VolumeModel
 from volmdlr.step import Step
 from volmdlr import faces, surfaces, wires
 import os

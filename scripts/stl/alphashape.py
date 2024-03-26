@@ -51,11 +51,11 @@ for stl_file in os.listdir(stl_path):
             shell = pointcloud3d.alpha_shape(alpha, number_point_samples)
             shell.color = (1, 0.1, 0.1)
             shell.alpha = 0.6
-            volum = volmdlr.core.VolumeModel([shell])
+            volum = volmdlr.model.VolumeModel([shell])
             volum.babylonjs()
             shells.append(shell)
             break
 
     
-# volum = volmdlr.core.VolumeModel(shells)
+# volum = volmdlr.model.VolumeModel(shells)
 # volum.babylonjs()

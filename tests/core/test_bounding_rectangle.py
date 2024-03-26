@@ -1,3 +1,4 @@
+import math
 import unittest
 import volmdlr
 from volmdlr.core import BoundingRectangle
@@ -23,6 +24,17 @@ class TestBoundingRectangle(unittest.TestCase):
 
     def test_bounds(self):
         self.assertTupleEqual(self.br.bounds(), (self.xmin, self.xmax, self.ymin, self.ymax))
+
+    def test_bounding_points(self):
+        points = self.br.bounding_points()
+        xmin = min(point.x for point in points)
+        xmax = max(point.x for point in points)
+        ymin = min(point.y for point in points)
+        ymax = max(point.y for point in points)
+        self.assertEqual(xmin, self.xmin)
+        self.assertEqual(xmax, self.xmax)
+        self.assertEqual(ymin, self.ymin)
+        self.assertEqual(ymax, self.ymax)
 
     def test_plot(self):
         ax = self.br.plot()
@@ -108,6 +120,16 @@ class TestBoundingRectangle(unittest.TestCase):
 
         self.assertEqual(self.b_rectangle1.distance_to_point(volmdlr.Point2D(0.25, 0.25)), 0.75)
         self.assertEqual(self.b_rectangle1.distance_to_point(volmdlr.Point2D(0.25, 2)), 1)
+
+    def test_from_points(self):
+        points = [volmdlr.Point2D(0, 1), volmdlr.Point2D(-0.35, 0), volmdlr.Point2D(0.35, 0),
+                  volmdlr.Point2D(0.5, 0.65), volmdlr.Point2D(-0.5, 0.65)]
+        b_rec = BoundingRectangle.from_points(points)
+        self.assertEqual(b_rec.area(), 1.0)
+        self.assertEqual(b_rec.xmin, -0.5)
+        self.assertEqual(b_rec.xmax, 0.5)
+        self.assertEqual(b_rec.ymin, 0)
+        self.assertEqual(b_rec.ymax, 1)
 
 
 if __name__ == "__main__":

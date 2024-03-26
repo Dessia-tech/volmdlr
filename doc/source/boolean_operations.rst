@@ -51,7 +51,7 @@ Here we will present you all possible boolean operations using ClosedShell3D.
 
     shell2 = shell1.rotation(volmdlr.O3D, volmdlr.X3D, math.pi / 5)
     shell2 = shell2.translation(volmdlr.Vector3D(.1, .1, .1))
-    volmdlr.core.VolumeModel([shell1, shell2]).babylonjs()
+    volmdlr.model.VolumeModel([shell1, shell2]).babylonjs()
 
     ...
 

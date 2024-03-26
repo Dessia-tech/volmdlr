@@ -2122,6 +2122,18 @@ class EllipseMixin:
         """Gets ellipse's minor direction vector."""
         return self.frame.v
 
+    @property
+    def focus1(self):
+        """Gets ellipse's positive focal point."""
+        half_focal_distance = math.sqrt(self.major_axis ** 2 - self.minor_axis ** 2)
+        return self.center + half_focal_distance * self.major_dir
+
+    @property
+    def focus2(self):
+        """Gets ellipse's negative focal point."""
+        half_focal_distance = math.sqrt(self.major_axis ** 2 - self.minor_axis ** 2)
+        return self.center - half_focal_distance * self.major_dir
+
     def length(self):
         """
         Calculates the length of the ellipse.
@@ -2999,6 +3011,14 @@ class HyperbolaMixin(Curve):
         if key == 2:
             return self.semi_minor_axis
         raise IndexError
+
+    @property
+    def focus(self):
+        """
+        Gets the focus of the hyperbola.
+        """
+        half_focal_distance = math.sqrt(self.semi_major_axis ** 2 + self.semi_minor_axis ** 2)
+        return self.frame.origin + self.frame.u * half_focal_distance
 
     def is_close(self, other, abs_tol: float = 1e-6):
         """
