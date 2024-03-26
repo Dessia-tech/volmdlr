@@ -34,7 +34,7 @@ new_poly_13 = new_poly_12.translation(0.05*vm.Z3D)
 new_poly_14 = new_poly_13.translation(0.2*vm.Z3D).rotation(vm.O3D, vm.Z3D, math.pi/4)
 # faces1 = [faces.Triangle3D(*points)
 #           for points in new_poly_11.sewing(new_poly_12,vm.X3D, vm.Y3D)]
-# vm.core.VolumeModel(faces1).babylonjs()
+# vm.model.VolumeModel(faces1).babylonjs()
 faces1 = [faces.Triangle3D(*points)
           for points in new_poly_11.sewing(new_poly_12,vm.X3D, vm.Y3D)] + \
          [faces.Triangle3D(*points)
@@ -110,7 +110,7 @@ for shell in [new_box, subtract_to_closed_shell]:
 # # # for shell in new_box:
 # # #     shell.color = (1, 0.1, 0.1)
 # # #     shell.alpha = 0.6
-# # # vm.core.VolumeModel(new_box).babylonjs()
+# # # vm.model.VolumeModel(new_box).babylonjs()
 
 # new_box = new_box[0].union(shell3)
 # subtract_to_closed_shell = subtract_to_closed_shell[0].subtract_to_closed_shell(shell3)
@@ -119,7 +119,7 @@ for shell in [new_box, subtract_to_closed_shell]:
 #               subtract_to_closed_shell]:
 #     shell[0].color = (1, 0.1, 0.1)
 #     shell[0].alpha = 0.6
-#     vm.core.VolumeModel(shell).babylonjs()
+#     vm.model.VolumeModel(shell).babylonjs()
 
 time_after = time.time()
 

@@ -50,4 +50,4 @@ for i, face in enumerate(bspline_faces):
     face.color = random_colors[i]
     face.plot(ax=ax, color=face.color)
 
-# vm.core.VolumeModel(bspline_faces).babylonjs()
+# vm.model.VolumeModel(bspline_faces).babylonjs()

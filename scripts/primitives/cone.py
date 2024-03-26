@@ -4,7 +4,7 @@ Demo usage of Cone class.
 import math
 
 import volmdlr
-from volmdlr.core import VolumeModel
+from volmdlr.model import VolumeModel
 from volmdlr.primitives3d import Cone
 
 # 1. Instantiate a red Cone directly with the init:

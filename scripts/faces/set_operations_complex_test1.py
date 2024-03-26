@@ -75,4 +75,4 @@ for new_box in [union_box, subtraction_box, subtraction_closedbox, intersection_
     for shell in new_box:
         shell.color = (1, 0.1, 0.1)
         shell.alpha = 0.6
-    vm.core.VolumeModel(new_box + [shell1, shell2]).babylonjs()
+    vm.model.VolumeModel(new_box + [shell1, shell2]).babylonjs()
