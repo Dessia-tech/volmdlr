@@ -154,7 +154,7 @@ class Shape(PhysicalObject):
         return tcast(Iterable[TopoDS_Shape], shape_set)
 
     def _get_vertices(self):
-       """Gets shape's vertices, if there exists any."""
+        """Gets shape's vertices, if there exists any."""
         return [downcast(obj=i) for i in self._entities(obj=self.wrapped, topo_type="Vertex")]
 
     def _get_edges(self):
@@ -165,6 +165,7 @@ class Shape(PhysicalObject):
     def _get_faces(self):
         """Gets shape's faces, if there exists any."""
         return [downcast(i) for i in self._entities(obj=self.wrapped, topo_type="Face")]
+
     def get_shells(self) -> List["Shell"]:
         """
         :returns: All the shells in this Shape.
