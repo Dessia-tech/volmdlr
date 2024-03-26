@@ -1,5 +1,5 @@
 {
-  "object_class": "volmdlr.core.VolumeModel",
+  "object_class": "volmdlr.model.VolumeModel",
   "name": "",
   "primitives": [
     9.258187921229666e-06,

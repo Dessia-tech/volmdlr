@@ -23,7 +23,7 @@ method_volumemodel = ModelMethod(
 cadview_block = CadView(name="Display3D")
 
 export_html = Export(
-    method_type=MethodType(vm.core.VolumeModel, "to_html_stream"),
+    method_type=MethodType(vm.model.VolumeModel, "to_html_stream"),
     filename="VolumeModel.html",
     extension="html",
     text=True,

@@ -69,4 +69,4 @@ ax.legend(handles=[mpatches.Patch(color='green', label='Approximation'),
                    mpatches.Patch(color='red', label='Interpolation')])
 
 # primitives = [bspline_face, bspline_curve3d_approximated, bspline_curve3d_interpolated]
-# vm.core.VolumeModel(primitives).babylonjs()
+# vm.model.VolumeModel(primitives).babylonjs()

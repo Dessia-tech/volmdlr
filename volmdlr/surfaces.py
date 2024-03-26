@@ -704,7 +704,7 @@ class Surface2D(PhysicalObject):
                     factor=factor, curvature_mesh_size=kwargs['curvature_mesh_size'],
                     min_points=kwargs['min_points'], initial_mesh_size=kwargs['initial_mesh_size'])
 
-        volmdlr.core.VolumeModel.generate_msh_file(file_name, mesh_dimension, mesh_order)
+        volmdlr.model.VolumeModel.generate_msh_file(file_name, mesh_dimension, mesh_order)
 
         # gmsh.initialize()
         # gmsh.open(file_name + ".geo")
@@ -3024,7 +3024,7 @@ class CylindricalSurface3D(UPeriodicalSurface):
     #     for gene in cyl_generatrices:
     #         intersections = cylindricalsurface.edge_intersections(gene)
     #         for intersection in intersections:
-    #             if not volmdlr.core.point_in_list(intersection, intersection_points):
+    #             if not intersection.in_list(intersection_points):
     #                 intersection_points.append(intersection)
     #     return intersection_points
 

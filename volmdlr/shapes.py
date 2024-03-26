@@ -40,7 +40,7 @@ from OCP.TopExp import TopExp
 
 import volmdlr.core_compiled
 from volmdlr import curves, display, edges, surfaces, wires, geometry, faces as vm_faces
-from volmdlr.core import edge_in_list, get_edge_index_in_list, get_point_index_in_list, point_in_list
+from volmdlr.core import edge_in_list, get_edge_index_in_list, get_point_index_in_list
 from volmdlr.utils.step_writer import geometric_context_writer, product_writer, step_ids_to_str
 from volmdlr import from_ocp, to_ocp
 from volmdlr.utils.mesh_helpers import perform_decimation
@@ -147,21 +147,24 @@ class Shape(PhysicalObject):
 
     @staticmethod
     def _entities(obj, topo_type: Shapes) -> Iterable[TopoDS_Shape]:
+        """Gets shape's entities (vertices, edges, faces, shells...)."""
         shape_set = TopTools_IndexedMapOfShape()
         TopExp.MapShapes_s(obj, inverse_shape_LUT[topo_type], shape_set)
 
         return tcast(Iterable[TopoDS_Shape], shape_set)
 
     def _get_vertices(self):
+       """Gets shape's vertices, if there exists any."""
         return [downcast(obj=i) for i in self._entities(obj=self.wrapped, topo_type="Vertex")]
 
     def _get_edges(self):
-        return [downcast(obj=i) for i in self._entities(obj=self.wrapped, topo_type="Edge") if
+        """Gets shape's edges, if there exists any."""
+        return [downcast(i) for i in self._entities(obj=self.wrapped, topo_type="Edge") if
                 not BRep_Tool.Degenerated_s(TopoDS.Edge_s(i))]
 
     def _get_faces(self):
-        return [downcast(obj=i) for i in self._entities(obj=self.wrapped, topo_type="Face")]
-
+        """Gets shape's faces, if there exists any."""
+        return [downcast(i) for i in self._entities(obj=self.wrapped, topo_type="Face")]
     def get_shells(self) -> List["Shell"]:
         """
         :returns: All the shells in this Shape.
@@ -178,7 +181,7 @@ class Shape(PhysicalObject):
 
     def get_compsolids(self) -> List["CompSolid"]:
         """
-        :returns: All the compsolids in this Shape
+        :returns: All the compsolids in this Shape.
         """
 
         return [CompSolid(obj=i) for i in self._entities(obj=self.wrapped, topo_type="CompSolid")]
@@ -215,9 +218,15 @@ class Shape(PhysicalObject):
 
     @classmethod
     def from_brep_stream(cls, stream: BinaryFile, name: str = "") -> "Shape":
+        """
+        Import shape from a BREP file stream.
+        """
         return cls.from_brep(file=stream, name=name)
 
     def to_brep_stream(self) -> BytesIO:
+        """
+        Export shape from a BREP file stream.
+        """
         brep_bytesio = BytesIO()
         self.to_brep(brep_bytesio)
         return brep_bytesio
@@ -228,6 +237,9 @@ class Shape(PhysicalObject):
                 path: str = "#",
                 id_method=True,
                 id_memo=None, **kwargs) -> JsonSerializable:
+        """
+        Serializes a 3-dimensional Shape into a dictionary.
+        """
         dict_ = self.base_dict()
 
         brep_content = self.to_brep_stream().getvalue()
@@ -247,6 +259,9 @@ class Shape(PhysicalObject):
             pointers_memo: Dict[str, Any] = None,
             path: str = "#",
     ) -> "Shape":
+        """
+        Creates a Shape from a dictionary.
+        """
         name = dict_["name"]
 
         encoded_brep_string = dict_["brep"]
@@ -257,6 +272,7 @@ class Shape(PhysicalObject):
         return obj_class.from_brep(new_brep_bytesio, name)
 
     def bounding_box(self):
+        """Gets bounding box for this shape."""
         if not self._bbox:
             tol = 1e-2
             bbox = Bnd_Box()
@@ -407,6 +423,7 @@ class Shell(Shape):
 
     @property
     def faces(self):
+        """Get shell's volmdlr faces."""
         if not self._faces:
             pass
             # self._faces = [from_ocp. for face in self._get_faces(self.wrapped)]
