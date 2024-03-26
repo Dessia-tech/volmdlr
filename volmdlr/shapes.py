@@ -3,6 +3,7 @@ import base64
 # pylint: disable=no-name-in-module
 import math
 import random
+import sys
 import warnings
 import zlib
 from io import BytesIO
@@ -12,6 +13,7 @@ from typing import Iterable, List, Tuple, Union, Optional, Any, Dict, overload, 
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
+from dessia_common.files import BinaryFile
 from dessia_common.core import DessiaObject, PhysicalObject
 from dessia_common.typings import JsonSerializable
 from numpy.typing import NDArray
@@ -20,7 +22,7 @@ from trimesh import Trimesh
 from OCP.BRep import BRep_Tool, BRep_Builder
 from OCP.TopoDS import (TopoDS, TopoDS_Shape, TopoDS_Shell, TopoDS_Face,
                         TopoDS_Solid, TopoDS_CompSolid, TopoDS_Compound, TopoDS_Builder)
-from OCP.BRepBuilderAPI import BRepBuilderAPI_Sewing
+from OCP.BRepBuilderAPI import BRepBuilderAPI_Sewing, BRepBuilderAPI_Copy
 from OCP.Bnd import Bnd_Box
 from OCP.BRepBndLib import BRepBndLib
 from OCP.BRepMesh import BRepMesh_IncrementalMesh
@@ -100,7 +102,8 @@ class Shape(PhysicalObject):
     """
     Represents a shape in the system. Wraps TopoDS_Shape.
     """
-
+    _non_serializable_attributes = ["obj"]
+    _non_data_eq_attributes = ["wrapped"]
     wrapped: TopoDS_Shape
 
     def __init__(self, obj: TopoDS_Shape, name: str = ""):
@@ -109,8 +112,19 @@ class Shape(PhysicalObject):
         self._bbox = None
         PhysicalObject.__init__(self, name=name)
 
+    def copy(self, deep=True, memo=None):
+        """
+        Copy of Shape.
+
+        :return: return a copy the Shape.
+        """
+        return self.__class__(obj=BRepBuilderAPI_Copy(self.wrapped, True, False).Shape())
+        # new_faces = [face.copy(deep=deep, memo=memo) for face in self.faces]
+        # return self.__class__(new_faces, color=self.color, alpha=self.alpha,
+        #                       name=self.name)
+
     @classmethod
-    def cast(cls, obj: TopoDS_Shape) -> "Shape":
+    def cast(cls, obj: TopoDS_Shape, name: str = '') -> "Shape":
         """
         Returns the right type of wrapper, given a OCCT object.
         """
@@ -125,9 +139,9 @@ class Shape(PhysicalObject):
             topabs.TopAbs_COMPOUND: Compound,
         }
 
-        shape_type = shapetype(obj)
+        shape_type = shapetype(obj=obj)
         # NB downcast is needed to handle TopoDS_Shape types
-        tr = constructor_LUT[shape_type](downcast(obj))
+        tr = constructor_LUT[shape_type](obj=downcast(obj), name=name)
 
         return tr
 
@@ -139,18 +153,39 @@ class Shape(PhysicalObject):
         return tcast(Iterable[TopoDS_Shape], shape_set)
 
     def _get_vertices(self):
-        return [downcast(i) for i in self._entities(obj=self.wrapped, topo_type="Vertex")]
+        return [downcast(obj=i) for i in self._entities(obj=self.wrapped, topo_type="Vertex")]
 
     def _get_edges(self):
-        return [downcast(i) for i in self._entities(obj=self.wrapped, topo_type="Edge") if
+        return [downcast(obj=i) for i in self._entities(obj=self.wrapped, topo_type="Edge") if
                 not BRep_Tool.Degenerated_s(TopoDS.Edge_s(i))]
 
     def _get_faces(self):
-        return [downcast(i) for i in self._entities(obj=self.wrapped, topo_type="Face")]
+        return [downcast(obj=i) for i in self._entities(obj=self.wrapped, topo_type="Face")]
+
+    def get_shells(self) -> List["Shell"]:
+        """
+        :returns: All the shells in this Shape.
+        """
+
+        return [Shell(obj=i) for i in self._entities(obj=self.wrapped, topo_type="Shell")]
+
+    def get_solids(self) -> List["Solid"]:
+        """
+        :returns: All the solids in this Shape.
+        """
+
+        return [Solid(obj=i) for i in self._entities(obj=self.wrapped, topo_type="Solid")]
+
+    def get_compsolids(self) -> List["CompSolid"]:
+        """
+        :returns: All the compsolids in this Shape
+        """
+
+        return [CompSolid(obj=i) for i in self._entities(obj=self.wrapped, topo_type="CompSolid")]
 
     def to_brep(self, file: Union[str, BytesIO]) -> bool:
         """
-        Export this shape to a BREP file
+        Export this shape to a BREP file.
         """
 
         rv = BRepTools.Write_s(self.wrapped, file)
@@ -158,9 +193,9 @@ class Shape(PhysicalObject):
         return True if rv is None else rv
 
     @classmethod
-    def from_brep(cls, file: Union[str, BytesIO]) -> "Shape":
+    def from_brep(cls, file: Union[str, BytesIO], name: str = '') -> "Shape":
         """
-        Import shape from a BREP file
+        Import shape from a BREP file.
         """
         shape = TopoDS_Shape()
         builder = BRep_Builder()
@@ -169,12 +204,30 @@ class Shape(PhysicalObject):
 
         if shape.IsNull():
             raise ValueError(f"Could not import {file}")
+        shape = cls.cast(obj=shape, name=name)
+        # for shape_type in ["shells", "solids", "compsolids"]:
+        #     entity = getattr(shape, f"get_{shape_type}")()
+        #     print(True)
 
-        return cls.cast(shape)
+        if cls.__name__ in ["Shell", "Solid", "CompSolid"]:
+            return getattr(shape, f"get_{cls.__name__.lower()}s")()[0]
+        return shape
 
-    def to_dict(
-            self, use_pointers: bool = True, memo=None, path: str = "#", id_method=True, id_memo=None
-    ) -> JsonSerializable:
+    @classmethod
+    def from_brep_stream(cls, stream: BinaryFile, name: str = "") -> "Shape":
+        return cls.from_brep(file=stream, name=name)
+
+    def to_brep_stream(self) -> BytesIO:
+        brep_bytesio = BytesIO()
+        self.to_brep(brep_bytesio)
+        return brep_bytesio
+
+    def to_dict(self,
+                use_pointers: bool = True,
+                memo=None,
+                path: str = "#",
+                id_method=True,
+                id_memo=None, **kwargs) -> JsonSerializable:
         dict_ = self.base_dict()
 
         brep_content = self.to_brep_stream().getvalue()
@@ -193,15 +246,16 @@ class Shape(PhysicalObject):
             global_dict=None,
             pointers_memo: Dict[str, Any] = None,
             path: str = "#",
-    ) -> "Workplane":
+    ) -> "Shape":
         name = dict_["name"]
 
         encoded_brep_string = dict_["brep"]
         decoded_brep_data = base64.b64decode(encoded_brep_string)
         decompressed_brep_data = zlib.decompress(decoded_brep_data)
         new_brep_bytesio = BytesIO(decompressed_brep_data)
+        obj_class = getattr(sys.modules[__name__], dict_["object_class"][15:])
+        return obj_class.from_brep(new_brep_bytesio, name)
 
-        return cls.from_brep(new_brep_bytesio, name)
     def bounding_box(self):
         if not self._bbox:
             tol = 1e-2

@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Shape: volume, bounding_box
 - Shell: add 3 different instanciation methods
 - Shape: add boolean operations: subtraction, union, intersection
+- Shape: to_dict, dict_to_object, to_brep, from_brep, from_brep_stream, to_brep_stream, 
 
 #### core.py
 - VolumeModel: from_step using OCP step reader
