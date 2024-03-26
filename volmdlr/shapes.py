@@ -148,6 +148,60 @@ class Shape(PhysicalObject):
     def _get_faces(self):
         return [downcast(i) for i in self._entities(obj=self.wrapped, topo_type="Face")]
 
+    def to_brep(self, file: Union[str, BytesIO]) -> bool:
+        """
+        Export this shape to a BREP file
+        """
+
+        rv = BRepTools.Write_s(self.wrapped, file)
+
+        return True if rv is None else rv
+
+    @classmethod
+    def from_brep(cls, file: Union[str, BytesIO]) -> "Shape":
+        """
+        Import shape from a BREP file
+        """
+        shape = TopoDS_Shape()
+        builder = BRep_Builder()
+
+        BRepTools.Read_s(shape, file, builder)
+
+        if shape.IsNull():
+            raise ValueError(f"Could not import {file}")
+
+        return cls.cast(shape)
+
+    def to_dict(
+            self, use_pointers: bool = True, memo=None, path: str = "#", id_method=True, id_memo=None
+    ) -> JsonSerializable:
+        dict_ = self.base_dict()
+
+        brep_content = self.to_brep_stream().getvalue()
+        compressed_brep_data = zlib.compress(brep_content)
+        encoded_brep_string = base64.b64encode(compressed_brep_data).decode()
+
+        dict_["brep"] = encoded_brep_string
+
+        return dict_
+
+    @classmethod
+    def dict_to_object(
+            cls,
+            dict_: JsonSerializable,
+            force_generic: bool = False,
+            global_dict=None,
+            pointers_memo: Dict[str, Any] = None,
+            path: str = "#",
+    ) -> "Workplane":
+        name = dict_["name"]
+
+        encoded_brep_string = dict_["brep"]
+        decoded_brep_data = base64.b64decode(encoded_brep_string)
+        decompressed_brep_data = zlib.decompress(decoded_brep_data)
+        new_brep_bytesio = BytesIO(decompressed_brep_data)
+
+        return cls.from_brep(new_brep_bytesio, name)
     def bounding_box(self):
         if not self._bbox:
             tol = 1e-2
