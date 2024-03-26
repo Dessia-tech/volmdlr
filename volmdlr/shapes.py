@@ -288,11 +288,9 @@ class Shell(Shape):
     @property
     def primitives(self) -> List[vm_faces.Face3D]:
         """
-        Gets shells from solid
+        Gets shell's faces.
         """
-        shape_set = TopTools_IndexedMapOfShape()
-        TopExp.MapShapes_s(self.wrapped, topabs.TopAbs_FACE, shape_set)
-        return [vm_faces.Face3D.from_ocp(downcast(shape)) for shape in shape_set]
+        return [vm_faces.Face3D.from_ocp(downcast(shape)) for shape in self._get_faces()]
 
     @classmethod
     def make_wedge(cls,
@@ -350,6 +348,7 @@ class Shell(Shape):
         >>>                                 local_frame_origin=volmdlr.Point3D(-0.5, 0.5, 0.0),
         >>>                                 local_frame_direction=-volmdlr.Y3D,
         >>>                                 local_frame_x_direction=volmdlr.X3D)
+
         """
 
         return cls(obj=_make_wedge(dx=dx, dy=dy, dz=dz, xmin=xmin, zmin=zmin, xmax=xmax, zmax=zmax,
@@ -382,7 +381,7 @@ class Solid(Shape):
     @property
     def primitives(self) -> List[Shell]:
         """
-        Gets shells from solid
+        Gets shells from solid.
         """
         shape_set = TopTools_IndexedMapOfShape()
         TopExp.MapShapes_s(self.wrapped, topabs.TopAbs_SHELL, shape_set)
@@ -444,6 +443,7 @@ class Solid(Shape):
         >>>                                 local_frame_origin=volmdlr.Point3D(-0.5, 0.5, 0.0),
         >>>                                 local_frame_direction=-volmdlr.Y3D,
         >>>                                 local_frame_x_direction=volmdlr.X3D)
+
         """
 
         return cls(obj=_make_wedge(dx=dx, dy=dy, dz=dz, xmin=xmin, zmin=zmin, xmax=xmax, zmax=zmax,

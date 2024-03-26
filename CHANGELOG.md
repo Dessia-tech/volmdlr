@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### shapes.py
 - Shape: volume, bounding_box
 - Shell: add 3 different instanciation methods, 
+- Shell constructors: make_extrusion, make_wedge
+- Solid constructors: make_extrusion, make_extrusion_from_frame_and_wires, make_wedge
 
 
 #### core.py

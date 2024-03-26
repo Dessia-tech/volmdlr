@@ -5,7 +5,7 @@ from OCP.BRepPrimAPI import BRepPrimAPI_MakeBox
 
 
 class TestShell(unittest.TestCase):
-    box = BRepPrimAPI_MakeBox(2, 2, 2).Shape()
+    box = BRepPrimAPI_MakeBox(2, 2, 2).Shell()
     shell = shapes.Shell(obj=box)
 
     def test_init1(self):
