@@ -21,7 +21,7 @@ import volmdlr.core
 import volmdlr.faces
 import volmdlr.geometry
 from volmdlr import curves, display, edges, surfaces, wires, from_ocp
-from volmdlr.core import edge_in_list, get_edge_index_in_list, get_point_index_in_list, point_in_list
+from volmdlr.core import edge_in_list, get_edge_index_in_list, get_point_index_in_list
 from volmdlr.utils.mesh_helpers import perform_decimation
 from volmdlr.utils.step_writer import geometric_context_writer, product_writer, step_ids_to_str
 
