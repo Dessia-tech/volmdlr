@@ -2,7 +2,7 @@ import unittest
 import os
 from time import perf_counter
 import volmdlr
-from volmdlr import edges, surfaces, wires, faces, core
+from volmdlr import edges, surfaces, wires, faces, model
 from volmdlr.models.bspline_surfaces import bspline_surface_1
 # properties used to store mass calculation result
 from OCP.GProp import GProp_GProps
@@ -60,7 +60,7 @@ class TestBSplineFace3D(unittest.TestCase):
 
         surface = surfaces.BSplineSurface3D.from_json(
             os.path.join(folder, "bsplinesurface_bsplineface_with_openned_contour.json"))
-        contours3d = core.VolumeModel.from_json(
+        contours3d = model.VolumeModel.from_json(
             os.path.join(folder, "bsplinesurface_bsplineface_with_openned_contour_contours.json")).primitives
         face = faces.BSplineFace3D.from_contours3d(surface, contours3d)
         self.assertAlmostEqual(face.surface2d.area(), 0.4261703133157918, 2)

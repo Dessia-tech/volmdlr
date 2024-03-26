@@ -27,7 +27,7 @@ outer_profile = vm.wires.Contour2D(edges)
 
 profile=primitives3d.ExtrudedProfile(vm.O3D, vm.Y3D, vm.Z3D, outer_profile, [], vm.X3D*0.1, name = 'extrusion')
 
-model=vm.core.VolumeModel([profile])
+model=vm.model.VolumeModel([profile])
 
 model.to_geo(file_name = 'model_2_geo',
              factor = 0.5,

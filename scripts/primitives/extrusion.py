@@ -35,7 +35,7 @@ c2 = wires.Contour2D([l1, l2, l3])
 
 profile = primitives3d.ExtrudedProfile(vm.OYZX, outer_profile, [c2], 0.1, name='extrusion')
 
-model = vm.core.VolumeModel([profile])
+model = vm.model.VolumeModel([profile])
 
 model.babylonjs()
 

@@ -2,7 +2,7 @@
 Demo usage of HollowCylinder class.
 """
 import volmdlr
-from volmdlr.core import VolumeModel
+from volmdlr.model import VolumeModel
 from volmdlr.primitives3d import HollowCylinder
 
 # 1. Instantiate a red HollowCylinder directly with the init:
