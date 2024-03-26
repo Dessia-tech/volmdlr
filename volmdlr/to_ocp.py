@@ -1,6 +1,7 @@
 """
 Module to translate objects in Volmdlr to OCP.
 """
+import volmdlr
 # pylint: disable=no-name-in-module
 from OCP.Geom import (Geom_BSplineSurface, Geom_CylindricalSurface, Geom_ConicalSurface, Geom_ToroidalSurface,
                       Geom_SphericalSurface, Geom_SurfaceOfLinearExtrusion, Geom_Plane, Geom_BSplineCurve, Geom_Line,
@@ -9,7 +10,7 @@ from OCP.Geom2d import Geom2d_BSplineCurve, Geom2d_Circle, Geom2d_Line, Geom2d_E
 from OCP.TColStd import TColStd_Array1OfReal, TColStd_Array1OfInteger
 # from OCP.TColStd import TColStd_Array1OfReal, TColStd_Array1OfInteger
 from OCP.TColgp import TColgp_Array2OfPnt, TColgp_Array1OfPnt, TColgp_Array1OfPnt2d
-from OCP.gp import gp_Pnt, gp_Ax2, gp_Ax3, gp_Dir, gp_Pnt2d, gp_Dir2d, gp_Ax2d
+from OCP.gp import gp_Pnt, gp_Ax2, gp_Ax3, gp_Vec, gp_Vec2d, gp_Dir, gp_Pnt2d, gp_Dir2d, gp_Ax2d
 from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeEdge, BRepBuilderAPI_MakeWire, BRepBuilderAPI_MakeEdge2d
 
 
@@ -77,24 +78,30 @@ def point3d_to_ocp(point):
     return gp_Pnt(*point)
 
 
-def vector3d_to_ocp(vector):
+def vector3d_to_ocp(vector: volmdlr.Vector3D, unit_vector: bool = False):
     """
     Create an OCP Vector3D from a voldmlr Vector3D.
 
     :param vector: volmdlr Vector3D.
+    :param unit_vector: If set to True, returns an OCP.gp.gp_Dir object.
     :return: OCP Vector3D
     """
-    return gp_Dir(*vector)
+    if unit_vector:
+        return gp_Dir(*vector)
+    return gp_Vec(*vector)
 
 
-def vector2d_to_ocp(vector):
+def vector2d_to_ocp(vector: volmdlr.Vector2D, unit_vector: bool = False):
     """
     Create an OCP Vector2D from a voldmlr Vector2D.
 
     :param vector: volmdlr Vector2D.
+    :param unit_vector: If set to True, returns an OCP.gp.gp_Dir2d object.
     :return: OCP Vector2D
     """
-    return gp_Dir2d(*vector)
+    if unit_vector:
+        return gp_Dir2d(*vector)
+    return gp_Vec2d(*vector)
 
 
 def frame3d_to_ocp(frame, right_handed: bool = False):
@@ -107,8 +114,8 @@ def frame3d_to_ocp(frame, right_handed: bool = False):
     :return: OCP Frame3D.
     """
     point = point3d_to_ocp(frame.origin)
-    z_vector = vector3d_to_ocp(frame.w)
-    x_vector = vector3d_to_ocp(frame.u)
+    z_vector = vector3d_to_ocp(frame.w, unit_vector=True)
+    x_vector = vector3d_to_ocp(frame.u, unit_vector=True)
     if right_handed:
         return gp_Ax2(point, z_vector, x_vector)
     return gp_Ax3(point, z_vector, x_vector)
@@ -122,7 +129,7 @@ def frame2d_to_ocp(frame):
     :return: OCP Frame2D.
     """
     point = point2d_to_ocp(frame.origin)
-    x_vector = vector2d_to_ocp(frame.u)
+    x_vector = vector2d_to_ocp(frame.u, unit_vector=True)
     return gp_Ax2d(point, x_vector)
 
 
@@ -134,7 +141,7 @@ def line3d_to_ocp(line):
     :return: OCP Geom_Line.
     """
     point = point3d_to_ocp(line.point1)
-    direction = vector3d_to_ocp(line.unit_direction_vector())
+    direction = vector3d_to_ocp(line.unit_direction_vector(), unit_vector=True)
     return Geom_Line(point, direction)
 
 
@@ -187,7 +194,7 @@ def line2d_to_ocp(line):
     :return: OCP Geom_Line.
     """
     point = point2d_to_ocp(line.point1)
-    direction = vector2d_to_ocp(line.unit_direction_vector())
+    direction = vector2d_to_ocp(line.unit_direction_vector(), unit_vector=True)
     return Geom2d_Line(point, direction)
 
 
@@ -241,7 +248,7 @@ def edge2d_to_ocp(edge2d, ocp_surface=None):
     :return:
     """
     volmdlr_curve = edge2d.curve()
-    curve = globals()[volmdlr_curve.__class__.__name__.lower()+'_to_ocp'](volmdlr_curve)
+    curve = globals()[volmdlr_curve.__class__.__name__.lower() + '_to_ocp'](volmdlr_curve)
     start = point2d_to_ocp(edge2d.start)
     end = point2d_to_ocp(edge2d.end)
     if ocp_surface:
@@ -255,7 +262,7 @@ def curve_ocp_from_edge_volmdlr(edge3d):
     Gets the OCP curve from a volmdlr edge.
     """
     volmdlr_curve = edge3d.curve()
-    return globals()[volmdlr_curve.__class__.__name__.lower()+'_to_ocp'](volmdlr_curve)
+    return globals()[volmdlr_curve.__class__.__name__.lower() + '_to_ocp'](volmdlr_curve)
 
 
 def edge3d_to_ocp(edge3d):
@@ -396,7 +403,7 @@ def extrusionsurface_to_ocp(surface):
     :return: OCP ExtrusionSurface.
     """
     curve = curve_ocp_from_edge_volmdlr(surface.edge)
-    direction = vector3d_to_ocp(surface.direction)
+    direction = vector3d_to_ocp(surface.direction, unit_vector=True)
     return Geom_SurfaceOfLinearExtrusion(curve, direction)
 
 
