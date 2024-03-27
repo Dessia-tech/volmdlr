@@ -144,7 +144,7 @@ class OCAFReader:
             map_of_names[shape] = self._get_shape_name(shape, shape_tool)
         elif shape_type == TopAbs_SHELL:
             map_of_colors[shape] = self._process_shell(shape=shape, color_tool=color_tool)
-            map_of_names[shape] = self.get_shape_name(shape, shape_tool)
+            map_of_names[shape] = self._get_shape_name(shape, shape_tool)
         else:
             raise NotImplementedError
         return map_of_names, map_of_colors
@@ -230,7 +230,7 @@ class OCAFReader:
         """
         label = TDF_Label()
         shape_tool.Search(shape, label)
-        return self.get_shape_name_from_label(label)
+        return self._get_shape_name_from_label(label)
 
     @staticmethod
     def _get_shape_name_from_label(label):
