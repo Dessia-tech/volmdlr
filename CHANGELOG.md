@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### New Features
 - new module: shapes.py
 - New module model.py to hold VolumeModel object.
+- New module ocaf.py to read metadata from step files.
 
 #### shapes.py
 - Shape: volume, bounding_box
