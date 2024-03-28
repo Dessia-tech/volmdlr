@@ -48,6 +48,28 @@ class TestSolid(unittest.TestCase):
         intersection = self.solid1.intersection(self.solid2)
         self.assertAlmostEqual(intersection.volume(), 1.0)
 
+    def test_box(self):
+        box = shapes.Solid.make_box(length=2, width=3, height=5)
+        self.assertEqual(box.volume(), 2*3*5)
+
+    def test_cone(self):
+        cone = shapes.Solid.make_cone(radius1=0, radius2=5, height=5, direction=volmdlr.X3D, angle_degrees=270)
+        self.assertAlmostEqual(cone.volume(), 98.1747704332957)
+
+    def test_cylinder(self):
+        cylinder = shapes.Solid.make_cylinder(radius=5, height=5, direction=volmdlr.X3D, angle_degrees=270)
+        self.assertAlmostEqual(cylinder.volume(), 294.5243112989299)
+
+    def test_sphere(self):
+        sphere1 = shapes.Solid.make_sphere(radius=5, direction=volmdlr.X3D, angle_degrees1=-90,
+                                           angle_degrees2=60, angle_degrees3=270)
+        self.assertAlmostEqual(sphere1.volume(), 387.6486925590814)
+
+    def test_torus(self):
+        torus1 = shapes.Solid.make_torus(radius1=2, radius2=.5, direction=volmdlr.X3D, angle_degrees1=0,
+                                         angle_degrees2=360)
+        self.assertAlmostEqual(torus1.volume(), 9.869604401089358)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -37,25 +37,38 @@ from OCP.ShapeFix import ShapeFix_Solid
 from OCP.BRepTools import BRepTools
 from OCP.TopTools import TopTools_IndexedMapOfShape
 from OCP.TopExp import TopExp
+from OCP.BRepPrimAPI import (
+    BRepPrimAPI_MakeBox,
+    BRepPrimAPI_MakeCone,
+    BRepPrimAPI_MakeCylinder,
+    BRepPrimAPI_MakeTorus,
+    BRepPrimAPI_MakeWedge,
+    BRepPrimAPI_MakePrism,
+    BRepPrimAPI_MakeRevol,
+    BRepPrimAPI_MakeSphere,
+)
+from OCP.TopLoc import TopLoc_Location
 
 import volmdlr.core_compiled
 from volmdlr import curves, display, edges, surfaces, wires, geometry, faces as vm_faces
 from volmdlr.core import edge_in_list, get_edge_index_in_list, get_point_index_in_list
 from volmdlr.utils.step_writer import geometric_context_writer, product_writer, step_ids_to_str
 from volmdlr import from_ocp, to_ocp
+from volmdlr.utils.ocp_helpers import plot_edge
 from volmdlr.utils.mesh_helpers import perform_decimation
 
-import OCP.TopAbs as topabs  # Topology type enum
+import OCP.TopAbs as top_abs  # Topology type enum
+from OCP.TopAbs import TopAbs_Orientation
 
 shape_LUT = {
-    topabs.TopAbs_VERTEX: "Vertex",
-    topabs.TopAbs_EDGE: "Edge",
-    topabs.TopAbs_WIRE: "Wire",
-    topabs.TopAbs_FACE: "Face",
-    topabs.TopAbs_SHELL: "Shell",
-    topabs.TopAbs_SOLID: "Solid",
-    topabs.TopAbs_COMPSOLID: "CompSolid",
-    topabs.TopAbs_COMPOUND: "Compound",
+    top_abs.TopAbs_VERTEX: "Vertex",
+    top_abs.TopAbs_EDGE: "Edge",
+    top_abs.TopAbs_WIRE: "Wire",
+    top_abs.TopAbs_FACE: "Face",
+    top_abs.TopAbs_SHELL: "Shell",
+    top_abs.TopAbs_SOLID: "Solid",
+    top_abs.TopAbs_COMPSOLID: "CompSolid",
+    top_abs.TopAbs_COMPOUND: "Compound",
 }
 
 inverse_shape_LUT = {v: k for k, v in shape_LUT.items()}
@@ -63,10 +76,11 @@ inverse_shape_LUT = {v: k for k, v in shape_LUT.items()}
 Shapes = Literal[
     "Vertex", "Edge", "Wire", "Face", "Shell", "Solid", "CompSolid", "Compound"]
 
+
 # pylint: disable=no-name-in-module,invalid-name,unused-import,wrong-import-order
 
 
-def shapetype(obj: TopoDS_Shape) -> topabs.TopAbs_ShapeEnum:
+def shapetype(obj: TopoDS_Shape) -> top_abs.TopAbs_ShapeEnum:
     """
     Gets the shape type for a TopoDS_Shape obejct.
     """
@@ -82,14 +96,14 @@ def downcast(obj: TopoDS_Shape) -> TopoDS_Shape:
     Downcasts a TopoDS object to suitable specialized type.
     """
     downcast_LUT = {
-        topabs.TopAbs_VERTEX: TopoDS.Vertex_s,
-        topabs.TopAbs_EDGE: TopoDS.Edge_s,
-        topabs.TopAbs_WIRE: TopoDS.Wire_s,
-        topabs.TopAbs_FACE: TopoDS.Face_s,
-        topabs.TopAbs_SHELL: TopoDS.Shell_s,
-        topabs.TopAbs_SOLID: TopoDS.Solid_s,
-        topabs.TopAbs_COMPSOLID: TopoDS.CompSolid_s,
-        topabs.TopAbs_COMPOUND: TopoDS.Compound_s,
+        top_abs.TopAbs_VERTEX: TopoDS.Vertex_s,
+        top_abs.TopAbs_EDGE: TopoDS.Edge_s,
+        top_abs.TopAbs_WIRE: TopoDS.Wire_s,
+        top_abs.TopAbs_FACE: TopoDS.Face_s,
+        top_abs.TopAbs_SHELL: TopoDS.Shell_s,
+        top_abs.TopAbs_SOLID: TopoDS.Solid_s,
+        top_abs.TopAbs_COMPSOLID: TopoDS.CompSolid_s,
+        top_abs.TopAbs_COMPOUND: TopoDS.Compound_s,
     }
 
     f_downcast: Any = downcast_LUT[shapetype(obj)]
@@ -98,7 +112,7 @@ def downcast(obj: TopoDS_Shape) -> TopoDS_Shape:
     return downcasted_obj
 
 
-class Shape(PhysicalObject):
+class Shape(volmdlr.core.Primitive3D):
     """
     Represents a shape in the system. Wraps TopoDS_Shape.
     """
@@ -110,7 +124,7 @@ class Shape(PhysicalObject):
         self.wrapped = downcast(obj)
         self.label = name
         self._bbox = None
-        PhysicalObject.__init__(self, name=name)
+        super().__init__(name=name)
 
     def copy(self, deep=True, memo=None):
         """
@@ -129,21 +143,17 @@ class Shape(PhysicalObject):
         Returns the right type of wrapper, given a OCCT object.
         """
 
-        tr = None
-
         # define the shape lookup table for casting
         constructor_LUT = {
-            topabs.TopAbs_SHELL: Shell,
-            topabs.TopAbs_SOLID: Solid,
-            topabs.TopAbs_COMPSOLID: CompSolid,
-            topabs.TopAbs_COMPOUND: Compound,
+            top_abs.TopAbs_SHELL: Shell,
+            top_abs.TopAbs_SOLID: Solid,
+            top_abs.TopAbs_COMPSOLID: CompSolid,
+            top_abs.TopAbs_COMPOUND: Compound,
         }
 
         shape_type = shapetype(obj=obj)
         # NB downcast is needed to handle TopoDS_Shape types
-        tr = constructor_LUT[shape_type](obj=downcast(obj), name=name)
-
-        return tr
+        return constructor_LUT[shape_type](obj=downcast(obj), name=name)
 
     @staticmethod
     def _entities(obj, topo_type: Shapes) -> Iterable[TopoDS_Shape]:
@@ -374,6 +384,95 @@ class Shape(PhysicalObject):
 
         return self.__class__(self._bool_op((self,), to_intersect, intersect_op))
 
+    def plot(self, ax=None, edge_style=volmdlr.core.EdgeStyle()):
+        shape_edges = self._get_edges()
+        for edge in shape_edges:
+            ax = plot_edge(edge, ax, edge_style)
+        return ax
+
+    def volmdlr_primitives(self):
+        return [self]
+
+    def mesh(self, tolerance: float, angular_tolerance: float = 0.1):
+        """
+        Generate triangulation if none exists.
+        """
+
+        if not BRepTools.Triangulation_s(self.wrapped, tolerance):
+            BRepMesh_IncrementalMesh(self.wrapped, tolerance, True, angular_tolerance)
+
+    def tessellate(
+            self, tolerance: float, angular_tolerance: float = 0.1
+    ) -> [NDArray[float], List[Tuple[int, int, int]]]:
+
+        self.mesh(tolerance, angular_tolerance)
+
+        vertices = []
+        triangles = []
+        offset = 0
+
+        for face in self._get_faces():
+            loc = TopLoc_Location()
+            poly = BRep_Tool.Triangulation_s(face, loc)
+            trsf = loc.Transformation()
+            reverse = (
+                True
+                if face.Orientation() == TopAbs_Orientation.TopAbs_REVERSED
+                else False
+            )
+
+            # add vertices
+            vertices += [
+                [v.X(), v.Y(), v.Z()]
+                for v in (
+                    poly.Node(i).Transformed(trsf) for i in range(1, poly.NbNodes() + 1)
+                )
+            ]
+
+            # add triangles
+            triangles += [
+                (
+                    triangle.Value(1) + offset - 1,
+                    triangle.Value(3) + offset - 1,
+                    triangle.Value(2) + offset - 1,
+                )
+                if reverse
+                else (
+                    triangle.Value(1) + offset - 1,
+                    triangle.Value(2) + offset - 1,
+                    triangle.Value(3) + offset - 1,
+                )
+                for triangle in poly.Triangles()
+            ]
+
+            offset += poly.NbNodes()
+
+        return vertices, triangles
+
+    def triangulation(self):
+        vertices, triangles = self.tessellate(tolerance=1e-2)
+        mesh = display.Mesh3D(np.array(vertices), np.array(triangles))
+        return mesh
+
+    def babylon_meshes(self, *args, **kwargs):
+        """
+        Returns the babylonjs mesh.
+
+        """
+        mesh = self.triangulation()
+        if mesh is None:
+            return []
+        babylon_mesh = mesh.to_babylon()
+        babylon_mesh.update({
+            'alpha': self.alpha,
+            # 'alpha': 1.0,
+            'name': self.name,
+            'color': list(self.color) if self.color is not None else [0.8, 0.8, 0.8]
+            # 'color': [0.8, 0.8, 0.8]
+        })
+        babylon_mesh["reference_path"] = self.reference_path
+        return [babylon_mesh]
+
 
 class Shell(Shape):
     """
@@ -449,6 +548,127 @@ class Solid(Shape):
         """
 
         return cls(ShapeFix_Solid().SolidFromShell(shell.wrapped))
+
+    @classmethod
+    def make_box(
+            cls,
+            length: float,
+            width: float,
+            height: float,
+            point: volmdlr.Point3D = volmdlr.Point3D(0, 0, 0),
+            direction: volmdlr.Vector3D = volmdlr.Vector3D(0, 0, 1),
+    ) -> "Solid":
+        """
+        Make a box located in point with the dimensions (length,width,height).
+
+        By default, pnt=Vector(0,0,0) and dir=Vector(0,0,1).
+        """
+        frame = volmdlr.Frame3D.from_point_and_normal(point, direction)
+        return cls(
+            BRepPrimAPI_MakeBox(
+                to_ocp.frame3d_to_ocp(frame=frame, right_handed=True), length, width, height
+            ).Shape()
+        )
+
+    @classmethod
+    def make_cone(
+            cls,
+            radius1: float,
+            radius2: float,
+            height: float,
+            point: volmdlr.Point3D = volmdlr.Point3D(0, 0, 0),
+            direction: volmdlr.Vector3D = volmdlr.Vector3D(0, 0, 1),
+            angle_degrees: float = 360,
+    ) -> "Solid":
+        """
+        Make a cone with given radii and height
+        By default pnt=Vector(0,0,0),
+        dir=Vector(0,0,1) and angle=360
+        """
+        frame = volmdlr.Frame3D.from_point_and_normal(point, direction)
+        return cls(
+            BRepPrimAPI_MakeCone(
+                to_ocp.frame3d_to_ocp(frame=frame, right_handed=True),
+                radius1,
+                radius2,
+                height,
+                math.radians(angle_degrees),
+            ).Shape()
+        )
+
+    @classmethod
+    def make_cylinder(
+            cls,
+            radius: float,
+            height: float,
+            point: volmdlr.Point3D = volmdlr.Point3D(0, 0, 0),
+            direction: volmdlr.Vector3D = volmdlr.Vector3D(0, 0, 1),
+            angle_degrees: float = 360,
+    ) -> "Solid":
+        """
+        Make a cylinder with a given radius and height.
+
+        By default point=volmdlr.Point3D(0,0,0),dir=voldmlr.Vector3D(0,0,1) and angle=360.
+
+        """
+        frame = volmdlr.Frame3D.from_point_and_normal(point, direction)
+        return cls(
+            BRepPrimAPI_MakeCylinder(to_ocp.frame3d_to_ocp(frame=frame, right_handed=True),
+                                     radius, height, math.radians(angle_degrees), ).Shape()
+        )
+
+    @classmethod
+    def make_torus(
+            cls,
+            radius1: float,
+            radius2: float,
+            point: volmdlr.Point3D = volmdlr.Point3D(0, 0, 0),
+            direction: volmdlr.Vector3D = volmdlr.Vector3D(0, 0, 1),
+            angle_degrees1: float = 0,
+            angle_degrees2: float = 360,
+    ) -> "Solid":
+        """
+        Make a torus with a given radii and angles.
+
+        By default, point=Vector3D(0,0,0),direction=Vector3D(0,0,1),angle1=0
+        ,angle1=360 and angle=360.
+        """
+        frame = volmdlr.Frame3D.from_point_and_normal(point, direction)
+        return cls(
+            BRepPrimAPI_MakeTorus(
+                to_ocp.frame3d_to_ocp(frame=frame, right_handed=True),
+                radius1,
+                radius2,
+                math.radians(angle_degrees1),
+                math.radians(angle_degrees2),
+            ).Shape()
+        )
+
+    @classmethod
+    def make_sphere(
+            cls,
+            radius: float,
+            point: volmdlr.Point3D = volmdlr.Point3D(0, 0, 0),
+            direction: volmdlr.Vector3D = volmdlr.Vector3D(0, 0, 1),
+            angle_degrees1: float = 0,
+            angle_degrees2: float = 90,
+            angle_degrees3: float = 360,
+    ) -> "Shape":
+        """
+        Make a sphere with a given radius.
+
+        By default, point=Vector3D(0,0,0),direction=Vector3D(0,0,1), angle1=0, angle2=90 and angle3=360
+        """
+        frame = volmdlr.Frame3D.from_point_and_normal(point, direction)
+        return cls(
+            BRepPrimAPI_MakeSphere(
+                to_ocp.frame3d_to_ocp(frame=frame, right_handed=True),
+                radius,
+                math.radians(angle_degrees1),
+                math.radians(angle_degrees2),
+                math.radians(angle_degrees3),
+            ).Shape()
+        )
 
 
 class CompSolid(Shape):
