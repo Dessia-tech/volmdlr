@@ -3037,6 +3037,7 @@ class FullArcMixin(ArcMixin):
         ArcMixin.__init__(self, circle=circle, start=start_end, end=start_end, name=name)  # !!! this is dangerous
 
     def get_start_end_angles(self):
+        """Returns the start and end angle of the arc."""
         return 0.0, volmdlr.TWO_PI
 
     @property
