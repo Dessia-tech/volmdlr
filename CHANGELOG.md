@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Shell constructors: make_extrusion, make_wedge
 - Solid constructors: make_extrusion, make_extrusion_from_frame_and_wires, make_wedge
 - Shape: to_dict, dict_to_object, to_brep, from_brep, from_brep_stream, to_brep_stream, 
-
+- Solid: make_box, make_cone, make_cylinder, make_torus, make_sphere methods.
 
 
 #### core.py
