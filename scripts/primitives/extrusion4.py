@@ -40,7 +40,7 @@ c2 = p2d.ClosedRoundedLineSegments2D([p8, p9, p10, p11], {})
 profile = p3d.ExtrudedProfile(vm.OXYZ, c1, [], 1)
 # profile.plot()
 
-model = vm.core.VolumeModel([profile])
+model = vm.model.VolumeModel([profile])
 model.babylonjs()
 
 # %%
@@ -63,5 +63,5 @@ c2 = vm.wires.Contour2D(l2.primitives)
 
 profile = p3d.ExtrudedProfile(vm.OXYZ, c1, [c2], 1)
 
-model = vm.core.VolumeModel([profile])
+model = vm.model.VolumeModel([profile])
 model.babylonjs()

@@ -145,5 +145,5 @@ for i, (p1, p2) in enumerate(polygons):
     list_faces = [faces.Triangle3D(*triangle_points, alpha=0.9,
                                    color=(1, 0.1, 0.1))
                   for triangle_points in list_triangles_points]
-    # vm.core.VolumeModel(list_faces).babylonjs()
+    # vm.model.VolumeModel(list_faces).babylonjs()
     assert polygon1.check_sewing(polygon2, list_faces)

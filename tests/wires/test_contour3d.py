@@ -1,9 +1,10 @@
 import os
 import unittest
 import volmdlr
+import volmdlr.model
 from volmdlr.wires import Contour3D, Contour2D
 from volmdlr.step import Step
-from volmdlr import edges, core, curves
+from volmdlr import edges, curves
 from volmdlr.models.contours import contour3d, contour3d_all_edges
 
 
@@ -31,7 +32,7 @@ class TestContour3D(unittest.TestCase):
         merged_contour1_contour2 = contour1.merge_with(contour2)
         merged_contour2_contour1 = contour2.merge_with(contour1)
         self.assertEqual(len(merged_contour1_contour2), len(merged_contour2_contour1))
-        self.assertEqual(merged_contour1_contour2[0], merged_contour2_contour1[0])
+        self.assertTrue(merged_contour1_contour2[0].is_superposing(merged_contour2_contour1[0]))
 
     def test_is_sharing_primitives_with(self):
         contour1_sharing_primitives = Contour3D.from_json(
@@ -59,7 +60,7 @@ class TestContour3D(unittest.TestCase):
         self.assertTrue(face.outer_contour3d.is_ordered())
 
         arguments = ["", ["#2518728", "#2518729"]]
-        primitives = core.VolumeModel.from_json(
+        primitives = volmdlr.model.VolumeModel.from_json(
                 os.path.join(folder, "strange_contour_from_step_primitives.json")).primitives
         object_dict = {2518728: primitives[0], 2518729: primitives[1]}
 

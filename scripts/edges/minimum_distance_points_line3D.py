@@ -25,7 +25,7 @@ w = pmd2 - pmd1
 
 print(u.dot(w), v.dot(w))
 
-m = vm.core.VolumeModel([('', [l1, l2, pmd1, pmd2])])
+m = vm.model.VolumeModel([('', [l1, l2, pmd1, pmd2])])
 
 m.MPLPlot() #Problem
 

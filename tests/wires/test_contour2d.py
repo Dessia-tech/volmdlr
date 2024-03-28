@@ -148,7 +148,7 @@ class TestContour2D(unittest.TestCase):
                             (2, 0.575, 3, 0.625),
                             (4, 0.9249999999999998, 1, 0.275)]
         for i, (pt1, pt2) in enumerate(self.point_to_extract_with):
-            inside_prims, outside_prims = self.contour_to_extract_from.split_with_two_points(pt1, pt2)
+            inside_prims, outside_prims = self.contour_to_extract_from.trim(point1=pt1, point2=pt2)
             expected_inside_ = expected_results[i][:2]
             expected_outside_ = expected_results[i][2:]
             self.assertEqual(len(inside_prims), expected_inside_[0])

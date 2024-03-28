@@ -53,4 +53,4 @@ bspline_face.color = [list(npy.random.choice(range(255), size=1))[0] / 256,
                       list(npy.random.choice(range(255), size=1))[0] / 256,
                       list(npy.random.choice(range(255), size=1))[0] / 256]
 
-vm.core.VolumeModel([cylindrical_face, bspline_face]).babylonjs()
+vm.model.VolumeModel([cylindrical_face, bspline_face]).babylonjs()

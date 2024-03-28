@@ -2,8 +2,11 @@ import unittest
 import os
 from time import perf_counter
 import volmdlr
-from volmdlr import edges, surfaces, wires, faces, core
+from volmdlr import edges, surfaces, wires, faces, model
 from volmdlr.models.bspline_surfaces import bspline_surface_1
+# properties used to store mass calculation result
+from OCP.GProp import GProp_GProps
+from OCP.BRepGProp import BRepGProp_Face, BRepGProp  # used for mass calculation
 
 
 folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'objects_bspline_test')
@@ -12,6 +15,9 @@ folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'objects_bspl
 class TestBSplineFace3D(unittest.TestCase):
     bspline_face = faces.BSplineFace3D.from_surface_rectangular_cut(bspline_surface_1, 0, 1, 0, 1)
 
+    spiral_surface = surfaces.BSplineSurface3D.from_json(os.path.join(folder, "spiral_bsplineface_surface.json"))
+    contour3d = wires.Contour3D.from_json(os.path.join(folder, "spiral_bsplineface_contour.json"))
+    spiral_face = faces.BSplineFace3D.from_contours3d(spiral_surface, [contour3d])
     def test_bounding_box(self):
         face = faces.BSplineFace3D.from_json(os.path.join(folder, "bsplineface_bbox_test.json"))
         bbox = face.bounding_box
@@ -54,7 +60,7 @@ class TestBSplineFace3D(unittest.TestCase):
 
         surface = surfaces.BSplineSurface3D.from_json(
             os.path.join(folder, "bsplinesurface_bsplineface_with_openned_contour.json"))
-        contours3d = core.VolumeModel.from_json(
+        contours3d = model.VolumeModel.from_json(
             os.path.join(folder, "bsplinesurface_bsplineface_with_openned_contour_contours.json")).primitives
         face = faces.BSplineFace3D.from_contours3d(surface, contours3d)
         self.assertAlmostEqual(face.surface2d.area(), 0.4261703133157918, 2)
@@ -165,10 +171,8 @@ class TestBSplineFace3D(unittest.TestCase):
         self.assertAlmostEqual(neutral_fiber.length(), 0.1464370131293568, 2)
 
     def test_triangulation(self):
-        surface = surfaces.BSplineSurface3D.from_json(os.path.join(folder, "spiral_bsplineface_surface.json"))
-        contour3d = wires.Contour3D.from_json(os.path.join(folder, "spiral_bsplineface_contour.json"))
         start = perf_counter()
-        face = faces.BSplineFace3D.from_contours3d(surface, [contour3d])
+        face = faces.BSplineFace3D.from_contours3d(self.spiral_surface, [self.contour3d])
         end = perf_counter()
         total_time = end - start
         mesh = face.triangulation()
@@ -176,6 +180,16 @@ class TestBSplineFace3D(unittest.TestCase):
         self.assertGreaterEqual(len(mesh.vertices), 650)
         self.assertLessEqual(len(mesh.vertices), 2750)
         self.assertLessEqual(total_time, 2)
+
+    def test_to_ocp(self):
+        ocp_face = self.spiral_face.to_ocp()
+        properties = GProp_GProps()
+        BRepGProp.SurfaceProperties_s(ocp_face, properties)
+        face_area = properties.Mass()
+        proof = faces.BSplineFace3D.from_ocp(ocp_face=ocp_face)
+        self.assertAlmostEqual(face_area, 0.03564655697170522) # SI
+        self.assertAlmostEqual(proof.surface2d.area(), 1.0) # parametric domain
+        self.assertTrue(proof.surface2d.outer_contour.is_ordered())
 
 
 if __name__ == '__main__':

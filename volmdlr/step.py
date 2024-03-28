@@ -18,7 +18,7 @@ import dessia_common.core as dc  # isort: skip
 from dessia_common.files import BinaryFile  # isort: skip
 
 import volmdlr
-import volmdlr.core
+import volmdlr.model
 import volmdlr.edges
 import volmdlr.faces
 import volmdlr.curves
@@ -27,6 +27,7 @@ import volmdlr.wires
 from volmdlr.utils import step_reader
 from volmdlr.utils.step_reader import (STEP_TO_VOLMDLR, STEP_REPRESENTATION_ENTITIES,
                                        WIREFRAME_STEP_REPRESENTATION_ENTITIES)
+from volmdlr import composite_shapes
 
 
 class StepFunction:
@@ -731,7 +732,7 @@ class Step(dc.DessiaObject):
                     if not list_primitives:
                         none_primitives.add(instantiate_id)
 
-                    volmdlr_object = volmdlr.core.Assembly(list_primitives, assembly_positions, assembly_frame,
+                    volmdlr_object = composite_shapes.Assembly(list_primitives, assembly_positions, assembly_frame,
                                                            name=name)
                     object_dict[instantiate_id] = volmdlr_object
                     last_error = None
@@ -757,7 +758,7 @@ class Step(dc.DessiaObject):
             given class.
         :type show_times: bool
         :return: A volmdlr solid object.
-        :rtype: :class:`volmdlr.core.VolumeModel`
+        :rtype: :class:`volmdlr.model.VolumeModel`
         """
         object_dict = {}
         times = {}
@@ -792,7 +793,7 @@ class Step(dc.DessiaObject):
             print()
 
         if self.root_nodes["NEXT_ASSEMBLY_USAGE_OCCURRENCE"]:
-            return volmdlr.core.VolumeModel([self.instatiate_assembly(object_dict)])
+            return volmdlr.model.VolumeModel([self.instatiate_assembly(object_dict)])
         primitives = []
         shapes = [object_dict[shape] for shape in shape_representations
                   if self.functions[shape].name in STEP_REPRESENTATION_ENTITIES]
@@ -801,8 +802,8 @@ class Step(dc.DessiaObject):
                 primitives.extend(shape)
             else:
                 primitives.append(shape)
-        volume_model = volmdlr.core.VolumeModel(primitives)
-        # volume_model = volmdlr.core.VolumeModel([object_dict[shell_node] for shell_node in shell_nodes])
+        volume_model = volmdlr.model.VolumeModel(primitives)
+        # volume_model = volmdlr.model.VolumeModel([object_dict[shell_node] for shell_node in shell_nodes])
         return volume_model
 
     def _helper_instantiate(self, node, object_dict, times, show_times):

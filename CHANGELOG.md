@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### New Features
 
 - made wires classes and shells classes iterables
+- new module: shapes.py
+- New module model.py to hold VolumeModel object.
+
+#### shapes.py
+- Shape: volume, bounding_box
+- Shell: add 3 different instanciation methods, 
+- Shell constructors: make_extrusion, make_wedge
+- Solid constructors: make_extrusion, make_extrusion_from_frame_and_wires, make_wedge
+
+
+#### core.py
+- VolumeModel: from_step using OCP step reader
+- move VolumeModel from core.py to model.py.
 
 #### display.py
 - Mesh3D: rotation / translation / frame_mapping
@@ -26,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### faces.py
 - Face3D: from_contours3d (add abs_tol as parameter)
+- Face3D: to_ocp.
 #### shells.py
 - 
 ### Fixed
@@ -40,16 +54,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### wires.py
 - 
 #### surfaces.py
-- 
+- cylindricalSurface3D: fix tangent plane intersections.
+
 #### faces.py
 - SphericalFace3D: get_bounding_box
-- planeface:Sphericalface intersections
+- planeface: Sphericalface intersections
 
 #### shells.py
 - 
 
 ### Changed
 - Force wires to share same points between two edges.
+- increase code Quality
 
 #### curves.py
 - Ellipse2D: point_distance optimization

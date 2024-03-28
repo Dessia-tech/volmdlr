@@ -82,10 +82,8 @@ class Curve(DessiaObject):
         :return:a list containing all intersections between the two objects, if any exists.
         """
         line_intersections = self.line_intersections(linesegment.line)
-        intersections = []
-        for intersection in line_intersections:
-            if linesegment.point_belongs(intersection, abs_tol):
-                intersections.append(intersection)
+        intersections = [intersection for intersection in line_intersections
+                         if linesegment.point_belongs(intersection, abs_tol)]
         return intersections
 
     def intersections(self, other_curve, abs_tol: float = 1e-6):
@@ -341,8 +339,7 @@ class Line(Curve):
             :class:`volmdlr.Point3D`]
         :return: A list containing two lines
         """
-        return [self.__class__(self.point1, split_point),
-                self.__class__(split_point, self.point2)]
+        return [self.__class__(self.point1, split_point), self.__class__(split_point, self.point2)]
 
     def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, **kwargs):
         """
@@ -425,8 +422,7 @@ class Line2D(Line):
         :param angle: angle rotation.
         :return: a new rotated Line2D.
         """
-        return Line2D(*[point.rotation(center, angle)
-                        for point in [self.point1, self.point2]])
+        return Line2D(*[point.rotation(center, angle) for point in [self.point1, self.point2]])
 
     def translation(self, offset: volmdlr.Vector2D):
         """
@@ -806,8 +802,7 @@ class Line3D(Line):
         :param angle: angle rotation
         :return: a new rotated Line3D
         """
-        return Line3D(*[point.rotation(center, axis, angle) for point in
-                        [self.point1, self.point2]])
+        return Line3D(*[point.rotation(center, axis, angle) for point in [self.point1, self.point2]])
 
     def translation(self, offset: volmdlr.Vector3D):
         """
@@ -816,8 +811,7 @@ class Line3D(Line):
         :param offset: translation vector
         :return: A new translated Line3D
         """
-        return Line3D(*[point.translation(offset) for point in
-                        [self.point1, self.point2]])
+        return Line3D(*[point.translation(offset) for point in [self.point1, self.point2]])
 
     def point_belongs(self, point3d, tol: float = 1e-6):
         """
@@ -870,8 +864,7 @@ class Line3D(Line):
 
         :return: A new 2D line resulting from the projection of the current 3D line onto the specified plane.
         """
-        return Line2D(self.point1.plane_projection2d(center, x, y),
-                      self.point2.plane_projection2d(center, x, y))
+        return Line2D(self.point1.plane_projection2d(center, x, y), self.point2.plane_projection2d(center, x, y))
 
     def intersection(self, line2, tol: float = 1e-6):
         """
@@ -897,8 +890,6 @@ class Line3D(Line):
                          vector.dot(direction_vector1) * direction_vector2.dot(direction_vector2)) / (
                                 direction_vector1.dot(direction_vector1) * direction_vector2.dot(direction_vector2) -
                                 direction_vector1.dot(direction_vector2) * direction_vector2.dot(direction_vector1))
-        # u_coefficient = (vector.dot(direction_vector2) + t_coefficient * direction_vector1.dot(
-        # direction_vector2)) / direction_vector2.dot(direction_vector2)
         intersection = self.point1 + t_coefficient * direction_vector1
         return intersection
 
@@ -1263,7 +1254,6 @@ class Circle2D(CircleMixin, ClosedCurve):
 
         :return: the circle's length.
         """
-
         return volmdlr.TWO_PI * self.radius
 
     def point_belongs(self, point, tol: float = 1e-6):
@@ -1380,10 +1370,8 @@ class Circle2D(CircleMixin, ClosedCurve):
         if self.bounding_rectangle.distance_to_b_rectangle(linesegment.bounding_rectangle) > abs_tol:
             return []
         line_intersections = self.line_intersections(linesegment.line, abs_tol)
-        linesegment_intersections = []
-        for intersection in line_intersections:
-            if linesegment.point_belongs(intersection):
-                linesegment_intersections.append(intersection)
+        linesegment_intersections = [intersection for intersection in line_intersections
+                                     if linesegment.point_belongs(intersection)]
         return linesegment_intersections
 
     def circle_intersections(self, circle: 'Circle2D'):
@@ -1413,11 +1401,7 @@ class Circle2D(CircleMixin, ClosedCurve):
         :rtype: List[Point2D].
         """
         circle_intesections = self.circle_intersections(arc2d.circle)
-        intersections = []
-        for inter in circle_intesections:
-            if arc2d.point_belongs(inter, abs_tol):
-                intersections.append(inter)
-        return intersections
+        return [point for point in circle_intesections if arc2d.point_belongs(point, abs_tol)]
 
     def ellipse_intersections(self, ellipse2d: 'Ellipse2D', abs_tol: float = 1e-7):
         """
@@ -1431,8 +1415,7 @@ class Circle2D(CircleMixin, ClosedCurve):
         """
         if self.bounding_rectangle.distance_to_b_rectangle(ellipse2d.bounding_rectangle) > abs_tol:
             return []
-        intersections = volmdlr_intersections.get_bsplinecurve_intersections(ellipse2d, self, abs_tol)
-        return intersections
+        return volmdlr_intersections.get_bsplinecurve_intersections(ellipse2d, self, abs_tol)
 
     def bsplinecurve_intersections(self, bsplinecurve: 'volmdlr.edges.BSplineCurve2D', abs_tol: float = 1e-6):
         """
@@ -2139,6 +2122,18 @@ class EllipseMixin:
         """Gets ellipse's minor direction vector."""
         return self.frame.v
 
+    @property
+    def focus1(self):
+        """Gets ellipse's positive focal point."""
+        half_focal_distance = math.sqrt(self.major_axis ** 2 - self.minor_axis ** 2)
+        return self.center + half_focal_distance * self.major_dir
+
+    @property
+    def focus2(self):
+        """Gets ellipse's negative focal point."""
+        half_focal_distance = math.sqrt(self.major_axis ** 2 - self.minor_axis ** 2)
+        return self.center - half_focal_distance * self.major_dir
+
     def length(self):
         """
         Calculates the length of the ellipse.
@@ -2150,6 +2145,26 @@ class EllipseMixin:
         perimeter_formular_h = (self.major_axis - self.minor_axis) ** 2 / (self.major_axis + self.minor_axis) ** 2
         return math.pi * (self.major_axis + self.minor_axis) * \
             (1 + (3 * perimeter_formular_h / (10 + math.sqrt(4 - 3 * perimeter_formular_h))))
+
+    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, same_sense: bool = True, abs_tol: float = 1e-6):
+        """
+        Trims an ellipse between two points.
+
+        :param point1: point1 used to trim ellipse.
+        :param point2: point2 used to trim ellipse.
+        :param same_sense: indicates whether the curve direction agrees with (True) or is in the opposite
+               direction (False) to the edge direction. By default, it's assumed True
+        :param abs_tol: tolerance between points to consider a full arc of ellipse.
+        :return: arc of ellipse between these two points.
+        """
+        fullar_arc_class_ = getattr(volmdlr.edges, 'FullArcEllipse' + self.__class__.__name__[-2:])
+        arc_class_ = getattr(volmdlr.edges, 'ArcEllipse' + self.__class__.__name__[-2:])
+        ellipse = self
+        if not same_sense:
+            ellipse = self.reverse()
+        if point1.is_close(point2, abs_tol):
+            return fullar_arc_class_(ellipse, point1, self.name)
+        return arc_class_(ellipse, point1, point2)
 
 
 class Ellipse2D(EllipseMixin, ClosedCurve):
@@ -2868,24 +2883,6 @@ class Ellipse3D(ConicMixin, EllipseMixin, ClosedCurve):
         return math.isclose(new_point.x ** 2 / self.major_axis ** 2 +
                             new_point.y ** 2 / self.minor_axis ** 2, 1.0, abs_tol=tol)
 
-    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, same_sense: bool = True, abs_tol: float = 1e-6):
-        """
-        Trims an ellipse between two points.
-
-        :param point1: point1 used to trim ellipse.
-        :param point2: point2 used to trim ellipse.
-        :param same_sense: indicates whether the curve direction agrees with (True) or is in the opposite
-               direction (False) to the edge direction. By default, it's assumed True
-        :param abs_tol: tolerance between points to consider a full arc of ellipse.
-        :return: arc of ellipse between these two points.
-        """
-        ellipse = self
-        if not same_sense:
-            ellipse = self.reverse()
-        if point1.is_close(point2, abs_tol):
-            return volmdlr.edges.FullArcEllipse3D(ellipse, point1, self.name)
-        return volmdlr.edges.ArcEllipse3D(ellipse, point1, point2)
-
     def linesegment_intersections(self, linesegment, abs_tol: float = 1e-6):
         """
         Gets intersections between an Ellipse 3D and a Line3D.
@@ -3015,6 +3012,14 @@ class HyperbolaMixin(Curve):
             return self.semi_minor_axis
         raise IndexError
 
+    @property
+    def focus(self):
+        """
+        Gets the focus of the hyperbola.
+        """
+        half_focal_distance = math.sqrt(self.semi_major_axis ** 2 + self.semi_minor_axis ** 2)
+        return self.frame.origin + self.frame.u * half_focal_distance
+
     def is_close(self, other, abs_tol: float = 1e-6):
         """
         Verifies if two Hyperbolas are the same, up to given tolerance.
@@ -3054,8 +3059,7 @@ class HyperbolaMixin(Curve):
             hyperbola_points[0], start_tangent, hyperbola_points[2], end_tangent, hyperbola_points[1])
         knotvector = generate_knot_vector(2, 3)
 
-        bspline = _bspline_class(2, [point1, point, point2], [1] * len(knotvector), knotvector, [1, weight1, 1])
-        return bspline
+        return _bspline_class(2, [point1, point, point2], [1] * len(knotvector), knotvector, [1, weight1, 1])
 
     def linesegment_intersections(self, linesegment, abs_tol: float = 1e-6):
         """
@@ -3281,8 +3285,7 @@ class Hyperbola3D(ConicMixin, HyperbolaMixin):
         """
         points_ = [self.frame.global_to_local_coordinates(point) for point in points]
         localy_sorted = sorted(points_, key=lambda ip: ip.y)
-        sorted_points = [self.frame.local_to_global_coordinates(point) for point in localy_sorted]
-        return sorted_points
+        return [self.frame.local_to_global_coordinates(point) for point in localy_sorted]
 
     def tangent(self, point):
         """
@@ -3331,11 +3334,8 @@ class Hyperbola3D(ConicMixin, HyperbolaMixin):
             min_y, max_y = -self.semi_major_axis * 5, self.semi_major_axis * 5
         y_vals = np.linspace(min_y, max_y, number_points)
         x_positive_vals = self.get_x(y_vals)
-        points_positive_branch = []
-        for i, y in enumerate(y_vals):
-            points_positive_branch.append(volmdlr.Point3D(x_positive_vals[i], y, 0))
-        points_positive_branch = [self.frame.local_to_global_coordinates(point) for point in points_positive_branch]
-        return points_positive_branch
+        points_positive_branch = [volmdlr.Point3D(x_positive_vals[i], y, 0) for i, y in enumerate(y_vals)]
+        return [self.frame.local_to_global_coordinates(point) for point in points_positive_branch]
 
     def to_2d(self, plane_origin, x, y):
         """
@@ -3607,8 +3607,7 @@ class Parabola3D(ConicMixin, ParabolaMixin):
         """
         points_ = [self.frame.global_to_local_coordinates(point) for point in points]
         localy_sorted = sorted(points_, key=lambda ip: ip.x)
-        sorted_points = [self.frame.local_to_global_coordinates(point) for point in localy_sorted]
-        return sorted_points
+        return [self.frame.local_to_global_coordinates(point) for point in localy_sorted]
 
     def tangent(self, point):
         """

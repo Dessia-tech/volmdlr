@@ -2,7 +2,7 @@
 Surfaces & faces.
 
 """
-
+# pylint: disable=no-name-in-module
 import math
 import warnings
 from itertools import chain, product
@@ -10,6 +10,15 @@ from typing import List
 import matplotlib.pyplot as plt
 import numpy as np
 import triangle as triangle_lib
+
+from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeFace
+from OCP.BRepLib import BRepLib
+from OCP.BOPTools import BOPTools_AlgoTools2D
+from OCP.BRepTools import BRepTools_WireExplorer
+from OCP.ShapeFix import ShapeFix_Face
+from OCP.BRep import BRep_Tool
+from OCP.TopoDS import TopoDS_Shape
+
 
 from dessia_common.core import DessiaObject
 
@@ -24,6 +33,11 @@ import volmdlr.grid
 from volmdlr import surfaces
 from volmdlr.utils.parametric import update_face_grid_points_with_inner_polygons
 import volmdlr.wires
+from volmdlr import from_ocp
+from volmdlr import to_ocp
+from volmdlr.utils import ocp_helpers
+from volmdlr.utils import step_writer
+
 
 warnings.simplefilter("once")
 
@@ -87,6 +101,7 @@ class Face3D(volmdlr.core.Primitive3D):
     min_x_density = 1
     min_y_density = 1
     face_tolerance = 1e-6
+    _is_parametric_equal_to_ocp = True
 
     def __init__(self, surface3d, surface2d: surfaces.Surface2D,
                  reference_path: str = volmdlr.PATH_ROOT, name: str = ""):
@@ -369,6 +384,26 @@ class Face3D(volmdlr.core.Primitive3D):
                 for new_primitive, old_primitive in zip(inner_contours2d[i].primitives, _inner_contour.primitives):
                     primitives_mapping[new_primitive] = primitives_mapping.pop(old_primitive)
 
+    @classmethod
+    def from_ocp(cls, ocp_face: TopoDS_Shape):
+        """
+        Translate an occt face into a volmdlr face.
+        """
+        occt_surface = BRep_Tool().Surface_s(ocp_face)
+        if occt_surface.get_type_name_s() == 'Geom_RectangularTrimmedSurface':
+            occt_surface = occt_surface.BasisSurface()
+        surface_function = getattr(from_ocp, occt_surface.get_type_name_s().lower()[5:] + '_from_ocp')
+        surface_class = ocp_helpers.OCCT_TO_VOLMDLR[occt_surface.get_type_name_s()]
+        surface = surface_function(surface_class, occt_surface, occt_to_volmdlr=ocp_helpers.OCCT_TO_VOLMDLR)
+
+        occt_outer_wire, occt_inner_wires = from_ocp.get_wires_from_face(ocp_face)
+        contours = [volmdlr.wires.Contour3D.from_ocp(contour)
+                    for contour in [occt_outer_wire] + occt_inner_wires]
+        contours[0].name = "face_outer_bound"
+
+        face_class = globals()[surface.face_class]
+        return face_class.from_contours3d(surface, contours3d=contours)
+
     def to_step(self, current_id):
         """Transforms a Face 3D into a Step object."""
         content, surface3d_ids = self.surface3d.to_step(current_id)
@@ -393,7 +428,7 @@ class Face3D(volmdlr.core.Primitive3D):
             current_id = face_bound_id + 1
 
         content += (
-            f"#{current_id} = ADVANCED_FACE('{self.name}',({volmdlr.core.step_ids_to_str(contours_ids)})"
+            f"#{current_id} = ADVANCED_FACE('{self.name}',({step_writer.step_ids_to_str(contours_ids)})"
             f",#{surface3d_ids[0]},.T.);\n"
         )
         # TODO: create an ADVANCED_FACE for each surface3d_ids ?
@@ -682,10 +717,7 @@ class Face3D(volmdlr.core.Primitive3D):
         :param line: other line.
         :return: a list of intersections.
         """
-        intersections = []
-        for intersection in self.surface3d.line_intersections(line):
-            if self.point_belongs(intersection):
-                intersections.append(intersection)
+        intersections = [point for point in self.surface3d.line_intersections(line) if self.point_belongs(point)]
         if not intersections:
             for prim in self.outer_contour3d.primitives:
                 intersection = prim.line_intersections(line)
@@ -703,13 +735,10 @@ class Face3D(volmdlr.core.Primitive3D):
         :param abs_tol: tolerance used.
         :return: a list of intersections.
         """
-        linesegment_intersections = []
         if not self.bounding_box.is_intersecting(linesegment.bounding_box):
             return []
-        for intersection in self.surface3d.linesegment_intersections(linesegment):
-            if self.point_belongs(intersection, abs_tol):
-                linesegment_intersections.append(intersection)
-        return linesegment_intersections
+        return [point for point in self.surface3d.linesegment_intersections(linesegment)
+                if self.point_belongs(point, abs_tol)]
 
     def fullarc_intersections(self, fullarc: vme.FullArc3D) -> List[volmdlr.Point3D]:
         """
@@ -718,11 +747,7 @@ class Face3D(volmdlr.core.Primitive3D):
         :param fullarc: other fullarc.
         :return: a list of intersections.
         """
-        intersections = []
-        for intersection in self.surface3d.fullarc_intersections(fullarc):
-            if self.point_belongs(intersection):
-                intersections.append(intersection)
-        return intersections
+        return [point for point in self.surface3d.fullarc_intersections(fullarc) if self.point_belongs(point)]
 
     def plot(self, ax=None, color="k", alpha=1, edge_details=False):
         """Plots the face."""
@@ -905,10 +930,9 @@ class Face3D(volmdlr.core.Primitive3D):
         intersections_points = []
         for edge1 in self.outer_contour3d.primitives:
             intersection_points = face2.edge_intersections(edge1)
-            if intersection_points:
-                for point in intersection_points:
-                    if not point.in_list(intersections_points):
-                        intersections_points.append(point)
+            for point in intersection_points:
+                if not point.in_list(intersections_points):
+                    intersections_points.append(point)
 
         return intersections_points
 
@@ -1681,6 +1705,88 @@ class Face3D(volmdlr.core.Primitive3D):
             raise ValueError(f'Point {point} not in this face.')
         return self.surface3d.normal_at_point(point)
 
+    def to_ocp(self):
+        """
+        Returns an OCP shape equivalent to the volmdlr object.
+        """
+        if self._is_parametric_equal_to_ocp:
+            return self.to_ocp_from_2d()
+        return self.to_ocp_from_3d()
+
+    def to_ocp_from_2d(self):
+        """
+        Returns an OCP shape equivalent to the volmdlr object using Surface2D data.
+        """
+
+        occt_surface = getattr(to_ocp, self.surface3d.__class__.__name__.lower()[:-2] + '_to_ocp')(self.surface3d)
+        contour_type_name = self.surface2d.outer_contour.__class__.__name__.lower()
+        wire_traduction_fuction = getattr(to_ocp, contour_type_name + '_to_ocp')
+        outer_wire = wire_traduction_fuction(self.surface2d.outer_contour, ocp_surface=occt_surface)
+        inner_wires = [wire_traduction_fuction(contour, ocp_surface=occt_surface)
+                       for contour in self.surface2d.inner_contours]
+        outer_wire = from_ocp.fix(outer_wire)
+        # Compute the 3D representations of the edges/wires
+        BRepLib.BuildCurves3d_s(outer_wire)
+        for inner_wire in inner_wires:
+            BRepLib.BuildCurves3d_s(inner_wire)
+
+        face_builder = BRepBuilderAPI_MakeFace(occt_surface, outer_wire)
+        for wire in inner_wires:
+            if not BRep_Tool.IsClosed_s(wire):
+                raise ValueError("Cannot build face(s): inner wire is not closed")
+            face_builder.Add(wire)
+        face_builder.Build()
+
+        if not face_builder.IsDone():
+            raise ValueError(f"Cannot build face(s): {face_builder.Error()}")
+        face = face_builder.Face()
+
+        fix_face = ShapeFix_Face(face)
+        fix_face.FixOrientation()
+        fix_face.Perform()
+        return from_ocp.downcast(fix_face.Result())
+
+    def to_ocp_from_3d(self):
+        """
+        Returns an OCP shape equivalent to the volmdlr object using 3D data.
+        """
+        occt_surface = getattr(to_ocp, self.surface3d.__class__.__name__.lower()[:-2] + '_to_ocp')(self.surface3d)
+        contour_type_name = self.outer_contour3d.__class__.__name__.lower()
+        wire_traduction_fuction = getattr(to_ocp, contour_type_name + '_to_ocp')
+        outer_wire = wire_traduction_fuction(self.outer_contour3d)
+        inner_wires = [wire_traduction_fuction(contour)
+                       for contour in self.inner_contours3d]
+
+        outer_wire = from_ocp.fix(outer_wire)
+
+        face_builder = BRepBuilderAPI_MakeFace(occt_surface, outer_wire)
+        exp = BRepTools_WireExplorer(outer_wire)
+        while exp.More():
+            edge = exp.Current()
+            BOPTools_AlgoTools2D.BuildPCurveForEdgeOnFace_s(edge, face_builder.Face())
+            exp.Next()
+
+        for wire in inner_wires:
+            if not BRep_Tool.IsClosed_s(wire):
+                raise ValueError("Cannot build face(s): inner wire is not closed")
+            face_builder.Add(wire)
+            exp = BRepTools_WireExplorer(wire)
+            while exp.More():
+                edge = exp.Current()
+                BOPTools_AlgoTools2D.BuildPCurveForEdgeOnFace_s(edge, face_builder.Face())
+                exp.Next()
+
+        face_builder.Build()
+
+        if not face_builder.IsDone():
+            raise ValueError(f"Cannot build face(s): {face_builder.Error()}")
+        face = face_builder.Face()
+
+        fix_face = ShapeFix_Face(face)
+        fix_face.FixOrientation()
+        fix_face.Perform()
+        return from_ocp.downcast(fix_face.Result())
+
 
 class PlaneFace3D(Face3D):
     """
@@ -1875,17 +1981,17 @@ class PlaneFace3D(Face3D):
                 return [contour3d]
         intersections_points = self.face_intersections_outer_contour(cylindricalface)
         for point in cylindricalface.face_intersections_outer_contour(self):
-            if point not in intersections_points:
+            if not point.in_list(intersections_points):
                 intersections_points.append(point)
         face_intersections = []
         for primitive in cylindricalsurfaceface_intersections:
-            points_on_primitive = []
-            for point in intersections_points:
-                if primitive.point_belongs(point):
-                    points_on_primitive.append(point)
+            points_on_primitive = [point for point in intersections_points if primitive.point_belongs(point)]
+
             if not points_on_primitive:
                 continue
+
             points_on_primitive = primitive.sort_points_along_curve(points_on_primitive)
+
             if not isinstance(primitive, volmdlr_curves.Line3D):
                 points_on_primitive = points_on_primitive + [points_on_primitive[0]]
             for point1, point2 in zip(points_on_primitive[:-1], points_on_primitive[1:]):
@@ -1906,18 +2012,18 @@ class PlaneFace3D(Face3D):
                 self.edge3d_inside(surface_intersections[0]) and conical_face.edge3d_inside(surface_intersections[0]):
             contour3d = volmdlr.wires.Contour3D(surface_intersections)
             return [contour3d]
+
         intersections_points = self.face_intersections_outer_contour(conical_face)
         for point in conical_face.face_intersections_outer_contour(self):
             if not point.in_list(intersections_points):
                 intersections_points.append(point)
+
         face_intersections = []
         for primitive in surface_intersections:
-            points_on_primitive = []
-            for point in intersections_points:
-                if primitive.point_belongs(point):
-                    points_on_primitive.append(point)
+            points_on_primitive = [point for point in intersections_points if primitive.point_belongs(point)]
             if not points_on_primitive:
                 continue
+
             points_on_primitive = primitive.sort_points_along_curve(points_on_primitive)
             if isinstance(primitive, (volmdlr_curves.Hyperbola3D, volmdlr_curves.Parabola3D, volmdlr_curves.Line3D)):
                 for point1, point2 in zip(points_on_primitive[:-1], points_on_primitive[1:]):
@@ -1947,12 +2053,11 @@ class PlaneFace3D(Face3D):
                 intersections_points.append(point)
         face_intersections = []
         for primitive in surface_intersections:
-            points_on_primitive = []
-            for point in intersections_points:
-                if primitive.point_belongs(point, 1e-5):
-                    points_on_primitive.append(point)
+
+            points_on_primitive = [point for point in intersections_points if primitive.point_belongs(point, 1e-5)]
             if not points_on_primitive:
                 continue
+
             points_on_primitive = primitive.sort_points_along_curve(points_on_primitive)
             split_edges = primitive.split_with_sorted_points(points_on_primitive)
             for edge in split_edges:
@@ -2083,10 +2188,7 @@ class PlaneFace3D(Face3D):
 
         list_surfaces = []
         for contour in contours:
-            inners = []
-            for inner_c in inner_contours:
-                if contour.is_inside(inner_c):
-                    inners.append(inner_c)
+            inners = [inner_c for inner_c in inner_contours if contour.is_inside(inner_c)]
             list_surfaces.append(surfaces.Surface2D(contour, inners))
 
         return [self.__class__(self.surface3d, surface2d) for surface2d in list_surfaces]
@@ -2219,6 +2321,13 @@ class PlaneFace3D(Face3D):
         outer_contour = volmdlr.wires.Contour2D.from_points([point1, point2, point3, point4])
         surface = surfaces.Surface2D(outer_contour, [])
         return cls(plane3d, surface, name)
+
+    @classmethod
+    def from_ocp(cls, ocp_face: TopoDS_Shape):
+        """
+        Translate an occt face into a volmdlr face.
+        """
+        return from_ocp.face_from_ocp(cls, ocp_face, ocp_helpers.OCCT_TO_VOLMDLR, surfaces.Surface2D)
 
 
 class PeriodicalFaceMixin:
@@ -2586,9 +2695,7 @@ class Triangle3D(PlaneFace3D):
         normal to the face
 
         """
-        normal = self.surface3d.frame.w
-        normal = normal.unit_vector()
-        return normal
+        return self.surface3d.frame.w.unit_vector()
 
     def triangle_minimum_distance(self, triangle_face, return_points=False):
         """
@@ -2768,6 +2875,13 @@ class CylindricalFace3D(PeriodicalFaceMixin, Face3D):
         outer_contour = volmdlr.wires.Contour2D.from_points([point1, point2, point3, point4])
         surface2d = surfaces.Surface2D(outer_contour, [])
         return cls(cylindrical_surface, surface2d, name)
+
+    @classmethod
+    def from_ocp(cls, ocp_face: TopoDS_Shape):
+        """
+        Translate an occt face into a volmdlr face.
+        """
+        return from_ocp.face_from_ocp(cls, ocp_face, ocp_helpers.OCCT_TO_VOLMDLR, surfaces.Surface2D)
 
     def neutral_fiber(self):
         """
@@ -2959,6 +3073,13 @@ class ToroidalFace3D(PeriodicalFaceMixin, Face3D):
         """
         return parametric_face_inside(self, face2, abs_tol)
 
+    @classmethod
+    def from_ocp(cls, ocp_face: TopoDS_Shape):
+        """
+        Translate an occt face into a volmdlr face.
+        """
+        return from_ocp.face_from_ocp(cls, ocp_face, ocp_helpers.OCCT_TO_VOLMDLR, surfaces.Surface2D)
+
 
 class ConicalFace3D(PeriodicalFaceMixin, Face3D):
     """
@@ -2968,10 +3089,11 @@ class ConicalFace3D(PeriodicalFaceMixin, Face3D):
     :type surface3d: ConicalSurface3D.
     :param surface2d: a 2d surface to define the conical face.
     :type surface2d: Surface2D.
-
-
     """
+    
+    _is_parametric_equal_to_ocp = False
 
+    
     def __init__(self, surface3d: surfaces.ConicalSurface3D, surface2d: surfaces.Surface2D, name: str = ""):
         Face3D.__init__(self, surface3d=surface3d, surface2d=surface2d, name=name)
         self._bbox = None
@@ -3071,6 +3193,8 @@ class ConicalFace3D(PeriodicalFaceMixin, Face3D):
             if not self.point_belongs(point):
                 return False
         return True
+
+
 
 
 class SphericalFace3D(PeriodicalFaceMixin, Face3D):
@@ -3208,7 +3332,6 @@ class SphericalFace3D(PeriodicalFaceMixin, Face3D):
         :return: Spherical face.
         :rtype: SphericalFace3D
         """
-        inner_contours = []
         point1 = volmdlr.Point2D(-math.pi, -0.5 * math.pi)
         point2 = volmdlr.Point2D(math.pi, -0.5 * math.pi)
         point3 = volmdlr.Point2D(math.pi, 0.5 * math.pi)
@@ -3216,11 +3339,16 @@ class SphericalFace3D(PeriodicalFaceMixin, Face3D):
         surface_rectangular_cut = volmdlr.wires.Contour2D.from_points([point1, point2, point3, point4])
         contours2d = [surface3d.contour3d_to_2d(contour) for contour in contours]
         point2d = surface3d.point3d_to_2d(point)
-        for contour in contours2d:
-            if not contour.point_inside(point2d):
-                inner_contours.append(contour)
+        inner_contours = [contour for contour in contours2d if not contour.point_inside(point2d)]
         surface2d = surfaces.Surface2D(outer_contour=surface_rectangular_cut, inner_contours=inner_contours)
         return cls(surface3d, surface2d=surface2d, name=name)
+
+    @classmethod
+    def from_ocp(cls, ocp_face: TopoDS_Shape):
+        """
+        Translate an occt face into a volmdlr face.
+        """
+        return from_ocp.face_from_ocp(cls, ocp_face, ocp_helpers.OCCT_TO_VOLMDLR, surfaces.Surface2D)
 
     def get_bounding_box(self):
         """
@@ -3331,6 +3459,8 @@ class ExtrusionFace3D(Face3D):
 
     min_x_density = 50
     min_y_density = 1
+    _is_parametric_equal_to_ocp = False
+
 
     def __init__(self, surface3d: surfaces.ExtrusionSurface3D, surface2d: surfaces.Surface2D, name: str = ""):
         Face3D.__init__(self, surface3d=surface3d, surface2d=surface2d, name=name)

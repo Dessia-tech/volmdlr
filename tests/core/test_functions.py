@@ -3,7 +3,8 @@ Unit tests for functions defined in volmdlr.core.py
 """
 import unittest
 import volmdlr
-from volmdlr.core import delete_double_point, step_ids_to_str
+from volmdlr.core import delete_double_point, get_point_index_in_list
+from volmdlr.models.contours import contour3d_all_edges, arc_ellipse
 
 
 class TestDeleteDoublePoint(unittest.TestCase):
@@ -23,16 +24,18 @@ class TestDeleteDoublePoint(unittest.TestCase):
         self.assertTrue(volmdlr.Point3D(1.0, 1.0, 1.0) in result)
         self.assertTrue(volmdlr.Point3D(2.0, 2.0, 2.0) in result)
 
+    def test_get_point_index_in_list(self):
+        result = get_point_index_in_list(volmdlr.Point3D(0.0, 0.0, 0.0), self.points)
+        self.assertEqual(result, 0)
+        result = get_point_index_in_list(volmdlr.Point3D(1.0, 0.0, 0.0), self.points)
+        self.assertIsNone(result)
 
-class TestStepIdsToStr(unittest.TestCase):
-    ids_0 = [0]
-    ids_1 = [1, 2, 3, 4, 5]
-    ids_2 = [11, 22, 33, 44, 55]
+    def test_get_point_index_in_list(self):
+        result = get_point_index_in_list(arc_ellipse, contour3d_all_edges.primitives)
+        self.assertEqual(result, 2)
 
-    def test_step_ids_to_str(self):
-        self.assertEqual(step_ids_to_str(self.ids_0), "#0")
-        self.assertEqual(step_ids_to_str(self.ids_1), "#1,#2,#3,#4,#5")
-        self.assertEqual(step_ids_to_str(self.ids_2), "#11,#22,#33,#44,#55")
+
+
 
 
 if __name__ == "__main__":

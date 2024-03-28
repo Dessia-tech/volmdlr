@@ -4,6 +4,10 @@ import os
 import volmdlr
 from volmdlr import edges, faces, surfaces, wires
 from dessia_common.core import DessiaObject
+from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeFace
+from OCP.gp import gp_Ax3, gp_Cylinder
+from OCP.GProp import GProp_GProps
+from OCP.BRepGProp import BRepGProp_Face, BRepGProp  # used for mass calculation
 
 
 folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'objects_cylindrical_tests')
@@ -225,6 +229,22 @@ class TestCylindricalFace3D(unittest.TestCase):
         for i, area in enumerate(sorted([face.area() for face in new_faces])):
             self.assertAlmostEqual(area, expected_areas[i])
 
+    def test_from_ocp(self):
+        frame = gp_Ax3()
+        cylinder = gp_Cylinder(frame, 8)
+        cylindrical_face = BRepBuilderAPI_MakeFace(cylinder, 0, math.pi, 0, 15).Face()
+        volmdlr_face = faces.CylindricalFace3D.from_ocp(cylindrical_face)
+        self.assertAlmostEqual(volmdlr_face.surface2d.area(), math.pi * 15)
+
+    def test_to_ocp(self):
+        cylindrical_surface = surfaces.CylindricalSurface3D(volmdlr.OXYZ, 1)
+        cylindrical_face = faces.CylindricalFace3D.from_surface_rectangular_cut(cylindrical_surface,
+                                                                                0.0, math.pi, -0.5, 0.5)
+        ocp_face = cylindrical_face.to_ocp()
+        Properties = GProp_GProps()
+        BRepGProp.SurfaceProperties_s(ocp_face, Properties)
+        face_area = Properties.Mass()
+        self.assertAlmostEqual(face_area, math.pi) # SI
 
 
 if __name__ == '__main__':

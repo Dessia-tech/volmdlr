@@ -31,7 +31,7 @@ new_shell.color = (250,0,0)
 center2 = center1.frame_mapping(frame, 'old')
 new_shell_displaced = new_shell.translation(center1-center2)
 
-vol = volmdlr.core.VolumeModel([shell3d, new_shell_displaced])
+vol = volmdlr.model.VolumeModel([shell3d, new_shell_displaced])
 vol.babylonjs()
 
 dmin = shell3d.faces[0].point1.point_distance(new_shell_displaced.faces[0].point1)
@@ -232,5 +232,5 @@ new_shell.color = (0,0,250)
 center2 = center1.frame_mapping(frameresz, 'old')
 new_shell_displaced_z = new_shell.translation(center1-center2)
 
-vol = volmdlr.core.VolumeModel([shell3d, new_shell_displaced, new_shell_displaced_x, new_shell_displaced_y,new_shell_displaced_z]+spheres)
+vol = volmdlr.model.VolumeModel([shell3d, new_shell_displaced, new_shell_displaced_x, new_shell_displaced_y,new_shell_displaced_z]+spheres)
 vol.babylonjs()
