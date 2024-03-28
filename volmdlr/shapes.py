@@ -187,7 +187,8 @@ class Shape(PhysicalObject):
             parallel: bool = True,
     ) -> "TopoDS_Shell":
         """
-        Generic boolean operation
+        Generic boolean operation.
+
         :param parallel: Sets the SetRunParallel flag, which enables parallel execution of boolean\
         operations in OCC kernel.
         """
@@ -225,6 +226,7 @@ class Shape(PhysicalObject):
     def union(self, *to_union: "Shape", glue: bool = False, tol: Optional[float] = None):
         """
         Fuse the positional arguments with this Shape.
+
         :param glue: Sets the glue option for the algorithm, which allows
             increasing performance of the intersection of the input shapes
         :param tol: Fuzzy mode tolerance
