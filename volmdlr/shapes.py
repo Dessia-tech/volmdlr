@@ -425,25 +425,37 @@ class Shape(volmdlr.core.Primitive3D):
         return self._bool_op((self,), to_intersect, intersect_op)
 
     def plot(self, ax=None, edge_style=volmdlr.core.EdgeStyle()):
+        """Plots a shape using matplolib."""
         shape_edges = self._get_edges()
         for edge in shape_edges:
             ax = plot_edge(edge, ax, edge_style)
         return ax
 
     def volmdlr_primitives(self):
+        """Gets shape's volmdlr primitives."""
         return [self]
 
     def mesh(self, tolerance: float, angular_tolerance: float = 0.1):
         """
         Generate triangulation if none exists.
         """
-
         if not BRepTools.Triangulation_s(self.wrapped, tolerance):
             BRepMesh_IncrementalMesh(self.wrapped, tolerance, True, angular_tolerance)
 
-    def tessellate(
-            self, tolerance: float, angular_tolerance: float = 0.1
-    ) -> [NDArray[float], List[Tuple[int, int, int]]]:
+    def tessellate(self, tolerance: float, angular_tolerance: float = 0.1) ->\
+            [NDArray[float],  List[Tuple[int, int, int]]]:
+        """
+        Tessellates the geometry into vertices and triangles.
+
+        :param tolerance: (float) - Tolerance value for meshing.
+        :param angular_tolerance: (float, optional) - Angular tolerance value. Defaults to 0.1.
+
+        :return: Tuple[List[List[float]], List[Tuple[int, int, int]]]: A tuple containing:
+                - A list of vertices represented as lists of floats,
+                where each sublist represents the (x, y, z) coordinates of a vertex.
+                - A list of triangles represented as tuples of integers,
+                where each tuple contains the indices of the vertices forming a triangle.
+        """
 
         self.mesh(tolerance, angular_tolerance)
 
@@ -455,41 +467,29 @@ class Shape(volmdlr.core.Primitive3D):
             loc = TopLoc_Location()
             poly = BRep_Tool.Triangulation_s(face, loc)
             trsf = loc.Transformation()
-            reverse = (
-                True
-                if face.Orientation() == TopAbs_Orientation.TopAbs_REVERSED
-                else False
-            )
+            reverse = face.Orientation() == TopAbs_Orientation.TopAbs_REVERSED
 
             # add vertices
             vertices += [
-                [v.X(), v.Y(), v.Z()]
-                for v in (
-                    poly.Node(i).Transformed(trsf) for i in range(1, poly.NbNodes() + 1)
-                )
+                [v.X(), v.Y(), v.Z()] for v in (poly.Node(i).Transformed(trsf) for i in range(1, poly.NbNodes() + 1))
             ]
 
             # add triangles
             triangles += [
-                (
-                    triangle.Value(1) + offset - 1,
-                    triangle.Value(3) + offset - 1,
-                    triangle.Value(2) + offset - 1,
-                )
-                if reverse
-                else (
-                    triangle.Value(1) + offset - 1,
-                    triangle.Value(2) + offset - 1,
-                    triangle.Value(3) + offset - 1,
-                )
+                (triangle.Value(1) + offset - 1, triangle.Value(3) + offset - 1, triangle.Value(2) + offset - 1)
+                if reverse else
+                (triangle.Value(1) + offset - 1, triangle.Value(2) + offset - 1, triangle.Value(3) + offset - 1)
                 for triangle in poly.Triangles()
             ]
-
             offset += poly.NbNodes()
 
         return vertices, triangles
 
     def triangulation(self):
+        """
+        Gets shape triagulation.
+
+        """
         vertices, triangles = self.tessellate(tolerance=1e-2)
         mesh = display.Mesh3D(np.array(vertices), np.array(triangles))
         return mesh
@@ -505,10 +505,8 @@ class Shape(volmdlr.core.Primitive3D):
         babylon_mesh = mesh.to_babylon()
         babylon_mesh.update({
             'alpha': self.alpha,
-            # 'alpha': 1.0,
             'name': self.name,
             'color': list(self.color) if self.color is not None else [0.8, 0.8, 0.8]
-            # 'color': [0.8, 0.8, 0.8]
         })
         babylon_mesh["reference_path"] = self.reference_path
         return [babylon_mesh]
@@ -684,7 +682,7 @@ class Solid(Shape):
         Gets shells from solid.
         """
         shape_set = TopTools_IndexedMapOfShape()
-        TopExp.MapShapes_s(self.wrapped, topabs.TopAbs_SHELL, shape_set)
+        TopExp.MapShapes_s(self.wrapped, top_abs.TopAbs_SHELL, shape_set)
         return [Shell(obj=shape) for shape in shape_set]
 
     @classmethod
@@ -780,14 +778,6 @@ class Solid(Shape):
         return cls(obj=solid.wrapped, name=name)
 
     @classmethod
-    def make_solid(cls, shell: Shell) -> "Solid":
-        """
-        Makes a solid from a single shell.
-        """
-
-        return cls(ShapeFix_Solid().SolidFromShell(shell.wrapped))
-
-    @classmethod
     def make_box(
             cls,
             length: float,
@@ -799,7 +789,7 @@ class Solid(Shape):
         """
         Make a box located in point with the dimensions (length,width,height).
 
-        By default, pnt=Vector(0,0,0) and dir=Vector(0,0,1).
+        By default, pnt=volmdlr.Point3D(0,0,0) and dir=volmdlr.Vector3D(0,0,1).
         """
         frame = volmdlr.Frame3D.from_point_and_normal(point, direction)
         return cls(
@@ -819,9 +809,9 @@ class Solid(Shape):
             angle_degrees: float = 360,
     ) -> "Solid":
         """
-        Make a cone with given radii and height
-        By default pnt=Vector(0,0,0),
-        dir=Vector(0,0,1) and angle=360
+        Make a cone with given radii and height.
+
+        By default, pnt=volmdlr.Point3D(0,0,0), dir=volmdlr.Vector3D(0,0,1) and angle=360.
         """
         frame = volmdlr.Frame3D.from_point_and_normal(point, direction)
         return cls(
@@ -868,7 +858,7 @@ class Solid(Shape):
         """
         Make a torus with a given radii and angles.
 
-        By default, point=Vector3D(0,0,0),direction=Vector3D(0,0,1),angle1=0
+        By default, point=volmdlr.Point3D(0,0,0),direction=volmdlr.Vector3D(0,0,1),angle1=0
         ,angle1=360 and angle=360.
         """
         frame = volmdlr.Frame3D.from_point_and_normal(point, direction)
@@ -895,7 +885,7 @@ class Solid(Shape):
         """
         Make a sphere with a given radius.
 
-        By default, point=Vector3D(0,0,0),direction=Vector3D(0,0,1), angle1=0, angle2=90 and angle3=360
+        By default, point=volmdlr.Point3D(0,0,0),direction=volmdlr.Vector3D(0,0,1), angle1=0, angle2=90 and angle3=360
         """
         frame = volmdlr.Frame3D.from_point_and_normal(point, direction)
         return cls(
