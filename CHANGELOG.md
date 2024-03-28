@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v0.18.0 [Future]
 ### New Features
+
+- made wires classes and shells classes iterables
 - new module: shapes.py
 - New module model.py to hold VolumeModel object.
 
