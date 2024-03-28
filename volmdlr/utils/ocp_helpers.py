@@ -108,3 +108,33 @@ def plot_face(face, ax=None, color="k", alpha=1, edge_details=False):
         )
         exp.Next()
     return ax
+
+
+def plot_shell(shell, ax=None, color="k", alpha=1, edge_details=False):
+    """Plots the shell."""
+    if not ax:
+        _, ax = plt.subplots(subplot_kw={"projection": "3d"})
+
+    exp = TopExp_Explorer(shell, TopAbs.TopAbs_FACE)
+    while exp.More():
+        face_shape = exp.Current()
+        face = TopoDS.Face_s(face_shape)
+        plot_face(face=face,
+        ax = ax, color=color, alpha=alpha, edge_details=edge_details)
+        exp.Next()
+    return ax
+
+
+def plot_solid(solid, ax=None, color="k", alpha=1, edge_details=False):
+    """Plots the solid."""
+    if not ax:
+        _, ax = plt.subplots(subplot_kw={"projection": "3d"})
+
+    exp = TopExp_Explorer(solid, TopAbs.TopAbs_SHELL)
+    while exp.More():
+        shell_shape = exp.Current()
+        shell = TopoDS.Shell_s(shell_shape)
+        plot_shell(shell=shell,
+        ax = ax, color=color, alpha=alpha, edge_details=edge_details)
+        exp.Next()
+    return ax
