@@ -47,8 +47,16 @@ class TestSolid(unittest.TestCase):
                                         local_frame_origin=volmdlr.Point3D(-0.5, 0.5, 0.0),
                                         local_frame_direction=-volmdlr.Y3D,
                                         local_frame_x_direction=volmdlr.X3D)
-        
-        self.assertAlmostEqual(solid.volume(), (1 / 3) * dy * (1 + 0.5**2 + 0.5))
+
+        self.assertAlmostEqual(solid.volume(), (1 / 3) * dy)
+
+        solid = shapes.Solid.make_wedge(dx=dx, dy=dy, dz=dz, xmin=dx / 4, xmax=3 * dx / 4,
+                                        zmin=dz / 4, zmax=3 * dz / 4,
+                                        local_frame_origin=volmdlr.Point3D(-0.5, 0.5, 0.0),
+                                        local_frame_direction=-volmdlr.Y3D,
+                                        local_frame_x_direction=volmdlr.X3D)
+
+        self.assertAlmostEqual(solid.volume(), (1 / 3) * dy * (1 + 0.5 ** 2 + 0.5))
 
 
 if __name__ == '__main__':
