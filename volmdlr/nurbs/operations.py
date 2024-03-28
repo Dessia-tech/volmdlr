@@ -1,7 +1,7 @@
 """
 Nurbs main operations algorithms.
 """
-
+# cython: language_level=3
 from functools import lru_cache
 import numpy as np
 import volmdlr

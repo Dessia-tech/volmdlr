@@ -58,11 +58,11 @@ ll = primitives3D.OpenRoundedLineSegments3D([p1, p2], {}, name='mesure')
 
 # mes.MPLPlot(ax=ax)
 
-model = volmdlr.core.VolumeModel([rl1, rl, ll])
+model = volmdlr.model.VolumeModel([rl1, rl, ll])
 # model.FreeCADExport('lines')
 
 ll2 = primitives3D.OpenRoundedLineSegments3D([p1, p2], {}, name='mesure')
 
-model2 = volmdlr.core.VolumeModel([LS1, LS2, ll2])
+model2 = volmdlr.model.VolumeModel([LS1, LS2, ll2])
 # model2.MPLPlot()
 # model2.FreeCADExport('lines2')

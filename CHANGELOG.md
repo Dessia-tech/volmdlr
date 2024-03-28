@@ -7,9 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v0.18.0 [Future]
 ### New Features
+- new module: shapes.py
+- New module model.py to hold VolumeModel object.
+
+#### shapes.py
+- Shape: volume, bounding_box
+- Shell: add 3 different instanciation methods, 
+- Shell constructors: make_extrusion, make_wedge
+- Solid constructors: make_extrusion, make_extrusion_from_frame_and_wires, make_wedge
+
 
 #### core.py
 - VolumeModel: from_step using OCP step reader
+- move VolumeModel from core.py to model.py.
 
 #### display.py
 - Mesh3D: rotation / translation / frame_mapping

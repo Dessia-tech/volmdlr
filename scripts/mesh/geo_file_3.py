@@ -13,7 +13,7 @@ import volmdlr.core
 
 dict_obj = {
   "name": "",
-  "object_class": "volmdlr.core.VolumeModel",
+  "object_class": "volmdlr.model.VolumeModel",
   "package_version": "0.4.1.dev487+g91fdcd3a",
   "primitives": [
     {
@@ -105,7 +105,7 @@ dict_obj = {
   ]
 }
 
-model = volmdlr.core.VolumeModel.dict_to_object(dict_obj)
+model = volmdlr.model.VolumeModel.dict_to_object(dict_obj)
 # model.babylonjs()
 
 # %% geo file generation

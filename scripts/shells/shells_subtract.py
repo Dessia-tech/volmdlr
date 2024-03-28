@@ -58,7 +58,7 @@ shell2 = vm.shells.ClosedShell3D(profile.faces)
 for shell in [shell1, shell2]:
     shell.color = get_color()
 
-vm.core.VolumeModel([shell1, shell2]).babylonjs()
+vm.model.VolumeModel([shell1, shell2]).babylonjs()
 
 # %% Subtract
 
@@ -70,4 +70,4 @@ for result in [subtract_1, subtract_2]:
     for shell in result:
         shell.color = get_color()
 
-    vm.core.VolumeModel(result).babylonjs()
+    vm.model.VolumeModel(result).babylonjs()
