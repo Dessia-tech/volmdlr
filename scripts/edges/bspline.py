@@ -19,7 +19,7 @@ curve2d = vme.BSplineCurve2D(degree=2,
                              knot_multiplicities=[1, 2, 2, 1],
                              knots=[0.1, 0.3, 0.5, 0.7])
 curve2d.plot()
-
+ 
 # 3D
 points3d = [vm.Point3D(0, 0, 0),
             vm.Point3D(0.1, 0.1, 0),

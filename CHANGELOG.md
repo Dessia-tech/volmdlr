@@ -26,7 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ellipse2D: tangent_points
 
 #### edges.py
-- 
+- BSplineCurve: arc_to_nurbs 
+
 #### wires.py
 - 
 #### surfaces.py
@@ -68,6 +69,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Unittests
 - Ellipse2D: test to the news functions
+- BSplineCurve: test to arc_to_nurbs
 
 ## v0.17.0 [Unreleased]
 ### New Features

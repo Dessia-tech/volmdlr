@@ -2138,6 +2138,54 @@ class BSplineCurve(Edge):
         curve2 = bspline_curve.split(point2)[0]
         return curve1.merge_with(curve2)
 
+    @staticmethod
+    def arc_to_nurbs(arc):
+        """
+        Given an arc, return the parameters to form an equivalent NURBS line.
+
+        :param arc: 2D or 3D arc
+        :return: control_points list, knots list, knot_multiplicities list, weights list
+        """
+
+        if arc.angle <= math.pi / 2:
+            number_of_arcs = 1
+        elif arc.angle <= math.pi:
+            number_of_arcs = 2
+        elif arc.angle <= (3 * 2) * math.pi:
+            number_of_arcs = 3
+        else:
+            number_of_arcs = 4
+
+        individual_arc_angle = arc.angle / number_of_arcs
+        number_of_control_points = 2 * number_of_arcs + 1
+        weight = math.cos(individual_arc_angle / 2)
+        control_points = []
+        weights = []
+        knots = []
+        knot_multiplicities = []
+        knots.insert(0, 0.)
+        knot_multiplicities.insert(0, 3)
+        control_points.insert(0, arc.start)
+        weights.insert(0, 1.)
+
+        for i in range(number_of_arcs):
+            common_control_point = arc.point_at_abscissa((i + 1) * individual_arc_angle * arc.radius)
+            vector_start = (control_points[i * 2] - arc.center).to_vector()
+            vector_end = (common_control_point - arc.center).to_vector()
+            vector_control_point = (vector_end + vector_start) * (1 / (2 * math.cos(individual_arc_angle / 2) ** 2))
+            control_points.insert(i * 2 + 1, arc.center + vector_control_point)
+            control_points.insert(i * 2 + 2, common_control_point)
+
+            weights.insert(i * 2 + 1, weight)
+            weights.insert(i * 2 + 2, 1.)
+
+            knots.insert(i + 1, (i + 1) / number_of_arcs)
+            knot_multiplicities.insert(i + 1, 2)
+
+        knots.append(1.)
+        knot_multiplicities.append(3)
+        return control_points, knots, knot_multiplicities, weights
+
 
 class BSplineCurve2D(BSplineCurve):
     """
@@ -2786,7 +2834,7 @@ class ArcMixin:
     Abstract class representing an arc.
 
     :param circle: arc related circle curve.
-    :type circle: Union['volmdlr.curves.Circle2D', 'volmdlr.curves.Circle2D'].
+    :type circle: Union['volmdlr.curves.Circle2D', 'volmdlr.curves.Circle3D'].
     # :param start: The starting point
     # :type start: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
     # :param end: The finish point
