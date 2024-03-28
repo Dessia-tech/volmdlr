@@ -38,15 +38,15 @@ class TestSolid(unittest.TestCase):
         self.assertEqual(from_brep, self.solid1)
 
     def test_union(self):
-        union = self.solid1.union(self.solid2)
+        union = self.solid1.union(self.solid2)[0]
         self.assertAlmostEqual(union.volume(), 15)
 
     def test_subtraction(self):
-        subtraction = self.solid1.subtraction(self.solid2)
+        subtraction = self.solid1.subtraction(self.solid2)[0]
         self.assertAlmostEqual(subtraction.volume(), 7.0)
 
     def test_intersection(self):
-        intersection = self.solid1.intersection(self.solid2)
+        intersection = self.solid1.intersection(self.solid2)[0]
         self.assertAlmostEqual(intersection.volume(), 1.0)
     
     def test_make_extrusion(self):

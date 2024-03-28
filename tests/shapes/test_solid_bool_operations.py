@@ -14,14 +14,14 @@ class TestSolidBooleanOperations(unittest.TestCase):
         cyl2 = shapes.Solid.make_cylinder(radius=0.3, height=2, point=volmdlr.Point3D(-1, 0, 0), direction=volmdlr.X3D)
         cyl3 = shapes.Solid.make_cylinder(radius=0.3, height=2, point=volmdlr.Point3D(0, 1, 0), direction=-volmdlr.Y3D)
 
-        box_intersection_sphere = box.intersection(sphere1)
+        box_intersection_sphere = box.intersection(sphere1)[0]
         self.assertAlmostEqual(box_intersection_sphere.volume(), 0.9384398022558381)
 
-        cylinder1_cylinder2_union = cyl1.union(cyl2)
-        cyl1_cyl2_cyl3_union = cylinder1_cylinder2_union.union(cyl3)
+        cylinder1_cylinder2_union = cyl1.union(cyl2)[0]
+        cyl1_cyl2_cyl3_union = cylinder1_cylinder2_union.union(cyl3)[0]
         self.assertAlmostEqual(cyl1_cyl2_cyl3_union.volume(), 1.3909899141249489)
 
-        substraction = box_intersection_sphere.subtraction(cyl1_cyl2_cyl3_union)
+        substraction = box_intersection_sphere.subtraction(cyl1_cyl2_cyl3_union)[0]
         self.assertAlmostEqual(substraction.volume(), 0.3956799040690441)
 
 

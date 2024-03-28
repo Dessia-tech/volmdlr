@@ -155,7 +155,7 @@ class Shape(volmdlr.core.Primitive3D):
     Represents a shape in the system. Wraps TopoDS_Shape.
     """
     _non_serializable_attributes = ["obj"]
-    _non_data_eq_attributes = ["wrapped"]
+    _non_data_eq_attributes = ['wrapped', 'name', 'color', 'alpha']
     wrapped: TopoDS_Shape
 
     def __init__(self, obj: TopoDS_Shape, name: str = ""):
@@ -214,21 +214,21 @@ class Shape(volmdlr.core.Primitive3D):
         """Gets shape's faces, if there exists any."""
         return [downcast(i) for i in self._entities(obj=self.wrapped, topo_type="Face")]
 
-    def get_shells(self) -> List["Shell"]:
+    def _get_shells(self) -> List["Shell"]:
         """
         :returns: All the shells in this Shape.
         """
 
         return [Shell(obj=i) for i in self._entities(obj=self.wrapped, topo_type="Shell")]
 
-    def get_solids(self) -> List["Solid"]:
+    def _get_solids(self) -> List["Solid"]:
         """
         :returns: All the solids in this Shape.
         """
 
         return [Solid(obj=i) for i in self._entities(obj=self.wrapped, topo_type="Solid")]
 
-    def get_compsolids(self) -> List["CompSolid"]:
+    def _get_compsolids(self) -> List["CompSolid"]:
         """
         :returns: All the compsolids in this Shape.
         """
@@ -262,7 +262,7 @@ class Shape(volmdlr.core.Primitive3D):
         #     print(True)
 
         if cls.__name__ in ["Shell", "Solid", "CompSolid"]:
-            return getattr(shape, f"get_{cls.__name__.lower()}s")()[0]
+            return getattr(shape, f"_get_{cls.__name__.lower()}s")()[0]
         return shape
 
     @classmethod
@@ -350,8 +350,8 @@ class Shape(volmdlr.core.Primitive3D):
         BRepGProp.VolumeProperties_s(self.wrapped, prop, tol)
         return abs(prop.Mass())
 
-    @staticmethod
     def _bool_op(
+            self,
             args: Iterable["Shape"],
             tools: Iterable["Shape"],
             operation: Union[BRepAlgoAPI_BooleanOperation, BRepAlgoAPI_Splitter],
@@ -377,8 +377,8 @@ class Shape(volmdlr.core.Primitive3D):
 
         operation.SetRunParallel(parallel)
         operation.Build()
-
-        return operation.Shape()
+        shape = self.__class__(operation.Shape())
+        return getattr(shape, f"_get_{self.__class__.__name__.lower()}s")()
 
     def subtraction(self, *to_subtract: "Shape", tol: Optional[float] = None) -> "Shape":
         """
@@ -392,7 +392,7 @@ class Shape(volmdlr.core.Primitive3D):
         if tol:
             cut_op.SetFuzzyValue(tol)
 
-        return self.__class__(self._bool_op((self,), to_subtract, cut_op))
+        return self._bool_op((self,), to_subtract, cut_op)
 
     def union(self, *to_union: "Shape", glue: bool = False, tol: Optional[float] = None):
         """
@@ -402,16 +402,13 @@ class Shape(volmdlr.core.Primitive3D):
             increasing performance of the intersection of the input shapes
         :param tol: Fuzzy mode tolerance
         """
-
         fuse_op = BRepAlgoAPI_Fuse()
         if glue:
             fuse_op.SetGlue(BOPAlgo_GlueEnum.BOPAlgo_GlueShift)
         if tol:
             fuse_op.SetFuzzyValue(tol)
 
-        union = self._bool_op((self,), to_union, fuse_op)
-
-        return self.__class__(union)
+        return self._bool_op((self,), to_union, fuse_op)
 
     def intersection(self, *to_intersect: "Shape", tol: Optional[float] = None) -> "Shape":
         """
@@ -425,7 +422,7 @@ class Shape(volmdlr.core.Primitive3D):
         if tol:
             intersect_op.SetFuzzyValue(tol)
 
-        return self.__class__(self._bool_op((self,), to_intersect, intersect_op))
+        return self._bool_op((self,), to_intersect, intersect_op)
 
     def plot(self, ax=None, edge_style=volmdlr.core.EdgeStyle()):
         shape_edges = self._get_edges()
