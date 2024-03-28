@@ -20,7 +20,11 @@ from trimesh import Trimesh
 from OCP.BRep import BRep_Tool, BRep_Builder
 from OCP.TopoDS import (TopoDS, TopoDS_Shape, TopoDS_Shell, TopoDS_Face,
                         TopoDS_Solid, TopoDS_CompSolid, TopoDS_Compound, TopoDS_Builder)
-from OCP.BRepBuilderAPI import BRepBuilderAPI_Sewing
+from OCP.BRepBuilderAPI import BRepBuilderAPI_Sewing, BRepBuilderAPI_MakeFace
+from OCP.BRepPrimAPI import BRepPrimAPI_MakePrism, BRepPrimAPI_MakeWedge
+from OCP.TopTools import TopTools_IndexedMapOfShape
+from OCP.TopExp import TopExp
+from OCP.Geom import Geom_Plane
 from OCP.Bnd import Bnd_Box
 from OCP.BRepBndLib import BRepBndLib
 from OCP.BRepMesh import BRepMesh_IncrementalMesh
@@ -34,6 +38,7 @@ from OCP.ShapeFix import ShapeFix_Solid
 from OCP.BRepTools import BRepTools
 from OCP.TopTools import TopTools_IndexedMapOfShape
 from OCP.TopExp import TopExp
+from OCP.gp import gp_Ax2
 
 import volmdlr.core_compiled
 from volmdlr import curves, display, edges, surfaces, wires, geometry, faces as vm_faces
@@ -59,6 +64,7 @@ inverse_shape_LUT = {v: k for k, v in shape_LUT.items()}
 
 Shapes = Literal[
     "Vertex", "Edge", "Wire", "Face", "Shell", "Solid", "CompSolid", "Compound"]
+
 
 # pylint: disable=no-name-in-module,invalid-name,unused-import,wrong-import-order
 
@@ -93,6 +99,37 @@ def downcast(obj: TopoDS_Shape) -> TopoDS_Shape:
     downcasted_obj = f_downcast(obj)
 
     return downcasted_obj
+
+
+def _make_wedge(
+        dx: float,
+        dy: float,
+        dz: float,
+        xmin: float,
+        zmin: float,
+        xmax: float,
+        zmax: float,
+        point: volmdlr.Vector3D = volmdlr.O3D,
+        direction: volmdlr.Vector3D = volmdlr.Z3D,
+        x_direction=volmdlr.X3D) -> BRepPrimAPI_MakeWedge:
+    """
+    Make a wedge builder.
+
+    This is a private method and should not be used directlly. Please see Solid.make_wedge
+    or Shell.make_wedge for details.
+    """
+
+    return BRepPrimAPI_MakeWedge(
+        gp_Ax2(to_ocp.point3d_to_ocp(point), to_ocp.vector3d_to_ocp(direction, unit_vector=True),
+               to_ocp.vector3d_to_ocp(x_direction, unit_vector=True)),
+        dx,
+        dy,
+        dz,
+        xmin,
+        zmin,
+        xmax,
+        zmax,
+    )
 
 
 class Shape(PhysicalObject):
@@ -175,6 +212,9 @@ class Shape(PhysicalObject):
         """
         tol = 1e-6
         prop = GProp_PGProps()
+        if isinstance(self, Shell) and not self.is_closed:
+            raise ValueError("The shell is an open shell and the volume can't be calculated."
+                             " Try using a closed shell.")
         BRepGProp.VolumeProperties_s(self.wrapped, prop, tol)
         return abs(prop.Mass())
 
@@ -227,6 +267,13 @@ class Shell(Shape):
         return shell_builder.SewedShape()
 
     @property
+    def is_closed(self):
+        """
+        Returns True if shell is a closed shell and False otherwise.
+        """
+        return self.wrapped.Closed()
+
+    @property
     def faces(self):
         """Get shell's volmdlr faces."""
         if not self._faces:
@@ -238,6 +285,88 @@ class Shell(Shape):
     def faces(self, faces):
         self._faces = faces
 
+    @property
+    def primitives(self) -> List[vm_faces.Face3D]:
+        """
+        Gets shell's faces.
+        """
+        return [vm_faces.Face3D.from_ocp(downcast(shape)) for shape in self._get_faces()]
+
+    @classmethod
+    def make_wedge(cls,
+                   dx: float,
+                   dy: float,
+                   dz: float,
+                   xmin: float,
+                   zmin: float,
+                   xmax: float,
+                   zmax: float,
+                   local_frame_origin: volmdlr.Point3D = volmdlr.O3D,
+                   local_frame_direction: volmdlr.Vector3D = volmdlr.Z3D,
+                   local_frame_x_direction: volmdlr.Vector3D = volmdlr.X3D,
+                   ) -> "Shell":
+        """
+        Creates a wedge, which can represent a pyramid or a truncated pyramid.
+
+        The origin of the local coordinate system is the corner of the base rectangle of the wedge.
+        The y-axis represents the "height" of the pyramid or truncated pyramid.
+
+        To create a pyramid, specify xmin=xmax=dx/2 and zmin=zmax=dz/2.
+
+        :param dx: The length of the base rectangle along the x-axis.
+        :type dx: float
+        :param dy: The height of the pyramid or truncated pyramid along the y-axis.
+        :type dy: float
+        :param dz: The width of the base rectangle along the z-axis.
+        :type dz: float
+        :param xmin: The x-coordinate of one corner of the top rectangle.
+        :type xmin: float
+        :param zmin: The z-coordinate of one corner of the top rectangle.
+        :type zmin: float
+        :param xmax: The x-coordinate of the opposite corner of the top rectangle.
+        :type xmax: float
+        :param zmax: The z-coordinate of the opposite corner of the top rectangle.
+        :type zmax: float
+        :param local_frame_origin: The origin of the local coordinate system for the wedge.
+         Defaults to the origin (0, 0, 0).
+        :type local_frame_origin: volmdlr.Point3D
+        :param local_frame_direction: The main direction for the local coordinate system of the wedge.
+         Defaults to the z-axis (0, 0, 1).
+        :type local_frame_direction: volmdlr.Vector3D
+        :param local_frame_x_direction: The x direction for the local coordinate system of the wedge.
+         Defaults to the x-axis (1, 0, 0).
+        :type local_frame_x_direction: volmdlr.Vector3D
+
+        :return: The created wedge.
+        :rtype: Shell
+
+        Example:
+        To create a pyramid with a square base of size 1 and where its apex is located at
+        volmdlr.Point3D(0.0, 0.0, 2.0):
+        >>> dx, dy, dz = 1, 2, 1
+        >>> wedge = Shell.make_wedge(dx=dx, dy=dy, dz=dz, xmin=dx / 2, xmax=dx / 2, zmin=dz / 2, zmax=dz / 2,
+        >>>                                 local_frame_origin=volmdlr.Point3D(-0.5, 0.5, 0.0),
+        >>>                                 local_frame_direction=-volmdlr.Y3D,
+        >>>                                 local_frame_x_direction=volmdlr.X3D)
+
+        """
+
+        return cls(obj=_make_wedge(dx=dx, dy=dy, dz=dz, xmin=xmin, zmin=zmin, xmax=xmax, zmax=zmax,
+                                   point=local_frame_origin,
+                                   direction=local_frame_direction,
+                                   x_direction=local_frame_x_direction).Shell())
+
+    @classmethod
+    def make_extrusion(cls, wire: wires.Contour3D, extrusion_direction: volmdlr.Vector3D,
+                       extrusion_length: float, name: str = '') -> "Shell":
+        """
+        Returns a solid generated by the extrusion of a plane face.
+        """
+        ocp_wire = to_ocp.contour3d_to_ocp(wire)
+        extrusion_vector = to_ocp.vector3d_to_ocp(extrusion_direction * extrusion_length)
+
+        return cls(obj=BRepPrimAPI_MakePrism(ocp_wire, extrusion_vector).Shape(), name=name)
+
 
 class Solid(Shape):
     """
@@ -245,6 +374,110 @@ class Solid(Shape):
     """
 
     wrapped: TopoDS_Solid
+
+    def __init__(self, obj: TopoDS_Solid, name: str = '') -> None:
+        super().__init__(obj=obj, name=name)
+
+    @property
+    def primitives(self) -> List[Shell]:
+        """
+        Gets shells from solid.
+        """
+        shape_set = TopTools_IndexedMapOfShape()
+        TopExp.MapShapes_s(self.wrapped, topabs.TopAbs_SHELL, shape_set)
+        return [Shell(obj=shape) for shape in shape_set]
+
+    @classmethod
+    def make_wedge(cls,
+                   dx: float,
+                   dy: float,
+                   dz: float,
+                   xmin: float,
+                   zmin: float,
+                   xmax: float,
+                   zmax: float,
+                   local_frame_origin: volmdlr.Point3D = volmdlr.O3D,
+                   local_frame_direction: volmdlr.Vector3D = volmdlr.Z3D,
+                   local_frame_x_direction: volmdlr.Vector3D = volmdlr.X3D,
+                   ) -> "Solid":
+        """
+        Creates a wedge, which can represent a pyramid or a truncated pyramid.
+
+        The origin of the local coordinate system is the corner of the base rectangle of the wedge.
+        The y-axis represents the "height" of the pyramid or truncated pyramid.
+
+        To create a pyramid, specify xmin=xmax=dx/2 and zmin=zmax=dz/2.
+
+        :param dx: The length of the base rectangle along the x-axis.
+        :type dx: float
+        :param dy: The height of the pyramid or truncated pyramid along the y-axis.
+        :type dy: float
+        :param dz: The width of the base rectangle along the z-axis.
+        :type dz: float
+        :param xmin: The x-coordinate of one corner of the top rectangle.
+        :type xmin: float
+        :param zmin: The z-coordinate of one corner of the top rectangle.
+        :type zmin: float
+        :param xmax: The x-coordinate of the opposite corner of the top rectangle.
+        :type xmax: float
+        :param zmax: The z-coordinate of the opposite corner of the top rectangle.
+        :type zmax: float
+        :param local_frame_origin: The origin of the local coordinate system for the wedge.
+         Defaults to the origin (0, 0, 0).
+        :type local_frame_origin: volmdlr.Point3D
+        :param local_frame_direction: The main direction for the local coordinate system of the wedge.
+         Defaults to the z-axis (0, 0, 1).
+        :type local_frame_direction: volmdlr.Vector3D
+        :param local_frame_x_direction: The x direction for the local coordinate system of the wedge.
+         Defaults to the x-axis (1, 0, 0).
+        :type local_frame_x_direction: volmdlr.Vector3D
+
+        :return: The created wedge.
+        :rtype: Solid
+
+        Example:
+        To create a pyramid with a square base of size 1 and where its apex is located at
+        volmdlr.Point3D(0.0, 0.0, 2.0):
+        >>> dx, dy, dz = 1, 2, 1
+        >>> wedge = Solid.make_wedge(dx=dx, dy=dy, dz=dz, xmin=dx / 2, xmax=dx / 2, zmin=dz / 2, zmax=dz / 2,
+        >>>                                 local_frame_origin=volmdlr.Point3D(-0.5, 0.5, 0.0),
+        >>>                                 local_frame_direction=-volmdlr.Y3D,
+        >>>                                 local_frame_x_direction=volmdlr.X3D)
+
+        """
+
+        return cls(obj=_make_wedge(dx=dx, dy=dy, dz=dz, xmin=xmin, zmin=zmin, xmax=xmax, zmax=zmax,
+                                   point=local_frame_origin,
+                                   direction=local_frame_direction,
+                                   x_direction=local_frame_x_direction).Solid())
+
+    @classmethod
+    def make_extrusion(cls, face: Union[vm_faces.PlaneFace3D, Geom_Plane],
+                       extrusion_length: float, name: str = '') -> "Solid":
+        """
+        Returns a solid generated by the extrusion of a plane face.
+        """
+        ocp_face = face
+        if isinstance(ocp_face, vm_faces.Face3D):
+            ocp_face = face.to_ocp()
+        extrusion_vector = to_ocp.vector3d_to_ocp(face.surface3d.frame.w * extrusion_length)
+        solid = BRepPrimAPI_MakePrism(ocp_face, extrusion_vector)
+        return cls(obj=solid.Shape(), name=name)
+
+    @classmethod
+    def make_extrusion_from_frame_and_wires(cls, frame: volmdlr.Frame3D,
+                                            outer_contour2d: volmdlr.wires.Contour2D,
+                                            inner_contours2d: List[volmdlr.wires.Contour2D],
+                                            extrusion_length: float, name: str = '') -> "Solid":
+        """
+        Returns a solid generated by the extrusion of a plane face.
+        """
+        face = vm_faces.PlaneFace3D(surface3d=surfaces.Plane3D(frame),
+                                    surface2d=surfaces.Surface2D(outer_contour2d, inner_contours2d))
+
+        solid = Solid.make_extrusion(face=face, extrusion_length=extrusion_length)
+
+        return cls(obj=solid.wrapped, name=name)
 
 
 class CompSolid(Shape):
