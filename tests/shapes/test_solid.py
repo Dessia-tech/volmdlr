@@ -1,7 +1,12 @@
+import os
 import math
 import unittest
+from dessia_common.core import DessiaObject
 import volmdlr
 from volmdlr import faces, surfaces, shapes, wires, curves
+
+folder = os.path.join(os.path.dirname(os.path.realpath(__file__)))
+objects_folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), "shapes_objects")
 
 
 class TestSolid(unittest.TestCase):
@@ -18,6 +23,19 @@ class TestSolid(unittest.TestCase):
     solid1 = shapes.Solid.make_solid(shapes.Shell(faces=faces_list))
     faces2 = [f.translation(volmdlr.Vector3D(1, 1, 1)) for f in faces_list]
     solid2 = shapes.Solid.make_solid(shapes.Shell(faces=faces2))
+
+    def test_check_platform(self):
+        self.assertIsNone(self.solid1._check_platform())
+
+    def test_to_dict_dict_to_object(self):
+        to_dict = self.solid1.to_dict()
+        dict_to_obejct = DessiaObject.dict_to_object(to_dict)
+        self.assertEqual(dict_to_obejct, self.solid1)
+
+    def test_to_brep_from_brep(self):
+        self.solid1.to_brep(objects_folder+"/test_to_brep.brep")
+        from_brep = shapes.Solid.from_brep(objects_folder+"/test_to_brep.brep")
+        self.assertEqual(from_brep, self.solid1)
 
     def test_union(self):
         union = self.solid1.union(self.solid2)
