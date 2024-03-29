@@ -101,16 +101,25 @@ class OCAFReader:
         children_names_dict, map_of_colors = self._process_metadata(shape=shape,
                                                                     color_tool=color_tool, shape_tool=shape_tool)
 
-        if shape_type == TopAbs_COMPOUND:
-            wrapping_shape = Compound(obj=shape, name=name)
-        elif shape_type == TopAbs_COMPSOLID:
-            wrapping_shape = CompSolid(obj=shape, name=name)
-        elif shape_type == TopAbs_SOLID:
-            wrapping_shape = Solid(obj=shape, name=name)
-        elif shape_type == TopAbs_SHELL:
-            wrapping_shape = Shell(obj=shape, name=name)
-        else:
+        shapes_LUT = {
+            TopAbs_COMPOUND: Compound,
+            TopAbs_COMPSOLID: CompSolid,
+            TopAbs_SOLID: Solid,
+            TopAbs_SHELL: Shell
+        }
+        if shape_type not in shapes_LUT:
             raise NotImplementedError(f"Convertion of {shape_type} not implemented yet.")
+        wrapping_shape = shapes_LUT[shape_type](obj=shape, name=name)
+        # if shape_type == TopAbs_COMPOUND:
+        #     wrapping_shape = Compound(obj=shape, name=name)
+        # elif shape_type == TopAbs_COMPSOLID:
+        #     wrapping_shape = CompSolid(obj=shape, name=name)
+        # elif shape_type == TopAbs_SOLID:
+        #     wrapping_shape = Solid(obj=shape, name=name)
+        # elif shape_type == TopAbs_SHELL:
+        #     wrapping_shape = Shell(obj=shape, name=name)
+        # else:
+        #     raise NotImplementedError(f"Convertion of {shape_type} not implemented yet.")
         data_structure = {
             "shape": wrapping_shape,
             "children_names": children_names_dict,
