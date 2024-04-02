@@ -144,13 +144,15 @@ class OCAFReader:
             it.Initialize(shape, False, False)
             map_of_names[shape] = self._get_shape_name(shape, shape_tool)
             while it.More():
-                names, colors = self._process_metadata(shape=it.Value(), color_tool=color_tool, shape_tool=shape_tool)
+                i_shape = it.Value()
+                names, colors = self._process_metadata(shape=i_shape, color_tool=color_tool, shape_tool=shape_tool)
                 map_of_names.update(names)
                 map_of_colors.update(colors)
                 it.Next()
         elif shape_type == TopAbs_SOLID:
             map_of_colors.update(self._process_solid(shape=shape, color_tool=color_tool))
-            map_of_names[shape] = self._get_shape_name(shape, shape_tool)
+            _name = self._get_shape_name(shape, shape_tool)
+            map_of_names[shape] = _name
         elif shape_type == TopAbs_SHELL:
             map_of_colors[shape] = self._process_shell(shape=shape, color_tool=color_tool)
             map_of_names[shape] = self._get_shape_name(shape, shape_tool)
@@ -249,7 +251,8 @@ class OCAFReader:
         :return:
         """
         name_attr = TDataStd_Name()
-        if label.FindAttribute(TDataStd_Name.GetID_s(), name_attr):
+        id_attr = TDataStd_Name.GetID_s()
+        if label.FindAttribute(id_attr, name_attr):
             entity_name = name_attr.Get().ToExtString()
             return entity_name
         return ""
