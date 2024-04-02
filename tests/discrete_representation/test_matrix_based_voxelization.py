@@ -5,7 +5,8 @@ import os
 import unittest
 
 import volmdlr
-from volmdlr.core import BoundingBox, VolumeModel
+from volmdlr.core import BoundingBox
+from volmdlr.model import VolumeModel
 from volmdlr.discrete_representation import MatrixBasedVoxelization
 from volmdlr.primitives3d import Block, Cylinder, Sphere
 from volmdlr.shells import ClosedTriangleShell3D, DisplayTriangleShell3D

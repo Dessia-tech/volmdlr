@@ -97,7 +97,7 @@ class TestBSplineCurve3D(unittest.TestCase):
         self.assertTrue(bspline.end.is_close(trimmed_curve.end))
 
     def test_from_step(self):
-        obj_list = volmdlr.core.VolumeModel.from_json(
+        obj_list = volmdlr.model.VolumeModel.from_json(
             os.path.join(folder, "periodic_bsplinecurve_from_step_test_object_dict.json")).primitives
         object_dict = {0: obj_list[0], 1: obj_list[1], 2: obj_list[2]}
         arguments = ["''", 1, 2, 0, '.F.']

@@ -42,7 +42,7 @@ for prim in open_rounded_line_segements.primitives:
 
 sweep = primitives3d.Sweep(contour, open_rounded_line_segements, name='Random pipe')
 
-model = vm.core.VolumeModel([sweep])
+model = vm.model.VolumeModel([sweep])
 model._check_platform()
 model.babylonjs()
 
@@ -52,7 +52,7 @@ contour = wires.ClosedPolygon2D([volmdlr.Point2D(-0.008, -0.004), volmdlr.Point2
                                  volmdlr.Point2D(0.008, 0.004), volmdlr.Point2D(-0.008, 0.004)])
 
 sweep = primitives3d.Sweep(contour, open_rounded_line_segements, name='Random pipe')
-model = vm.core.VolumeModel([sweep])
+model = vm.model.VolumeModel([sweep])
 model._check_platform()
 model.babylonjs()
 

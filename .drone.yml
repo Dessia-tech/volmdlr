@@ -133,7 +133,6 @@ steps:
 
   commands:
     - apt-get update && apt-get install -y jq
-    - apt-get install -y libgl1
     - |
       api_url="https://api.github.com/repos/${DRONE_REPO}/pulls/${DRONE_PULL_REQUEST}"
       source_repo=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "$api_url" | jq -r .head.repo.full_name)
@@ -149,7 +148,7 @@ steps:
         echo "Source repo is ${DRONE_REPO}. Skipping step..."
       else
         echo "Source repo is a fork. Performing install, build doc run scripts and tutorials..."
-      
+        apt-get install -y libgl1
         git fetch --tags
         pip install .[doc,test]
         python setup.py build_ext --inplace

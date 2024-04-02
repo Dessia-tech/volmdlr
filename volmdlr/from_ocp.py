@@ -8,6 +8,7 @@ from OCP.BRep import BRep_Tool
 from OCP.BRepTools import BRepTools, BRepTools_WireExplorer
 from OCP.TopAbs import (TopAbs_EDGE, TopAbs_FACE, TopAbs_VERTEX, TopAbs_WIRE, TopAbs_SHELL, TopAbs_ShapeEnum,
                         TopAbs_SOLID, TopAbs_COMPSOLID, TopAbs_COMPOUND)
+from OCP.ShapeFix import ShapeFix_Shape
 from OCP.TopoDS import (TopoDS_Face, TopoDS_Shell, TopoDS_Wire, TopoDS, TopoDS_Shape)
 
 from OCP.TopExp import TopExp_Explorer
@@ -143,7 +144,7 @@ def ellipse2d_from_ocp(cls, curve):
     :return: volmdlr Ellipse2D.
     """
     frame = frame2d_from_ocp_ax22d(curve.Position())
-    return cls(frame, curve.MajorRadius(), curve.MinorRadius())
+    return cls(curve.MajorRadius(), curve.MinorRadius(), frame)
 
 
 def ellipse3d_from_ocp(cls, curve):
@@ -407,6 +408,12 @@ def surfaceofrevolution_from_ocp(cls, occt_surface, **kwargs):
                                                           occt_curve)
     axis_point = point3d_from_ocp(occt_surface.Axis().Location())
     axis_direction = vector3d_from_ocp(occt_surface.Axis().Direction())
+    if curve.__class__.__name__ == "Circle3D":
+        start_end = curve.center + curve.frame.u * curve.radius
+        curve = curve.trim(point1=start_end, point2=start_end)
+    elif curve.__class__.__name__ == "Ellipse3D":
+        start_end = curve.center + curve.frame.u * curve.major_axis
+        curve = curve.trim(point1=start_end, point2=start_end)
     return cls(curve, axis_point, axis_direction)
 
 
@@ -497,7 +504,7 @@ def get_wires_from_face(face):
     face_wires = get_wires(face)
     if len(face_wires) > 1:
         outer_wire = BRepTools.OuterWire_s(face)
-        inner_wires = [wire for wire in face_wires if not outer_wire.IsSame(wire)]
+        inner_wires = [wire for wire in face_wires if not outer_wire.IsPartner(wire)]
     else:
         outer_wire = face_wires[0]
         inner_wires = []
@@ -516,7 +523,8 @@ def get_contour2d_from_face_wire(contour2d_class, wire, face, occt_to_volmdlr):
         orientation = exp.Current().Orientation()
         if orientation == 1:
             u_start, u_end = u_end, u_start
-
+        if crv.IsInstance("Geom2d_TrimmedCurve"):
+            crv = crv.BasisCurve()
         list_edges.append(volmdlr_edge2d_from_ocp_curve(occt_to_volmdlr[crv.get_type_name_s()], crv,
                                                          u_start, u_end, orientation))
         exp.Next()
@@ -575,3 +583,14 @@ def downcast(obj: TopoDS_Shape) -> TopoDS_Shape:
     f_downcast: Any = downcast_LUT[shapetype(obj)]
 
     return f_downcast(obj)
+
+
+def fix(obj: TopoDS_Shape) -> TopoDS_Shape:
+    """
+    Fix a TopoDS object to suitable specialized type.
+    """
+
+    shape_fixer = ShapeFix_Shape(obj)
+    shape_fixer.Perform()
+
+    return downcast(shape_fixer.Shape())

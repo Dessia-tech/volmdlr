@@ -4,7 +4,7 @@ Showcase of non homogeneous voxelization.
 import random
 
 import volmdlr
-from volmdlr.core import VolumeModel
+from volmdlr.model import VolumeModel
 from volmdlr.discrete_representation import MatrixBasedVoxelization
 from volmdlr.primitives3d import Cylinder
 

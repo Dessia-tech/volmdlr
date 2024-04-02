@@ -7,7 +7,7 @@ import unittest
 
 import volmdlr.primitives3d as p3d
 from volmdlr import O2D, O3D, OXYZ, X3D, Point2D, Point3D
-from volmdlr.core import VolumeModel
+from volmdlr.model import VolumeModel
 from volmdlr.curves import Circle2D
 from volmdlr.display import Mesh3D
 from volmdlr.step import Step

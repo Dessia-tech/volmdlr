@@ -136,7 +136,7 @@ contour3D_1.color = [1,0,0]
 primitives2 = [edges.LineSegment3D(point1, point2) for point1, point2 in zip(points_poly2, points_poly2[1:] + [points_poly2[0]])]
 contour3D_2 = wires.Contour3D(primitives2)
 contour3D_2.color = [1,0,0]
-volum = vm.core.VolumeModel([contour3D_1, contour3D_2])
+volum = vm.model.VolumeModel([contour3D_1, contour3D_2])
 volum.babylonjs()
 
 """ Wires"""
@@ -158,12 +158,12 @@ wire_points = [vm.Point3D(-0.10650088500976562, 0.27905870056152345, 0.624640625
 wire_primtives = [edges.LineSegment3D(point1, point2) for point1, point2 in zip(wire_points[:-1], wire_points[1:])]
 wire3d = wires.Wire3D(wire_primtives)
 wire3d.color = [0,1,0]
-volum = vm.core.VolumeModel([wire3d])
+volum = vm.model.VolumeModel([wire3d])
 volum.babylonjs()
 
 """"BSpline"""
 bezier = edges.BezierCurve3D(3, wire_points)
 wire3d = wires.Wire3D([bezier])
 wire3d.color = [0,0,1]
-volum = vm.core.VolumeModel([wire3d])
+volum = vm.model.VolumeModel([wire3d])
 volum.babylonjs()

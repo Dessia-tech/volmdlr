@@ -4,7 +4,7 @@ Voxelization of a volume model using PointBasedVoxelization.
 In PointBasedVoxelization, voxels are stored as a Set[Tuple[float, float, float]].
 """
 import volmdlr
-from volmdlr.core import VolumeModel
+from volmdlr.model import VolumeModel
 from volmdlr.discrete_representation import PointBasedVoxelization
 from volmdlr.primitives3d import Cylinder, Sphere
 

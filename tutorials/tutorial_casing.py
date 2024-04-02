@@ -84,7 +84,7 @@ belt = primitives3d.ExtrudedProfile(
 belt.save_babylonjs_to_file(filename='/tmp/belt')
 
 
-casing = volmdlr.core.VolumeModel([bottom, sides, belt], name='Casing')
+casing = volmdlr.model.VolumeModel([bottom, sides, belt], name='Casing')
 
 # Jupyter Notebook usage
 casing.save_babylonjs_to_file(filename='/tmp/casing')
@@ -97,7 +97,7 @@ lid = primitives3d.ExtrudedProfile(
     extrusion_length=thickness,
     name='lid')
 
-casing = volmdlr.core.VolumeModel([bottom, sides, belt, lid], name='Casing')
+casing = volmdlr.model.VolumeModel([bottom, sides, belt, lid], name='Casing')
 
 # Jupyter Notebook usage
 casing.save_babylonjs_to_file(filename='/tmp/casing')

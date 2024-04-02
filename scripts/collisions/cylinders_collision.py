@@ -40,7 +40,7 @@ cylinders = [
     ),
 ]
 
-volume_model = vm.core.VolumeModel(cylinders)
+volume_model = vm.model.VolumeModel(cylinders)
 volume_model.babylonjs()
 
 print("Collision detection methods")

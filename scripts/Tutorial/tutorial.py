@@ -101,7 +101,7 @@ sweep1 = primitives3D.Sweep(contour2d = c,
 
 
 
-model=vm.core.VolumeModel([profile, profile1, profile2, profile3, profile4, profile5, sweep, sweep1])
+model=vm.model.VolumeModel([profile, profile1, profile2, profile3, profile4, profile5, sweep, sweep1])
 
 model.babylonjs()
 

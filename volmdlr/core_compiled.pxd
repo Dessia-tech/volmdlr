@@ -1,3 +1,4 @@
+# cython: language_level=3
 cdef class Vector:
     cdef public str name
 

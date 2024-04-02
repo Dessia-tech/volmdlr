@@ -3,8 +3,10 @@ import os
 import math
 from dessia_common.core import DessiaObject
 import volmdlr
-from volmdlr import edges, faces, surfaces, wires, curves
+from volmdlr import edges, faces, surfaces, wires, curves, core
 from volmdlr.models import conical_surfaces
+from OCP.GProp import GProp_GProps
+from OCP.BRepGProp import BRepGProp_Face, BRepGProp  # used for mass calculation
 
 folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'objects_conical_tests')
 
@@ -134,9 +136,18 @@ class TestConicalFace3D(unittest.TestCase):
         self.assertIsNotNone(mesh2d)
 
     def test_normal_at_point(self):
-        face, point = DessiaObject.from_json(os.path.join(folder,'test_conicalface_normal_at_point.json')).primitives
+        face, point = DessiaObject.from_json(os.path.join(folder, 'test_conicalface_normal_at_point.json')).primitives
         normal = face.normal_at_point(point)
         self.assertTrue(normal.is_close(volmdlr.Vector3D(0.4736709994871299, 0.7250074373721028, -0.4999999999999999)))
+
+    def test_to_ocp(self):
+        conical_surface = surfaces.ConicalSurface3D(volmdlr.OXYZ.copy(), math.pi / 4, ref_radius=1.0)
+        conical_face = faces.ConicalFace3D.from_surface_rectangular_cut(conical_surface, 0.0, 2 * math.pi, -1.0, 0.0)
+        ocp_face = conical_face.to_ocp()
+        properties = GProp_GProps()
+        BRepGProp.SurfaceProperties_s(ocp_face, properties)
+        face_area = properties.Mass()
+        self.assertAlmostEqual(face_area, math.pi * math.sqrt(2)) # SI
 
 
 if __name__ == '__main__':

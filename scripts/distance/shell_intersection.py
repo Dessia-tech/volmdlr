@@ -20,5 +20,5 @@ box_red = primitives3d.Block(
 
 assert type(box_red.shell_intersection(box, resolution=0.001)) == tuple
 
-vol = vm.core.VolumeModel([box, box_red])
+vol = vm.model.VolumeModel([box, box_red])
 vol.babylonjs()

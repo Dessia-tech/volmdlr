@@ -5,4 +5,3 @@ Base models for volmdlr.
 """
 
 from .bspline_surfaces import *
-from .casing import casing

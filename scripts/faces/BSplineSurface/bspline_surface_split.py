@@ -42,7 +42,7 @@ ax = faces.BSplineFace3D.from_surface_rectangular_cut(bspline_surface, 0, 1, 0, 
 for f in splitted_faces:
     f.plot(ax=ax, color=f.color)
 
-# vm.core.VolumeModel(splitted_faces).babylonjs()
+# vm.model.VolumeModel(splitted_faces).babylonjs()
 
 # %% (2) BSpline-surface split - v_split
 # split the bspline_surface at the input parametric coordinate (v) on the v-direction, into 2 surfaces
@@ -61,7 +61,7 @@ ax = faces.BSplineFace3D.from_surface_rectangular_cut(bspline_surface, 0, 1, 0, 
 for f in splitted_faces:
     f.plot(ax=ax, color=f.color)
 
-# vm.core.VolumeModel(splitted_faces).babylonjs()
+# vm.model.VolumeModel(splitted_faces).babylonjs()
 
 # %% (3) BSpline-surface split - bspline_curve_split
 # split the bspline_surface, into 2 surfaces, using a bspline curve
@@ -93,4 +93,4 @@ ax = faces.BSplineFace3D.from_surface_rectangular_cut(bspline_surface, 0, 1, 0, 
 for f in splitted_faces:
     f.plot(ax=ax, color=f.color)
 
-# vm.core.VolumeModel(splitted_faces).babylonjs()
+# vm.model.VolumeModel(splitted_faces).babylonjs()

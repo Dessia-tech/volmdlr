@@ -15,7 +15,8 @@ from numpy.typing import NDArray
 from dessia_common.core import DessiaObject, PhysicalObject
 from dessia_common.serialization import JsonSerializable
 from volmdlr import Point2D, Point3D, Vector3D
-from volmdlr.core import BoundingBox, BoundingRectangle, VolumeModel
+from volmdlr.core import BoundingBox, BoundingRectangle
+from volmdlr.model import VolumeModel
 from volmdlr.discrete_representation_compiled import (
     flood_fill_matrix_2d,
     flood_fill_matrix_3d,

@@ -13,7 +13,7 @@ import trimesh
 import volmdlr
 from dessia_common.serialization import BinaryFile
 from volmdlr import Point3D
-from volmdlr.core import VolumeModel
+from volmdlr.model import VolumeModel
 from volmdlr.display import Mesh3D
 from volmdlr.faces import Triangle3D
 from volmdlr.shells import ClosedTriangleShell3D, OpenTriangleShell3D

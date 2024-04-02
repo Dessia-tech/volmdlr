@@ -22,7 +22,7 @@ import STL files
     import volmdlr.core
     import volmdlr.stl as vmstl
 
-    stl = vmstl.Stl.load_from_file('path/to/your/stl/file.stl')
+    stl = vmstl.Stl.from_json('path/to/your/stl/file.stl')
     shell = stl.to_closed_shell()
     shell.alpha = 0.3
     shell.babylonjs()
@@ -45,9 +45,9 @@ These modules likely provide different functionalities related to cloud computin
 
 .. code-block:: python
 
-    stl = vmstl.Stl.load_from_file('path/to/your/stl/file.stl')
+    stl = vmstl.Stl.from_json('path/to/your/stl/file.stl')
 
-Here, an STL file is loaded using the ``Stl.load_from_file()`` method from the vmstl sub-module.
+Here, an STL file is loaded using the ``Stl.from_json()`` method from the vmstl sub-module.
 The path to your STL file should be specified in the ``'path/to/your/stl/file.stl'`` placeholder.
 The stl variable is assigned the resulting Stl object, which likely holds the geometry and other properties of the loaded STL file.
 

@@ -19,7 +19,7 @@ bspline_faces = [faces.BSplineFace3D.from_surface_rectangular_cut(bspline_surfac
 
 # %% Export
 
-model = volmdlr.core.VolumeModel([shells.OpenShell3D(bspline_faces)])
+model = volmdlr.model.VolumeModel([shells.OpenShell3D(bspline_faces)])
 
 model.to_step('model_to_step.stp')
 

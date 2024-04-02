@@ -46,7 +46,7 @@ angle = 3*math.pi/2 #Arc's angle
 # p1.MPLPlot(ax=ax, color='r')
 
 # shell = vm.Shell3D([cylinder])
-model = vm.core.VolumeModel([cylinder], name='cylinder model')
+model = vm.model.VolumeModel([cylinder], name='cylinder model')
 
 model.to_step('cylinder.step')
 

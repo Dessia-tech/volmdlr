@@ -29,5 +29,5 @@ for stl_file in [
         shell2.color = (1, 0.1, 0.1)
         shells.append(shell2)
 
-    volume_model = volmdlr.core.VolumeModel(shells)
+    volume_model = volmdlr.model.VolumeModel(shells)
     volume_model.babylonjs()

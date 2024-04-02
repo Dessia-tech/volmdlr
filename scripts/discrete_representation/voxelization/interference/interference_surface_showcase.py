@@ -5,7 +5,7 @@ import math
 import time
 
 import volmdlr
-from volmdlr.core import VolumeModel
+from volmdlr.model import VolumeModel
 from volmdlr.discrete_representation import PointBasedVoxelization
 from volmdlr.step import Step
 

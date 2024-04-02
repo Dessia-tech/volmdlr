@@ -1,7 +1,7 @@
 import unittest
 import os
 import volmdlr
-from volmdlr.core import VolumeModel
+from volmdlr.model import VolumeModel
 from volmdlr.step import Step
 
 

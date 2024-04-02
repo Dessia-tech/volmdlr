@@ -2,7 +2,7 @@
 Demo usage of Cylinder class.
 """
 import volmdlr
-from volmdlr.core import VolumeModel
+from volmdlr.model import VolumeModel
 from volmdlr.primitives3d import Cylinder
 
 # 1. Instantiate a red Cylinder directly with the init:

@@ -7,9 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v0.18.0 [Future]
 ### New Features
+- new module: shapes.py
+- New module model.py to hold VolumeModel object.
+
+#### shapes.py
+- Shape: volume, bounding_box
+- Shape: add boolean operations: subtraction, union, intersection
+- Shell constructors: make_extrusion, make_wedge, make_sweep, make_revolve
+- Solid constructors: make_extrusion, make_extrusion_from_frame_and_wires, make_wedge, make_sweep, make_revolve
+- Shape: to_dict, dict_to_object, to_brep, from_brep, from_brep_stream, to_brep_stream, 
+- Solid: make_box, make_cone, make_cylinder, make_torus, make_sphere methods.
 
 #### core.py
 - VolumeModel: from_step using OCP step reader
+- move VolumeModel from core.py to model.py.
 
 #### display.py
 - Mesh3D: rotation / translation / frame_mapping
@@ -27,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### faces.py
 - Face3D: from_contours3d (add abs_tol as parameter)
+- Face3D: to_ocp.
 #### shells.py
 - 
 ### Fixed
@@ -38,6 +50,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### edges.py
 - Edge: delete_shared_section (use abs_tol)
 - Bspline: get_shared_section (update abs_tol for is_shared_section_possible)
+- Arc2D: plot_data
+
 #### wires.py
 - 
 #### surfaces.py
@@ -52,6 +66,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Force wires to share same points between two edges.
+- increase code Quality
 
 #### curves.py
 - Ellipse2D: point_distance optimization

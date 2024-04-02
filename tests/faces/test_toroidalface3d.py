@@ -6,6 +6,8 @@ import unittest
 from dessia_common.core import DessiaObject
 import volmdlr
 from volmdlr import faces, surfaces, wires
+from OCP.GProp import GProp_GProps
+from OCP.BRepGProp import BRepGProp_Face, BRepGProp  # used for mass calculation
 
 
 folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'objects_toroidal_tests')
@@ -142,6 +144,15 @@ class TestToroidalFace3D(unittest.TestCase):
 
         normal = toroidaface.normal_at_point(point)
         self.assertTrue(normal.is_close(volmdlr.Vector3D(0.1568952782807088, 0.27351794069082946, 0.9489846193555862)))
+
+    def test_to_ocp(self):
+        torus = surfaces.ToroidalSurface3D(volmdlr.OXYZ, 1, 0.1)
+        toroidal_face = faces.ToroidalFace3D.from_surface_rectangular_cut(torus, 0.0, math.pi, 0.0, math.pi)
+        ocp_face = toroidal_face.to_ocp()
+        properties = GProp_GProps()
+        BRepGProp.SurfaceProperties_s(ocp_face, properties)
+        face_area = properties.Mass()
+        self.assertAlmostEqual(face_area, math.pi ** 2 * torus.major_radius * torus.minor_radius) # SI
 
 
 if __name__ == '__main__':

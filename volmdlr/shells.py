@@ -9,22 +9,23 @@ from typing import Iterable, List, Tuple, Union
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
-from dessia_common.core import DessiaObject
-from dessia_common.typings import JsonSerializable
+from OCP.BRep import BRep_Tool
 from numpy.typing import NDArray
 from trimesh import Trimesh
 
-from OCP.BRep import BRep_Tool
+from dessia_common.core import DessiaObject
+from dessia_common.typings import JsonSerializable
 
-import volmdlr.core
 import volmdlr.core_compiled
+import volmdlr.core
 import volmdlr.faces
 import volmdlr.geometry
-from volmdlr import curves, display, edges, surfaces, wires
-from volmdlr.core import edge_in_list, get_edge_index_in_list, get_point_index_in_list, point_in_list
-from volmdlr.utils.step_writer import geometric_context_writer, product_writer, step_ids_to_str
-from volmdlr import from_ocp
+from volmdlr import curves, display, edges, surfaces, wires, from_ocp
+from volmdlr.core import edge_in_list, get_edge_index_in_list, get_point_index_in_list
 from volmdlr.utils.mesh_helpers import perform_decimation
+from volmdlr.utils.step_writer import geometric_context_writer, product_writer, step_ids_to_str
+
+
 # pylint: disable=unused-argument
 
 
@@ -899,7 +900,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         for face in self.faces:
             for contour in list(chain(*[[face.outer_contour3d], face.inner_contours3d])):
                 for point_contour in contour.get_geo_points():
-                    if not point_in_list(point_contour, points):
+                    if not point_contour.in_list(points):
                         points.append(point_contour)
 
                 if isinstance(contour, curves.Circle2D):

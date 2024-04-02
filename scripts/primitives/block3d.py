@@ -57,7 +57,7 @@ print(box.minimum_distance(box_red))
 print(box_green.is_intersecting_with(box_blue))
 print(box_green.intersection_internal_aabb_volume(box_blue, resolution))
 print(box_green.intersection_external_aabb_volume(box_blue, resolution))
-model = vm.core.VolumeModel([box, box_red, box_green, box_blue])
+model = vm.model.VolumeModel([box, box_red, box_green, box_blue])
 model.babylonjs(debug=True)
 
 assert box.is_inside_shell(box_red) == True
@@ -69,7 +69,7 @@ assert box_green.is_inside_shell(box) == False
 assert box.is_inside_shell(box_blue) == False
 assert box_blue.is_inside_shell(box) == False
 
-model = vm.core.VolumeModel([box_red])
+model = vm.model.VolumeModel([box_red])
 model.to_step('block.step')
 step = vm_step.Step.from_file('block.step')
 model2 = step.to_volume_model()
@@ -79,7 +79,7 @@ for shell in new_box:
     shell.alpha = 0.6
 # for face in new_box.face:
 #     face.color = 
-vm.core.VolumeModel(new_box).babylonjs()
+vm.model.VolumeModel(new_box).babylonjs()
 
 orange_box = box.frame_mapping(vm.Frame3D(vm.Point3D(0, 0.1, 0.2),
                                           vm.Vector3D(1.5, 0, 0),
@@ -87,13 +87,13 @@ orange_box = box.frame_mapping(vm.Frame3D(vm.Point3D(0, 0.1, 0.2),
                                           vm.Vector3D(0, 0, 0.5)), 'old')
 orange_box.color = (255/255, 127/255, 80/255)
 orange_box.alpha = 0.6
-vm.core.VolumeModel([new_box[0], orange_box]).babylonjs()
+vm.model.VolumeModel([new_box[0], orange_box]).babylonjs()
 
 redbox_union_orangebox = new_box[0].union(orange_box)
 for shell in redbox_union_orangebox:
     shell.color = (1, 0.1, 0.1)
     shell.alpha = 0.6
-vm.core.VolumeModel(redbox_union_orangebox).babylonjs()
+vm.model.VolumeModel(redbox_union_orangebox).babylonjs()
 
 box = primitives3d.Block(
     vm.Frame3D(vm.Point3D(0, 0, 0), vm.Vector3D(0.3, 0, 0),
@@ -113,12 +113,12 @@ for i in range(1):
     print('intersection_external_aabb_volume', box.intersection_external_aabb_volume(box_red, resolution), box_red.intersection_external_aabb_volume(box, resolution))
     # print('is_inside_shell', box.is_inside_shell(box_red, resolution), box_red.is_inside_shell(box, resolution))
     # if not box_red.is_inside_shell(box, resolution):
-    #     model = vm.core.VolumeModel([box, box_red])
+    #     model = vm.model.VolumeModel([box, box_red])
     #     model.babylonjs(debug=True)
     #     raise
     box_red = box_red.translation(vm.Vector3D(0.01, 0, 0))
 #
 #
-model = vm.core.VolumeModel([box, box_red])
+model = vm.model.VolumeModel([box, box_red])
 model._check_platform()
 model.babylonjs(debug=True)

@@ -166,6 +166,23 @@ invalid_unordered_contour2_unittest = wires.Contour2D([line_segment2, bspline.re
 unordered_wire_unittest = wires.Wire2D([line_segment2, bspline.reverse(), arc.reverse(),
                                         line_segment1, line_segment3])
 
+r = 0.15
+R = 0.2
+Rb = 0.25
+w = 0.2
+wb = 0.02
+th = 0.008
+
+rim_contour = wires.Contour2D.from_points([volmdlr.Point2D(-0.5 * w, Rb),
+                                           volmdlr.Point2D(-0.5 * w + wb, Rb),
+                                           volmdlr.Point2D(-0.5 * w + wb, R),
+                                           volmdlr.Point2D(-0.05 * w, r),
+                                           volmdlr.Point2D(0, r),
+                                           volmdlr.Point2D(0, r - th),
+                                           volmdlr.Point2D(-0.05 * w, r - th),
+                                           volmdlr.Point2D(-0.5 * w, R - th),
+                                           ])
+
 # Contour3D with all edges.
 bspline_curve3d = volmdlr.models.edges.bspline_curve3d()
 lineseg1 = edges.LineSegment3D(volmdlr.Point3D(3, 3, 2), bspline_curve3d.start)

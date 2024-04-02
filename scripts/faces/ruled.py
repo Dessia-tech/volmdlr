@@ -57,4 +57,4 @@ circle2 = volmdlr.curves.Circle3D(volmdlr.Frame3D(0.1*volmdlr.Z3D,
 ruled_surface = surfaces.RuledSurface3D(circle1, circle2)
 face2 = faces.RuledFace3D.from_surface_rectangular_cut(ruled_surface, 0, 1,0, 1)
 face2.babylonjs()
-# model = volmdlr.core.VolumeModel([face]).babylonjs(debug=True)
+# model = volmdlr.model.VolumeModel([face]).babylonjs(debug=True)
