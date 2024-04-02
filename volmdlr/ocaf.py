@@ -252,7 +252,8 @@ class OCAFReader:
         """
         name_attr = TDataStd_Name()
         id_attr = TDataStd_Name.GetID_s()
-        if label.FindAttribute(id_attr, name_attr):
+        if label.IsAttribute(id_attr):
+            label.FindAttribute(id_attr, name_attr)
             entity_name = name_attr.Get().ToExtString()
             return entity_name
         return ""
