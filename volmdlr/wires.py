@@ -209,6 +209,9 @@ class WireMixin:
     _non_serializable_attributes = ['primitive_to_index',
                                     'basis_primitives']
 
+    def __iter__(self):
+        return iter(self.primitives)
+
     def _data_hash(self):
         return sum(hash(e) for e in self.primitives) + len(self.primitives)
 
@@ -967,7 +970,7 @@ class Wire2D(WireMixin, PhysicalObject):
         :returns: a tuple (point, primitive)
         """
         intersection_points = []
-        for primitive in self.primitives:
+        for primitive in self:
             for point in primitive.line_intersections(line=line):
                 intersection_points.append((point, primitive))
         return intersection_points
@@ -1425,8 +1428,8 @@ class Wire3D(WireMixin, PhysicalObject):
         :return:
         """
         distance = []
-        for element in self.primitives:
-            for element2 in wire2.primitives:
+        for element in self:
+            for element2 in wire2:
                 distance.append(element.minimum_distance(element=element2))
 
         return min(distance)
@@ -2148,7 +2151,7 @@ class Contour2D(ContourMixin, Wire2D):
         :param y: plane v vector.
         :return: Contour3D.
         """
-        primitives3d = [edge.to_3d(plane_origin, x, y) for edge in self.primitives]
+        primitives3d = [edge.to_3d(plane_origin, x, y) for edge in self]
         return Contour3D(primitives=merge_primitives_points(primitives=primitives3d))
 
     def point_inside(self, point, include_edge_points: bool = False, tol: float = 1e-6):
@@ -2866,6 +2869,9 @@ class ClosedPolygonMixin:
 
     """
 
+    def __iter__(self):
+        return iter(self.points)
+
     def get_lengths(self):
         """
         Gets line segment lengths.
@@ -3004,8 +3010,8 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         if len(self.points) < 3:
             return 0.
 
-        x = [point.x for point in self.points]
-        y = [point.y for point in self.points]
+        x = [point.x for point in self]
+        y = [point.y for point in self]
 
         x1 = [x[-1]] + x[0:-1]
         y1 = [y[-1]] + y[0:-1]
@@ -4391,7 +4397,7 @@ class Contour3D(ContourMixin, Wire3D):
         """
         memo = {}
         new_edges = [edge.translation(offset, memo=memo) for edge in
-                     self.primitives]
+                     self]
         return Contour3D(new_edges, self.name)
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
@@ -4515,8 +4521,10 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
     def __init__(self, points: List[volmdlr.Point3D], name: str = ''):
         self.points = points
         self._line_segments = None
-
         Contour3D.__init__(self, self.line_segments, name)
+
+    def __iter__(self):
+        return iter(self.points)
 
     def get_line_segments(self):
         """Get polygon lines."""
@@ -4568,7 +4576,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         :param offset: translation vector.
         :return: A new translated ClosedPolygon3D.
         """
-        new_points = [point.translation(offset) for point in self.points]
+        new_points = [point.translation(offset) for point in self]
         return ClosedPolygon3D(points=new_points, name=self.name)
 
     def to_2d(self, plane_origin, x, y):

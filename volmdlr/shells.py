@@ -123,6 +123,9 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
                                                    primitives=faces, color=color, alpha=alpha,
                                                    reference_path=reference_path, name=name)
 
+    def __iter__(self):
+        return iter(self.faces)
+
     def _data_hash(self):
         return len(self.faces)  # sum(face._data_hash() for face in self.faces)
 
@@ -505,7 +508,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         :return: a new rotated OpenShell3D.
         """
         new_faces = [face.rotation(center, axis, angle) for face
-                     in self.faces]
+                     in self]
         return self.__class__(new_faces, color=self.color, alpha=self.alpha, name=self.name)
 
     def translation(self, offset: volmdlr.Vector3D):
@@ -516,7 +519,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         :return: A new translated Open Shell 3D.
         """
         new_faces = [face.translation(offset) for face in
-                     self.faces]
+                     self]
         return self.__class__(new_faces, color=self.color, alpha=self.alpha,
                               name=self.name)
 

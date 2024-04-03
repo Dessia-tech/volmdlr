@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineCurve: arc_to_nurbs and arc_to_nurbs_parameters
 
 #### wires.py
+- Transforms the wires into iterables
 - translation: Add memo dictionary to keep data sctructure when perfoming translations.
 
 #### surfaces.py
@@ -42,7 +43,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Face3D: from_contours3d (add abs_tol as parameter)
 - Face3D: to_ocp.
 #### shells.py
-- 
+- Transforms the shells into iterables
+
 ### Fixed
 
 - Updates CONTRIBUTING.md.
@@ -75,7 +77,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Unittests
 - Ellipse2D: test to the news functions
-- BSplineCurve: test to arc_to_nurbs and arc_to_nurbs_parameters
 
 ## v0.17.0 [Unreleased]
 ### New Features
