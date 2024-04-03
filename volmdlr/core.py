@@ -13,9 +13,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 import dessia_common.core as dc
-from dessia_common.errors import ConsistencyError
-import dessia_common.files as dcf
-from dessia_common.schemas.core import BuiltinProperty, SchemaAttribute, ClassSchema, Schema
+from dessia_common.schemas.core import SchemaAttribute, Schema
 
 import volmdlr
 import volmdlr.templates
@@ -999,7 +997,7 @@ class VolumeModel:
         # pylint: disable=cyclic-import, import-outside-toplevel
         from volmdlr import model
         self.instance = model.VolumeModel(primitives=primitives, name=name)
-    
+
     def __getattr__(self, name):
         return getattr(self.instance, name)
 
@@ -1015,11 +1013,13 @@ class VectorSchema(Schema):
         dict_.update({"standalone_in_db": False, "classes": [self.classname]})
         return dict_
 
+
 class Vector2Schema(VectorSchema):
     def __init__(self, class_):
         annotations = {"x": float, "y": float, "name": str}
         attributes = [SchemaAttribute("x"), SchemaAttribute("y"), SchemaAttribute("name", default_value="")]
         super().__init__(class_=class_, annotations=annotations, attributes=attributes)
+
 
 class Vector3Schema(Schema):
     def __init__(self, class_):
@@ -1046,18 +1046,9 @@ class Vector2DBlueprint(volmdlr.Vector2D):
         """ Custom Schema implementation in order to allow vectors and points to be used in forms. """
         return Vector2Schema(cls)
 
+
 class Vector3DBlueprint(volmdlr.Vector3D):
     @classmethod
     def raw_schema(cls):
         """ Custom Schema implementation in order to allow vectors and points to be used in forms. """
         return Vector3Schema(cls)
-
-class Point2DBlueprint(volmdlr.Point2D):
-    pass
-
-
-class TestSchema(dc.PhysicalObject):
-    def __init__(self, point: Point2DBlueprint, name: str = ""):
-        self.point = point
-
-        super().__init__(name)
