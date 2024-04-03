@@ -12,9 +12,120 @@ from volmdlr import curves
 from volmdlr.models import bspline_curves
 import volmdlr.nurbs.helpers as nurbs_helpers
 
-
 DELTA = 0.001
 folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'bsplinecurve_objects')
+
+
+class TestBSplineCurve(unittest.TestCase):
+    def test_arc_to_nurbs_parameters(self):
+        arc = vme.Arc2D.from_3_points(volmdlr.Point2D(0, 0.3), volmdlr.Point2D(1, -0.3), volmdlr.Point2D(2, 2))
+        control_points, knot_multiplicities, knots, weights = vme.BSplineCurve.arc_to_nurbs_parameters(arc)
+
+        expected_ctrlpts = [
+            [0.0, 0.3], [0.4578268848009306, -0.4077103355939562],
+            [1.2927631248147025, -0.2922077353431394], [2.127699364828474, -0.17670513509232277],
+            [2.3762039959055192, 0.6287170050840547], [2.6247086269825646, 1.4341391452604322],
+            [2.0000000000000004, 1.9999999999999996]
+        ]
+        expected_knots = [0.0, 0.3333333333333333, 0.6666666666666666, 1.0]
+        expected_knot_multiplicities = [3, 2, 2, 3]
+        expected_weights = [1.0, 0.8435002378086555, 1.0, 0.8435002378086555, 1.0, 0.8435002378086555, 1.0]
+
+        for point, expected_point, weight, expected_weight in zip(control_points, expected_ctrlpts,
+                                                                  weights, expected_weights):
+            self.assertAlmostEqual(point[0], expected_point[0])
+            self.assertAlmostEqual(point[1], expected_point[1])
+            self.assertAlmostEqual(weight, expected_weight)
+
+        for knot, expected_knot, knot_multiplicity, expected_knot_multiplicity \
+                in (zip(knots, expected_knots, knot_multiplicities, expected_knot_multiplicities)):
+            self.assertAlmostEqual(knot, expected_knot)
+            self.assertAlmostEqual(knot_multiplicity, expected_knot_multiplicity)
+
+        vector1 = volmdlr.Vector3D(1, 1, 1)
+        vector1 = vector1.unit_vector()
+        vector2 = vector1.deterministic_unit_normal_vector()
+        vector3 = vector1.cross(vector2)
+        circle3d = curves.Circle3D(volmdlr.Frame3D(volmdlr.O3D, vector1, vector2, vector3), 1)
+        arc3d = vme.Arc3D(circle3d, start=volmdlr.Point3D(0.5773502691896258, 0.5773502691896258, 0.5773502691896258),
+                          end=volmdlr.Point3D(-0.9855985596534886, -0.11957315586905026, -0.11957315586905026))
+
+        control_points3d, knot_multiplicities3d, knots3d, weights3d = vme.BSplineCurve.arc_to_nurbs_parameters(arc3d)
+        expected_ctrlpts3d = [
+            [0.5773502691896258, 0.5773502691896258, 0.5773502691896258],
+            [1.2038701267717946, 0.26409034039854135, 0.26409034039854135],
+            [0.9381043823891009, -0.2449083172764492, -0.2449083172764492],
+            [0.672338638006407, -0.7539069749514399, -0.7539069749514399],
+            [-0.09175169554644669, -0.7041241461434029, -0.7041241461434029],
+            [-0.8558420290993004, -0.6543413173353662, -0.6543413173353662],
+            [-0.9855985560899309, -0.11957317055561367, -0.11957317055561367]
+        ]
+        expected_knots3d = [0.0, 0.3333333333333333, 0.6666666666666666, 1.0]
+        expected_knot_multiplicities3d = [3, 2, 2, 3]
+        expected_weights3d = [1.0, 0.7933533424293499, 1.0, 0.7933533424293499, 1.0, 0.7933533424293499, 1.0]
+
+        for point3d, expected_point3d, weight3d, expected_weight3d in zip(control_points3d, expected_ctrlpts3d,
+                                                                          weights3d, expected_weights3d):
+            self.assertAlmostEqual(point3d[0], expected_point3d[0])
+            self.assertAlmostEqual(point3d[1], expected_point3d[1])
+            self.assertAlmostEqual(point3d[2], expected_point3d[2])
+            self.assertAlmostEqual(weight3d, expected_weight3d)
+
+        for knot3d, expected_knot3d, knot_multiplicity3d, expected_knot_multiplicity3d \
+                in (zip(knots3d, expected_knots3d, knot_multiplicities3d, expected_knot_multiplicities3d)):
+            self.assertAlmostEqual(knot3d, expected_knot3d)
+            self.assertAlmostEqual(knot_multiplicity3d, expected_knot_multiplicity3d)
+
+    def test_from_arc(self):
+        arc = vme.Arc2D.from_3_points(volmdlr.Point2D(0, 0.3), volmdlr.Point2D(1, -0.3), volmdlr.Point2D(2, 2))
+        bspline2d = vme.BSplineCurve2D.from_arc(arc)
+
+        expected_ctrlpts = [
+            volmdlr.Point2D(0.0, 0.3), volmdlr.Point2D(0.4578268848009306, -0.4077103355939562),
+            volmdlr.Point2D(1.2927631248147025, -0.2922077353431394),
+            volmdlr.Point2D(2.127699364828474, -0.17670513509232277),
+            volmdlr.Point2D(2.3762039959055192, 0.6287170050840547),
+            volmdlr.Point2D(2.6247086269825646, 1.4341391452604322),
+            volmdlr.Point2D(2.0000000000000004, 1.9999999999999996)
+        ]
+        expected_knots = [0.0, 0.3333333333333333, 0.6666666666666666, 1.0]
+        expected_knot_multiplicities = [3, 2, 2, 3]
+        expected_weights = [1.0, 0.8435002378086555, 1.0, 0.8435002378086555, 1.0, 0.8435002378086555, 1.0]
+        expected_bspline2d = vme.BSplineCurve2D(2, expected_ctrlpts, expected_knot_multiplicities,
+                                                expected_knots, expected_weights)
+
+        self.assertTrue(bspline2d.is_close(expected_bspline2d))
+        for point in bspline2d.discretization_points(number_points=10):
+            self.assertEqual(arc.point_distance(point), 0.0)
+
+        vector1 = volmdlr.Vector3D(1, 1, 1)
+        vector1 = vector1.unit_vector()
+        vector2 = vector1.deterministic_unit_normal_vector()
+        vector3 = vector1.cross(vector2)
+        circle3d = curves.Circle3D(volmdlr.Frame3D(volmdlr.O3D, vector1, vector2, vector3), 1)
+        arc3d = vme.Arc3D(circle3d, start=volmdlr.Point3D(0.5773502691896258, 0.5773502691896258, 0.5773502691896258),
+                          end=volmdlr.Point3D(-0.9855985596534886, -0.11957315586905026, -0.11957315586905026))
+
+        bspline3d = vme.BSplineCurve3D.from_arc(arc3d)
+
+        expected_ctrlpts3d = [
+            volmdlr.Point3D(0.5773502691896258, 0.5773502691896258, 0.5773502691896258),
+            volmdlr.Point3D(1.2038701267717946, 0.26409034039854135, 0.26409034039854135),
+            volmdlr.Point3D(0.9381043823891009, -0.2449083172764492, -0.2449083172764492),
+            volmdlr.Point3D(0.672338638006407, -0.7539069749514399, -0.7539069749514399),
+            volmdlr.Point3D(-0.09175169554644669, -0.7041241461434029, -0.7041241461434029),
+            volmdlr.Point3D(-0.8558420290993004, -0.6543413173353662, -0.6543413173353662),
+            volmdlr.Point3D(-0.9855985560899309, -0.11957317055561367, -0.11957317055561367)
+        ]
+        expected_knots3d = [0.0, 0.3333333333333333, 0.6666666666666666, 1.0]
+        expected_knot_multiplicities3d = [3, 2, 2, 3]
+        expected_weights3d = [1.0, 0.7933533424293499, 1.0, 0.7933533424293499, 1.0, 0.7933533424293499, 1.0]
+        expected_bspline3d = vme.BSplineCurve3D(2, expected_ctrlpts3d, expected_knot_multiplicities3d,
+                                                expected_knots3d, expected_weights3d)
+
+        self.assertTrue(bspline3d.is_close(expected_bspline3d))
+        for point in bspline3d.discretization_points(number_points=10):
+            self.assertEqual(arc3d.point_distance(point), 0.0)
 
 
 class TestBSplineCurve2D(unittest.TestCase):
@@ -72,7 +183,8 @@ class TestBSplineCurve2D(unittest.TestCase):
 
     def test_derivatives(self):
         derivatives = self.bspline2d.derivatives(u=0.35, order=2)
-        expected_result = [[20.879272837543425, 13.96350686701158], [45.20015428165102, 9.987462558623653], [-1.334434093851499, -68.74685708529317]]
+        expected_result = [[20.879272837543425, 13.96350686701158], [45.20015428165102, 9.987462558623653],
+                           [-1.334434093851499, -68.74685708529317]]
         for der, res in zip(derivatives, expected_result):
             self.assertAlmostEqual(der[0], res[0], delta=DELTA)
             self.assertAlmostEqual(der[1], res[1], delta=DELTA)
@@ -182,7 +294,7 @@ class TestBSplineCurve2D(unittest.TestCase):
     def test_line_intersections(self):
         bspline_curve2d = DessiaObject.from_json(os.path.join(folder, "bsplinecurve2d_1.json"))
         line = curves.Line2D(volmdlr.Point2D(1.263163105753452, -0.002645572020392778),
-                          volmdlr.Point2D(1.263163105753452, -0.001820963841291406))
+                             volmdlr.Point2D(1.263163105753452, -0.001820963841291406))
 
         line_intersections = bspline_curve2d.line_intersections(line)
         self.assertEqual(len(line_intersections), 1)
@@ -358,7 +470,7 @@ class TestBSplineCurve3D(unittest.TestCase):
 
     def test_line_intersections(self):
         line = curves.Line3D(volmdlr.Point3D(0.5334, -0.44659009801843536, 0.0),
-                          volmdlr.Point3D(0.5334, 0.4342689853571558, -0.47337857496375274))
+                             volmdlr.Point3D(0.5334, 0.4342689853571558, -0.47337857496375274))
         bspline_line_intersections = self.b_splinecurve3d.line_intersections(line)
         self.assertTrue(bspline_line_intersections[0].is_close(
             volmdlr.Point3D(0.5334, 1.784620497933768, -1.1990649949459866)))

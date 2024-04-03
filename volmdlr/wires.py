@@ -196,7 +196,8 @@ OCCT_TO_VOLMDLR = {"Geom_Line": curves.Line3D,
                    "Geom_Ellipse": curves.Ellipse3D,
                    "Geom_Parabola": curves.Parabola3D,
                    "Geom_Hyperbola": curves.Hyperbola3D,
-                   "Geom_BSplineCurve": edges.BSplineCurve3D}
+                   "Geom_BSplineCurve": edges.BSplineCurve3D,
+                   "Geom_BezierCurve": edges.BezierCurve3D}
 
 
 class WireMixin:
@@ -4388,8 +4389,10 @@ class Contour3D(ContourMixin, Wire3D):
         :param offset: translation vector.
         :return: A new translated Contour3D.
         """
-        new_edges = [edge.translation(offset=offset) for edge in self.primitives]
-        return Contour3D(primitives=new_edges, name=self.name)
+        memo = {}
+        new_edges = [edge.translation(offset, memo=memo) for edge in
+                     self.primitives]
+        return Contour3D(new_edges, self.name)
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """

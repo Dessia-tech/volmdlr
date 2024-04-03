@@ -1,8 +1,8 @@
 import unittest
-import volmdlr
 from OCP.BRepPrimAPI import BRepPrimAPI_MakeBox
 from OCP.TopoDS import TopoDS_Shell
-from volmdlr import shapes, wires, surfaces, faces
+import volmdlr
+from volmdlr import curves, shapes, wires, surfaces, faces
 from volmdlr.models.contours import rim_contour
 
 
@@ -80,6 +80,23 @@ class TestShell(unittest.TestCase):
         self.assertEqual(revolution_shape.name, "Conical rim")
         self.assertEqual(len(revolution_shape.primitives), 8)
         self.assertIsInstance(revolution_shape.wrapped, TopoDS_Shell)
+
+    def test_loft(self):
+        diameter = 0.3
+        circle1 = curves.Circle3D(frame=volmdlr.OXYZ, radius=diameter / 2)
+        circle2 = curves.Circle3D(
+            frame=volmdlr.Frame3D(volmdlr.Point3D(0.3, 0.0, 0.5), volmdlr.Y3D, volmdlr.Z3D, volmdlr.X3D),
+            radius=circle1.radius / 2)
+        circle3 = curves.Circle3D(
+            frame=volmdlr.Frame3D(volmdlr.Point3D(0.6, 0.0, 0.3), volmdlr.Y3D, volmdlr.X3D, -volmdlr.Z3D),
+            radius=circle1.radius * 0.6)
+        sections = [wires.Contour3D.from_circle(circle1), wires.Contour3D.from_circle(circle2),
+                    wires.Contour3D.from_circle(circle3)]
+        loft = shapes.Shell.make_loft(sections=sections, ruled=True, name="loft")
+        self.assertEqual(loft.name, "loft")
+        self.assertEqual(len(loft.primitives), 4)
+        self.assertFalse(loft.is_closed)
+        self.assertIsInstance(loft.wrapped, TopoDS_Shell)
 
 
 if __name__ == '__main__':

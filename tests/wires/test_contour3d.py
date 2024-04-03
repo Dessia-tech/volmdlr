@@ -4,9 +4,8 @@ import volmdlr
 import volmdlr.model
 from volmdlr.wires import Contour3D, Contour2D
 from volmdlr.step import Step
-from volmdlr import edges, curves
-from volmdlr.models.contours import contour3d, contour3d_all_edges
-
+from volmdlr import edges
+from volmdlr.models.contours import contour3d, contour3d_all_edges, contour3d_two_arcs, contour3d_two_arcs_of_ellipse
 
 folder = os.path.dirname(os.path.realpath(__file__))
 
@@ -96,6 +95,21 @@ class TestContour3D(unittest.TestCase):
         for intersection, expected_result in zip(edge_intersections, expected_results):
             self.assertTrue(intersection.is_close(expected_result))
 
+    def test_translation(self):
+        new_contour = contour3d_all_edges.translation(volmdlr.Z3D)
+        for prim1, prim2 in zip(new_contour.primitives, new_contour.primitives[1:] + [new_contour.primitives[0]]):
+            self.assertIs(prim1.end, prim2.start)
+
+        new_contour = contour3d_two_arcs.translation(volmdlr.Z3D)
+        self.assertIs(new_contour.primitives[0].circle, new_contour.primitives[1].circle)
+        self.assertIs(new_contour.primitives[0].end, new_contour.primitives[1].start)
+        self.assertIs(new_contour.primitives[1].end, new_contour.primitives[0].start)
+
+        new_contour = contour3d_two_arcs_of_ellipse.translation(volmdlr.Z3D)
+        self.assertIs(new_contour.primitives[0].ellipse, new_contour.primitives[1].ellipse)
+        self.assertIs(new_contour.primitives[0].end, new_contour.primitives[1].start)
+        self.assertIs(new_contour.primitives[1].end, new_contour.primitives[0].start)
+
     def test_to_3d(self):
         contour = Contour2D.from_bounding_rectangle(-0.5, 0.5, -0.5, 0.5).to_3d(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D)
         for prim1, prim2 in zip(contour.primitives, contour.primitives[1:] + [contour.primitives[0]]):
@@ -111,23 +125,12 @@ class TestContour3D(unittest.TestCase):
         for prim1, prim2 in zip(contour.primitives, contour.primitives[1:] + [contour.primitives[0]]):
             self.assertIs(prim2.start, prim1.end)
 
-        point1 = volmdlr.Point3D(1.0, 0.0, 0.0)
-        point2 = volmdlr.Point3D(-1.0, 0.0, 0.0)
-        circle = curves.Circle3D(volmdlr.OXYZ, 1)
-        arc1 = edges.Arc3D(circle, point1, point2)
-        arc2 = edges.Arc3D(circle, point2, point1)
-        contour = Contour3D([arc1, arc2])
-
-        new_contour = contour.copy(deep=True, memo={})
+        new_contour = contour3d_two_arcs.copy(deep=True, memo={})
         self.assertIs(new_contour.primitives[0].circle, new_contour.primitives[1].circle)
         self.assertIs(new_contour.primitives[0].end, new_contour.primitives[1].start)
         self.assertIs(new_contour.primitives[1].end, new_contour.primitives[0].start)
 
-        ellipse = curves.Ellipse3D(frame=volmdlr.OXYZ, major_axis=1.0, minor_axis=0.5)
-        arc1 = edges.ArcEllipse3D(ellipse, point1, point2)
-        arc2 = edges.ArcEllipse3D(ellipse, point2, point1)
-        contour = Contour3D([arc1, arc2])
-        new_contour = contour.copy(deep=True, memo={})
+        new_contour = contour3d_two_arcs_of_ellipse.copy(deep=True, memo={})
         self.assertIs(new_contour.primitives[0].ellipse, new_contour.primitives[1].ellipse)
         self.assertIs(new_contour.primitives[0].end, new_contour.primitives[1].start)
         self.assertIs(new_contour.primitives[1].end, new_contour.primitives[0].start)

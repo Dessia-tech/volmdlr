@@ -26,7 +26,7 @@ from volmdlr.core import EdgeStyle
 
 def hyperbola_parabola_control_point_and_weight(start, start_tangent, end, end_tangent, point):
     """Gets control points and weights for hyperbola and parabola curves represented by bsplines."""
-    line_class = globals()["Line"+start.__class__.__name__[-2:]]
+    line_class = globals()["Line" + start.__class__.__name__[-2:]]
     line02 = line_class.from_point_and_vector(start, (end - start).to_vector())
 
     line0 = line_class.from_point_and_vector(start, start_tangent.unit_vector())
@@ -36,11 +36,11 @@ def hyperbola_parabola_control_point_and_weight(start, start_tangent, end, end_t
     vector_p1 = point1 - point
     line1p = line_class.from_point_and_vector(point1, vector_p1)
     point_q = line02.line_intersections(line1p)[0]
-    a = math.sqrt((start - point_q).norm()/(point_q - end).norm())
-    u = a/(1.0 + a)
-    num = ((1.0 - u)**2) * (point - start).dot(vector_p1) + u**2 * (point - end).dot(vector_p1)
+    a = math.sqrt((start - point_q).norm() / (point_q - end).norm())
+    u = a / (1.0 + a)
+    num = ((1.0 - u) ** 2) * (point - start).dot(vector_p1) + u ** 2 * (point - end).dot(vector_p1)
     den = 2.0 * u * (1.0 - u) * vector_p1.dot(vector_p1)
-    weight_1 = num/den
+    weight_1 = num / den
     return point1, weight_1
 
 
@@ -117,6 +117,7 @@ class Curve(DessiaObject):
 
 class ClosedCurve(Curve):
     """Abstract class for defining closed curves (Circle, Ellipse) properties."""
+
     def __init__(self, name: str = ''):
         Curve.__init__(self, name=name)
 
@@ -209,7 +210,7 @@ class Line(Curve):
         """
         if self.__class__.__name__ != other_line.__class__.__name__:
             return False
-        if other_line.point_belongs(self.point1, abs_tol) and\
+        if other_line.point_belongs(self.point1, abs_tol) and \
                 self.direction_vector().is_colinear_to(other_line.direction_vector(), abs_tol):
             return True
         return False
@@ -424,14 +425,21 @@ class Line2D(Line):
         """
         return Line2D(*[point.rotation(center, angle) for point in [self.point1, self.point2]])
 
-    def translation(self, offset: volmdlr.Vector2D):
+    def translation(self, offset: volmdlr.Vector2D, memo=None):
         """
         Line2D translation.
 
         :param offset: translation vector.
+        :param memo: (Optional) A dictionary that keeps track of elements that have already been transformed
+            and also save the current transformation. This is useful when transforming data structures where data
+            is intended to be shared between primitives.
         :return: A new translated Line2D.
         """
-        return Line2D(*[point.translation(offset) for point in [self.point1, self.point2]])
+        if memo is None:
+            return Line2D(*[point.translation(offset) for point in [self.point1, self.point2]])
+        if id(self) not in memo:
+            memo[id(self)] = Line2D(*[point.translation(offset) for point in [self.point1, self.point2]])
+        return memo[id(self)]
 
     def point_belongs(self, point2d, abs_tol: float = 1e-6):
         """
@@ -804,14 +812,22 @@ class Line3D(Line):
         """
         return Line3D(*[point.rotation(center, axis, angle) for point in [self.point1, self.point2]])
 
-    def translation(self, offset: volmdlr.Vector3D):
+    def translation(self, offset: volmdlr.Vector3D, memo=None):
         """
         Line3D translation.
 
         :param offset: translation vector
+        :param memo: (Optional) A dictionary that keeps track of elements that have already been transformed
+            and also save the current transformation. This is useful when transforming data structures where data
+            is intended to be shared between primitives.
         :return: A new translated Line3D
         """
-        return Line3D(*[point.translation(offset) for point in [self.point1, self.point2]])
+        if memo is None:
+            return Line3D(*[point.translation(offset) for point in [self.point1, self.point2]])
+
+        if id(self) not in memo:
+            memo[id(self)] = Line3D(*[point.translation(offset) for point in [self.point1, self.point2]])
+        return memo[id(self)]
 
     def point_belongs(self, point3d, tol: float = 1e-6):
         """
@@ -1024,7 +1040,7 @@ class CircleMixin:
         dimension = self.__class__.__name__[-2:]
         if dimension == "2D":
             rotation_sign = self.frame.u.cross(self.frame.v)
-            return start.rotation(self.center, rotation_sign*curvilinear_abscissa / self.radius)
+            return start.rotation(self.center, rotation_sign * curvilinear_abscissa / self.radius)
         return start.rotation(self.frame.origin, self.frame.w, curvilinear_abscissa / self.radius)
 
     def split_at_abscissa(self, abscissa):
@@ -1231,14 +1247,22 @@ class Circle2D(CircleMixin, ClosedCurve):
             return Circle2D(self.frame.rotation(center, angle, rotate_basis=True), self.radius)
         return Circle2D(self.frame.rotation(center, angle), self.radius)
 
-    def translation(self, offset: volmdlr.Vector2D):
+    def translation(self, offset: volmdlr.Vector2D, memo=None):
         """
         Circle2D translation.
 
         :param offset: translation vector
+        :param memo: (Optional) A dictionary that keeps track of elements that have already been transformed
+            and also save the current transformation. This is useful when transforming data structures where data
+            is intended to be shared between primitives.
         :return: A new translated Circle2D
         """
-        return Circle2D(self.frame.translation(offset), self.radius)
+        if memo is None:
+            return Circle2D(self.frame.translation(offset), self.radius)
+
+        if id(self) not in memo:
+            memo[id(self)] = Circle2D(self.frame.translation(offset), self.radius)
+        return memo[id(self)]
 
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
         """
@@ -1577,8 +1601,8 @@ class Circle2D(CircleMixin, ClosedCurve):
             x_line = line2d.point1.x
             if abs(self.radius ** 2 - x_line ** 2) < 1e-8:
                 return [volmdlr.Point2D(x_line, 0.0)]
-            y1 = - math.sqrt(self.radius**2 - x_line**2)
-            y2 = math.sqrt(self.radius**2 - x_line**2)
+            y1 = - math.sqrt(self.radius ** 2 - x_line ** 2)
+            y2 = math.sqrt(self.radius ** 2 - x_line ** 2)
             return [volmdlr.Point2D(x_line, y1), volmdlr.Point2D(x_line, y2)]
         quad_eq_a = 1 + m ** 2
         quad_eq_b = 2 * m * c
@@ -1772,14 +1796,22 @@ class Circle3D(CircleMixin, ClosedCurve):
         return Circle3D(self.frame.rotation(center, axis, angle),
                         self.radius, self.name)
 
-    def translation(self, offset: volmdlr.Vector3D):
+    def translation(self, offset: volmdlr.Vector3D, memo=None):
         """
         Circle3D translation.
 
         :param offset: translation vector
+        :param memo: (Optional) A dictionary that keeps track of elements that have already been transformed
+            and also save the current transformation. This is useful when transforming data structures where data
+            is intended to be shared between primitives.
         :return: A new translated Circle3D
         """
-        return Circle3D(self.frame.translation(offset), self.radius, self.name)
+        if memo is None:
+            return Circle3D(self.frame.translation(offset), self.radius)
+
+        if id(self) not in memo:
+            memo[id(self)] = Circle3D(self.frame.translation(offset), self.radius)
+        return memo[id(self)]
 
     def length(self) -> float:
         """Calculates the arc length of the circle."""
@@ -2282,14 +2314,22 @@ class Ellipse2D(EllipseMixin, ClosedCurve):
         new_frame = volmdlr.Frame2D(rotated_center, major_dir, minor_dir)
         return Ellipse2D(self.major_axis, self.minor_axis, new_frame)
 
-    def translation(self, offset: volmdlr.Vector2D):
+    def translation(self, offset: volmdlr.Vector2D, memo=None):
         """
         Translation of ellipse from an offset vector.
 
         :param offset: corresponding translation vector.
+        :param memo: (Optional) A dictionary that keeps track of elements that have already been transformed
+            and also save the current transformation. This is useful when transforming data structures where data
+            is intended to be shared between primitives.
         :return: translated new ellipse 2d.
         """
-        return Ellipse2D(self.major_axis, self.minor_axis, self.frame.translation(offset))
+        if memo is None:
+            return Ellipse2D(self.major_axis, self.minor_axis, self.frame.translation(offset))
+
+        if id(self) not in memo:
+            memo[id(self)] = Ellipse2D(self.major_axis, self.minor_axis, self.frame.translation(offset))
+        return memo[id(self)]
 
     def abscissa(self, point: volmdlr.Point2D, tol: float = 1e-6):
         """
@@ -2807,14 +2847,22 @@ class Ellipse3D(ConicMixin, EllipseMixin, ClosedCurve):
         """
         return Ellipse3D(self.major_axis, self.minor_axis, self.frame.rotation(center, axis, angle), self.name)
 
-    def translation(self, offset: volmdlr.Vector3D):
+    def translation(self, offset: volmdlr.Vector3D, memo=None):
         """
         Ellipse 3D translation.
 
         :param offset: translation vector.
+        :param memo: (Optional) A dictionary that keeps track of elements that have already been transformed
+            and also save the current transformation. This is useful when transforming data structures where data
+            is intended to be shared between primitives.
         :return: A new translated Ellipse 3D.
         """
-        return Ellipse3D(self.major_axis, self.minor_axis, self.frame.translation(offset), self.name)
+        if memo is None:
+            return Ellipse3D(self.major_axis, self.minor_axis, self.frame.translation(offset))
+
+        if id(self) not in memo:
+            memo[id(self)] = Ellipse3D(self.major_axis, self.minor_axis, self.frame.translation(offset))
+        return memo[id(self)]
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
@@ -2851,11 +2899,11 @@ class Ellipse3D(ConicMixin, EllipseMixin, ClosedCurve):
         if number_points:
             angle_resolution = number_points
         discretization_points_3d = [
-                                       self.center + self.major_axis * math.cos(
-                                           theta) * self.major_dir
-                                       + self.minor_axis * math.sin(
-                                           theta) * self.minor_dir for theta in
-                                       np.linspace(0, volmdlr.TWO_PI, angle_resolution)]
+            self.center + self.major_axis * math.cos(
+                theta) * self.major_dir
+            + self.minor_axis * math.sin(
+                theta) * self.minor_dir for theta in
+            np.linspace(0, volmdlr.TWO_PI, angle_resolution)]
 
         return discretization_points_3d
 
@@ -2907,7 +2955,7 @@ class Ellipse3D(ConicMixin, EllipseMixin, ClosedCurve):
         :return: A list of points, containing all intersections between the two Ellipse3D.
         """
         intersections = []
-        if self.frame.w.is_colinear_to(ellipse.frame.w) and\
+        if self.frame.w.is_colinear_to(ellipse.frame.w) and \
                 math.isclose(self.frame.w.dot(ellipse.frame.origin - self.frame.origin), 0, abs_tol=1e-6):
             ellipse2d = ellipse.to_2d(self.frame.origin, self.frame.u, self.frame.v)
             self_ellipse2d = self.to_2d(self.frame.origin, self.frame.u, self.frame.v)
@@ -2989,6 +3037,7 @@ class HyperbolaMixin(Curve):
     """
     Abstract class for a Hyperbola.
     """
+
     def __init__(self, frame: Union[volmdlr.Frame2D, volmdlr.Frame3D], semi_major_axis: float,
                  semi_minor_axis: float, name: str = ''):
         self.frame = frame
@@ -3030,7 +3079,7 @@ class HyperbolaMixin(Curve):
         """
         if not self.frame.is_close(other.frame):
             return False
-        if not math.isclose(self.semi_major_axis, other.semi_major_axis, abs_tol=abs_tol) or\
+        if not math.isclose(self.semi_major_axis, other.semi_major_axis, abs_tol=abs_tol) or \
                 not math.isclose(self.semi_minor_axis, other.semi_minor_axis, abs_tol=abs_tol):
             return False
         return True
@@ -3042,8 +3091,8 @@ class HyperbolaMixin(Curve):
         :param point1: point 1 used to trim circle.
         :param point2: point2 used to trim circle.
         """
-        _bspline_class = getattr(volmdlr.edges, 'BSplineCurve'+self.__class__.__name__[-2:])
-        _lineseg_class = getattr(volmdlr.edges, 'LineSegment'+self.__class__.__name__[-2:])
+        _bspline_class = getattr(volmdlr.edges, 'BSplineCurve' + self.__class__.__name__[-2:])
+        _lineseg_class = getattr(volmdlr.edges, 'LineSegment' + self.__class__.__name__[-2:])
         local_split_start = self.frame.global_to_local_coordinates(point1)
         local_split_end = self.frame.global_to_local_coordinates(point2)
         hyperbola_points = self.get_points(min(local_split_start.y, local_split_end.y),
@@ -3083,7 +3132,7 @@ class HyperbolaMixin(Curve):
         :param y: y component.
         :return: x component.
         """
-        x_positive = np.sqrt(((y ** 2) / (self.semi_minor_axis ** 2) + 1)*(self.semi_major_axis ** 2))
+        x_positive = np.sqrt(((y ** 2) / (self.semi_minor_axis ** 2) + 1) * (self.semi_major_axis ** 2))
         return x_positive
 
 
@@ -3095,6 +3144,7 @@ class Hyperbola2D(HyperbolaMixin):
     :param semi_major_axis: hyperbola's semi major axis.
     :param semi_minor_axis: hyperbola's semi minor axis.
     """
+
     def __init__(self, frame: volmdlr.Frame2D, semi_major_axis, semi_minor_axis, name: str = ''):
         self.frame = frame
         self.semi_major_axis = semi_major_axis
@@ -3122,7 +3172,7 @@ class Hyperbola2D(HyperbolaMixin):
         """
         local_point = self.frame.global_to_local_coordinates(point)
         if math.isclose(
-                local_point.x ** 2 / self.semi_major_axis ** 2 - local_point.y**2 / self.semi_minor_axis ** 1,
+                local_point.x ** 2 / self.semi_major_axis ** 2 - local_point.y ** 2 / self.semi_minor_axis ** 1,
                 1, abs_tol=abs_tol):
             return True
         return False
@@ -3164,16 +3214,16 @@ class Hyperbola2D(HyperbolaMixin):
         line_to_local_coodinates = line.frame_mapping(self.frame, 'new')
         m = line_to_local_coodinates.get_slope()
         c = line_to_local_coodinates.get_y_intersection()
-        a_quad_equation = (self.semi_major_axis**2) * (m**2) - self.semi_minor_axis**2
-        b_quad_equation = 2*(self.semi_major_axis**2)*m*c
-        c_quad_equation = self.semi_major_axis**2 * (self.semi_minor_axis**2 + c**2)
-        if c**2 < (self.semi_major_axis**2)*(m**2) - self.semi_minor_axis**2:
+        a_quad_equation = (self.semi_major_axis ** 2) * (m ** 2) - self.semi_minor_axis ** 2
+        b_quad_equation = 2 * (self.semi_major_axis ** 2) * m * c
+        c_quad_equation = self.semi_major_axis ** 2 * (self.semi_minor_axis ** 2 + c ** 2)
+        if c ** 2 < (self.semi_major_axis ** 2) * (m ** 2) - self.semi_minor_axis ** 2:
             return []
         if a_quad_equation == 0.0:
             return []
-        delta = math.sqrt(b_quad_equation**2 - 4*a_quad_equation*c_quad_equation)
-        x1 = (-b_quad_equation + delta) / (2*a_quad_equation)
-        x2 = (-b_quad_equation - delta) / (2*a_quad_equation)
+        delta = math.sqrt(b_quad_equation ** 2 - 4 * a_quad_equation * c_quad_equation)
+        x1 = (-b_quad_equation + delta) / (2 * a_quad_equation)
+        x2 = (-b_quad_equation - delta) / (2 * a_quad_equation)
         y1 = m * x1 + c
         y2 = m * x2 + c
         intersections = []
@@ -3241,6 +3291,7 @@ class Hyperbola3D(ConicMixin, HyperbolaMixin):
     :param semi_major_axis: hyperbola's semi major axis.
     :param semi_minor_axis: hyperbola's semi minor axis.
     """
+
     def __init__(self, frame: volmdlr.Frame3D, semi_major_axis, semi_minor_axis, name: str = ''):
         self._self_2d = None
         HyperbolaMixin.__init__(self, frame, semi_major_axis, semi_minor_axis, name=name)
@@ -3359,6 +3410,7 @@ class Hyperbola3D(ConicMixin, HyperbolaMixin):
 
 class ParabolaMixin(Curve):
     """Abstract class for Parabola."""
+
     def __getitem__(self, key):
         if key == 0:
             return self.frame
@@ -3420,6 +3472,7 @@ class Parabola2D(ParabolaMixin):
     :param focal_length: the parabola's focal length.
     :type focal_length: float.
     """
+
     def __init__(self, frame, focal_length: float, name: str = ''):
         self.vertex = frame.origin
         self.focal_length = focal_length
@@ -3482,8 +3535,8 @@ class Parabola2D(ParabolaMixin):
         line_to_local_coodinates = line.frame_mapping(self.frame, 'new')
         m = line_to_local_coodinates.get_slope()
         c = line_to_local_coodinates.get_y_intersection()
-        if m**2 > - 4 * self.vrtx_equation_a * c:
-            delta = math.sqrt(m**2 - 4 * self.vrtx_equation_a * (-c))
+        if m ** 2 > - 4 * self.vrtx_equation_a * c:
+            delta = math.sqrt(m ** 2 - 4 * self.vrtx_equation_a * (-c))
             x1 = (m + delta) / (2 * self.vrtx_equation_a)
             x2 = (m - delta) / (2 * self.vrtx_equation_a)
             y1 = m * x1 + c
@@ -3491,7 +3544,7 @@ class Parabola2D(ParabolaMixin):
             intersections = [volmdlr.Point2D(x1, y1), volmdlr.Point2D(x2, y2)]
             intersections = [self.frame.local_to_global_coordinates(point) for point in intersections]
             return intersections
-        if math.isclose(m**2, - 4 * self.vrtx_equation_a * c, abs_tol=abs_tol):
+        if math.isclose(m ** 2, - 4 * self.vrtx_equation_a * c, abs_tol=abs_tol):
             x = m / (2 * self.vrtx_equation_a)
             return [volmdlr.Point2D(x, m * x + c)]
         return []
@@ -3544,6 +3597,7 @@ class Parabola3D(ConicMixin, ParabolaMixin):
     :param focal_length: the parabola's focal length.
     :type focal_length: float.
     """
+
     def __init__(self, frame: volmdlr.Frame3D, focal_length: float, name: str = ''):
         self.vertex = frame.origin
         self.focal_length = focal_length
@@ -3596,7 +3650,7 @@ class Parabola3D(ConicMixin, ParabolaMixin):
         :return: True is point lies on the Hyperbola 3D, False otherwise
         """
         new_point = self.frame.global_to_local_coordinates(point)
-        return math.isclose(new_point.y, self.vrtx_equation_a * new_point.x**2, abs_tol=tol)
+        return math.isclose(new_point.y, self.vrtx_equation_a * new_point.x ** 2, abs_tol=tol)
 
     def sort_points_along_curve(self, points: List[Union[volmdlr.Point2D, volmdlr.Point3D]]):
         """

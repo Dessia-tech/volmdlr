@@ -809,18 +809,26 @@ cdef class Vector2D(Vector):
         v2x, v2y = self.rotation_parameters(center, angle)
         return self.__class__(v2x, v2y)
 
-    def translation(self, offset: Vector2D):
+    def translation(self, offset: Vector2D, memo=None):
         """
         Translates the 2-dimensional vector and returns a new translated vector
 
         :param offset: The offset vector of the translation
         :type offset: :class:`volmdlr.Vector2D`
+        :param memo: (Optional) A dictionary that keeps track of elements that have already been transformed
+            and also save the current transformation. This is useful when transforming data structures where data
+            is intended to be shared between primitives..
+        :type memo: dict
         :return: A translated Vector2D-like object
         :rtype: :class:`volmdlr.Vector2D`
         """
-        v2x = self.x + offset.x
-        v2y = self.y + offset.y
-        return self.__class__(v2x, v2y)
+        if memo is None:
+            return self + offset
+
+        if id(self) not in memo:
+            memo[id(self)] = self + offset
+
+        return memo[id(self)]
 
     def frame_mapping(self, frame: "Frame2D", side: str):
         """
@@ -1652,16 +1660,25 @@ cdef class Vector3D(Vector):
         x1, y1 = self.axis_rotation_parameters(self.x, self.y, angle)
         return Point3D(x1, y1, self.z)
 
-    def translation(self, offset: Vector3D):
+    def translation(self, offset: Vector3D, memo=None):
         """
-        Translates the vector and returns a new translated vector
+        Translates the vector and returns a new translated vector.
 
         :param offset: A Vector3D-like object used for offsetting
         :type offset: :class:`volmdlr.Vector3D`
+        :param memo: (Optional) A dictionary that keeps track of elements that have already been transformed
+            and also save the current transformation. This is useful when transforming data structures where data
+            is intended to be shared between primitives.
+        :type memo: dict
         :return: A translated Vector3D-like object
         :rtype: :class:`volmdlr.Vector3D`
         """
-        return self + offset
+        if memo is None:
+            return self + offset
+        if id(self) not in memo:
+            memo[id(self)] = self + offset
+
+        return memo[id(self)]
 
     def frame_mapping(self, frame: "Frame3D", side: str):
         """
