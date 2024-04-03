@@ -1021,7 +1021,7 @@ class Vector2Schema(VectorSchema):
         super().__init__(class_=class_, annotations=annotations, attributes=attributes)
 
 
-class Vector3Schema(Schema):
+class Vector3Schema(VectorSchema):
     def __init__(self, class_):
         annotations = {"x": float, "y": float, "z": float, "name": str}
         attributes = [SchemaAttribute("x"), SchemaAttribute("y"),
