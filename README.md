@@ -7,9 +7,9 @@
 </h4>
 
 <div align="center">
-  <a href="http://dessia.tech/"><img src="https://img.shields.io/website-up-down-green-red/http/dessia.tech.svg"></a>  
+  <a href="http://dessia.io/"><img src="https://img.shields.io/website-up-down-green-red/http/dessia.io.svg"></a>  
   <a href="https://GitHub.com/Dessia-tech/volmdlr/stargazers/"><img src="https://badgen.net/github/stars/Dessia-tech/volmdlr"></a>  
-  <a href="https://drone-opensource.dessia.tech/Dessia-tech/volmdlr"><img src="https://drone-opensource.dessia.tech/api/badges/Dessia-tech/volmdlr/status.svg?branch=master"></a>
+  <a href="https://drone-opensource.dessia.io/Dessia-tech/volmdlr"><img src="https://drone-opensource.dessia.io/api/badges/Dessia-tech/volmdlr/status.svg?branch=master"></a>
   <a href="https://pypi.org/project/volmdlr/"><img src="https://img.shields.io/pypi/v/volmdlr.svg"></a>
   <a href="https://github.com/Dessia-tech/volmdlr/graphs/contributors"><img src="https://img.shields.io/github/contributors/Dessia-tech/volmdlr.svg"></a>
   <a href="https://github.com/Dessia-tech/volmdlr/issues"><img src="https://img.shields.io/github/issues/Dessia-tech/volmdlr.svg"></a>
@@ -21,7 +21,7 @@
   <a href="#user-installation"><b>User Installation</b></a> |
   <a href="#dev-installation"><b>Dev Installation</b></a> |
   <a href="https://github.com/Dessia-tech/volmdlr/tree/master/scripts"><b>Usage</b></a> |
-  <a href="https://documentation.dessia.tech/volmdlr/"><b>Documentation</b></a> |
+  <a href="https://documentation.dessia.io/volmdlr/"><b>Documentation</b></a> |
   <a href="#licence"><b>Licence</b></a> |
   <a href="#contributors"><b>Contributors</b></a> |
 </div>
@@ -88,7 +88,7 @@ See the [script](https://github.com/Dessia-tech/volmdlr/tree/master/scripts) fol
 
 ## Documentation
 
-https://documentation.dessia.tech/volmdlr/
+https://documentation.dessia.io/volmdlr/
 
 ## License
 
@@ -97,7 +97,7 @@ https://documentation.dessia.tech/volmdlr/
 ## Team and contributors
 
 The project leader is [Wirajan Da Silva](https://github.com/WirajanDASILVA).
-Volmdlr is mainly developed by the [dessia](https://dessia.tech) company as a part of its opensource SDK, but contributions are welcomed. See [CONTRIBUTING.md](/blob/master/CONTRIBUTING.md) for details
+Volmdlr is mainly developed by the [dessia](https://dessia.io) company as a part of its opensource SDK, but contributions are welcomed. See [CONTRIBUTING.md](/blob/master/CONTRIBUTING.md) for details
 
 - [DessiA team](https://github.com/orgs/Dessia-tech/people)
 - [luzpaz](https://github.com/luzpaz)
